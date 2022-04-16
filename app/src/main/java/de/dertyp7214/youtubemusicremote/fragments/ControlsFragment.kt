@@ -33,6 +33,7 @@ class ControlsFragment : Fragment() {
     private var likeCallback: Callback = {}
     private var dislikeCallback: Callback = {}
     private var seekBarCallback: (seconds: Int) -> Unit = {}
+    private var volumeCallback: (volume: Int) -> Unit = {}
 
     private var shuffle: ImageButton? = null
     private var previous: ImageButton? = null
@@ -138,14 +139,8 @@ class ControlsFragment : Fragment() {
             }
         }
 
-        val controlsColor = if (isDark(
-                ColorUtils.blendARGB(
-                    coverData.dominant,
-                    coverData.dominant.darkenColor(.5f),
-                    .77f
-                )
-            )
-        ) Color.WHITE else Color.BLACK
+        val controlsColor = coverData.controlsColor
+
         shuffle?.animateImageTintList(controlsColor, Color.BLACK)
         previous?.animateImageTintList(controlsColor, Color.BLACK)
         next?.animateImageTintList(controlsColor, Color.BLACK)
@@ -174,7 +169,7 @@ class ControlsFragment : Fragment() {
         title?.isSelected = true
         artist?.isSelected = true
 
-        val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 60)
+        val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 0)
         if (oldBackgroundTint != backgroundColor) {
             layout?.let { view ->
                 animateColors(oldBackgroundTint, backgroundColor) {
@@ -210,7 +205,8 @@ class ControlsFragment : Fragment() {
         repeat: Callback = {},
         like: Callback = {},
         dislike: Callback = {},
-        seek: (seconds: Int) -> Unit = {}
+        seek: (seconds: Int) -> Unit = {},
+        volume: (volume: Int) -> Unit = {}
     ) {
         shuffleCallback = shuffle
         previousCallback = previous
@@ -220,5 +216,6 @@ class ControlsFragment : Fragment() {
         likeCallback = like
         dislikeCallback = dislike
         seekBarCallback = seek
+        volumeCallback = volume
     }
 }

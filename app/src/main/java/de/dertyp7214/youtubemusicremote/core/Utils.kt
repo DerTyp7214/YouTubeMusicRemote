@@ -1,6 +1,7 @@
 package de.dertyp7214.youtubemusicremote.core
 
 import android.animation.ValueAnimator
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.widget.ImageView
@@ -75,4 +76,11 @@ fun Int.darkenColor(amount: Float): Int {
         Color.colorToHSV(this@darkenColor, this)
         this[2] *= amount
     })
+}
+
+fun Context.getStatusBarHeight(): Int {
+    var result = 0
+    val resourceId: Int = resources.getIdentifier("status_bar_height", "dimen", "android")
+    if (resourceId > 0) result = resources.getDimensionPixelSize(resourceId)
+    return result
 }

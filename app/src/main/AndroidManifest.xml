@@ -15,7 +15,7 @@
         android:theme="@style/Theme.YouTubeMusicRemote"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".MainActivity"
+            android:name=".screens.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

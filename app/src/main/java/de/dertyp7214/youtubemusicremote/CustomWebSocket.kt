@@ -9,7 +9,7 @@ import okhttp3.WebSocketListener
 class CustomWebSocket(
     url: String,
     webSocketListener: WebSocketListener,
-    okHttpClient: OkHttpClient = OkHttpClient(),
+    private val okHttpClient: OkHttpClient = OkHttpClient(),
     private val gson: Gson = Gson()
 ) {
     private val webSocket: WebSocket =
@@ -19,7 +19,9 @@ class CustomWebSocket(
         webSocket.send(gson.toJson(data))
     }
 
-    fun send(data: String) {
-        webSocket.send(data)
+    fun close() {
+        okHttpClient.dispatcher().executorService().shutdown()
+        okHttpClient.connectionPool().evictAll()
+        okHttpClient.cache()?.close()
     }
 }

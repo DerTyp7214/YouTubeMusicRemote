@@ -57,7 +57,7 @@ class CoverFragment : Fragment() {
 
             val image = Bitmap.createBitmap(
                 bitmap,
-                ((bitmap.width * aspectRatio) * .6).roundToInt(),
+                ((bitmap.width * (1 - aspectRatio)) / 2).roundToInt(),
                 0,
                 (bitmap.width * aspectRatio).roundToInt(),
                 bitmap.height

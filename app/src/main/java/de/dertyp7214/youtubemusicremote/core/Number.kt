@@ -1,5 +1,6 @@
 package de.dertyp7214.youtubemusicremote.core
 
+import android.content.Context
 import java.util.concurrent.TimeUnit
 
 fun String.toHumanReadable(isSeconds: Boolean = false): String {
@@ -22,4 +23,12 @@ fun Long.toHumanReadable(isSeconds: Boolean = false): String {
     builder.append("${(seconds % 60).let { if (it > 9) it else "0$it" }}")
 
     return builder.toString()
+}
+
+fun Int.dpToPx(context: Context): Int {
+    return (this * context.resources.displayMetrics.density).toInt()
+}
+
+fun Int.pxToDp(context: Context): Int {
+    return (this / context.resources.displayMetrics.density).toInt()
 }

@@ -20,6 +20,8 @@ data class SongInfo(
     val liked: Boolean = false,
     val disliked: Boolean = false,
     val repeatMode: RepeatMode = RepeatMode.NONE,
+    var volume: Int = 0,
+    val isMuted: Boolean = false,
 
     @Transient
     var coverData: CoverData? = null

@@ -31,9 +31,16 @@ enum class Action {
     SHUFFLE,
 
     @SerializedName("seek")
-    SEEK
+    SEEK,
+
+    @SerializedName("volume")
+    VOLUME
 }
 
 data class SeekData(
     val elapsedSeconds: Int
+)
+
+data class VolumeData(
+    val volume: Int
 )
