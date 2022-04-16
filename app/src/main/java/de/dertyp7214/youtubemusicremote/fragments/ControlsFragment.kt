@@ -124,10 +124,11 @@ class ControlsFragment : Fragment() {
             }
         }
 
+        val luminance = ColorUtils.calculateLuminance(coverData.dominant).toFloat()
         val seekColor = ColorUtils.blendARGB(
             getFallBackColor(coverData.muted, coverData.vibrant),
-            Color.WHITE,
-            .2f
+            if (luminance < .5) Color.BLACK else Color.WHITE,
+            .6f * luminance
         )
 
         seekBar?.let { seekBar ->

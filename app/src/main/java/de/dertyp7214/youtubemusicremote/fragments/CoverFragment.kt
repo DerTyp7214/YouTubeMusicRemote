@@ -51,18 +51,19 @@ class CoverFragment : Fragment() {
         cover?.setImageDrawable(coverData.cover)
 
         val bitmap = coverData.background?.toBitmap()
-        val rootLayout = root
-        if (bitmap != null && rootLayout != null) {
-            val aspectRatio = rootLayout.width.toFloat() / rootLayout.height.toFloat()
+        root?.let { rootLayout ->
+            if (bitmap != null) {
+                val aspectRatio = rootLayout.width.toFloat() / rootLayout.height.toFloat()
 
-            val image = Bitmap.createBitmap(
-                bitmap,
-                ((bitmap.width * (1 - aspectRatio)) / 2).roundToInt(),
-                0,
-                (bitmap.width * aspectRatio).roundToInt(),
-                bitmap.height
-            )
-            rootLayout.background = BitmapDrawable(resources, image)
+                val image = Bitmap.createBitmap(
+                    bitmap,
+                    ((bitmap.width * (1 - aspectRatio)) / 2).roundToInt(),
+                    0,
+                    (bitmap.width * aspectRatio).roundToInt(),
+                    bitmap.height
+                )
+                rootLayout.background = BitmapDrawable(resources, image)
+            }
         }
     }
 }

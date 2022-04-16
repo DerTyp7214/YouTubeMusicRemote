@@ -34,8 +34,15 @@ enum class Action {
     SEEK,
 
     @SerializedName("volume")
-    VOLUME
+    VOLUME,
+
+    @SerializedName("status")
+    STATUS
 }
+
+data class StatusData(
+    val name: String
+)
 
 data class SeekData(
     val elapsedSeconds: Int

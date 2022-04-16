@@ -24,7 +24,12 @@ import de.dertyp7214.youtubemusicremote.types.*
 class MainActivity : AppCompatActivity(), OnTouchListener {
 
     companion object {
-        const val URL = "ws://192.168.178.234:8080" // TODO: connection logic
+        var URL = ""
+            set(value) {
+                var url = value
+                if (!url.startsWith("ws://")) url = "ws://$url"
+                field = url
+            }
     }
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
@@ -154,7 +159,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 changeVolume(currentSongInfo.volume + 5)
                 true
             }
-            else -> false
+            else -> super.onKeyDown(keyCode, event)
         }
     }
 
