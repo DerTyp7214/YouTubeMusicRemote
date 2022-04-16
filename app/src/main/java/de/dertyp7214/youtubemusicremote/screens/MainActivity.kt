@@ -6,16 +6,13 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.*
 import android.view.View.OnTouchListener
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.updateLayoutParams
 import com.google.gson.Gson
-import de.dertyp7214.youtubemusicremote.CustomWebSocket
-import de.dertyp7214.youtubemusicremote.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.R
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
 import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
@@ -55,8 +52,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
         val group = findViewById<LinearLayout>(R.id.group)
         val volume = findViewById<TextView>(R.id.volume)
-        val share = findViewById<ImageButton>(R.id.share)
-        val muteToggle = findViewById<ImageButton>(R.id.muteToggle)
+        val search = findViewById<ImageButton>(R.id.search)
+        val menuButton = findViewById<ImageButton>(R.id.menuButton)
 
         customWebSocketListener = CustomWebSocketListener()
 
@@ -74,6 +71,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         webSocket = CustomWebSocket(URL, customWebSocketListener, gson = gson)
+        webSocket.setInstance()
 
         fun setSongInfo(songInfo: SongInfo) {
             val controlsColor = songInfo.coverData?.controlsColor ?: Color.BLACK
@@ -81,22 +79,13 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             volume.changeText("${songInfo.volume}%")
             volume.animateTextColor(controlsColor)
 
-            muteToggle.animateImageTintList(controlsColor)
-            muteToggle.setImageResource(if (songInfo.isMuted) R.drawable.ic_volume_off else R.drawable.ic_volume)
+            menuButton.animateImageTintList(controlsColor)
 
-            share.animateImageTintList(controlsColor)
-        }
+            search.animateImageTintList(controlsColor)
 
-        muteToggle.setOnClickListener {
-            webSocket.send(SendAction(Action.MUTE_UNMUTE))
-        }
-
-        share.setOnClickListener {
-            startActivity(Intent.createChooser(Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, currentSongInfo.url)
-                type = "text/plain"
-            }, null))
+            menuButton.setOnClickListener {
+                showMenu(menuButton, songInfo)
+            }
         }
 
         customWebSocketListener.onMessage { _, text ->
@@ -128,6 +117,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             throwable.printStackTrace()
         }
 
+        search.setOnClickListener {
+            startActivity(Intent(this, YouTubeSearchActivity::class.java))
+        }
+
         controlsFragment.passCallbacks(
             shuffle = { webSocket.send(SendAction(Action.SHUFFLE)) },
             previous = { webSocket.send(SendAction(Action.PREVIOUS)) },
@@ -144,6 +137,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     override fun onResume() {
         super.onResume()
         webSocket = CustomWebSocket(URL, customWebSocketListener, gson = gson)
+        webSocket.setInstance()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -161,6 +155,31 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
             else -> super.onKeyDown(keyCode, event)
         }
+    }
+
+    private fun showMenu(v: View, songInfo: SongInfo) {
+        PopupMenu(this, v).apply {
+            setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.menu_toggle_mute -> {
+                        webSocket.send(SendAction(Action.MUTE_UNMUTE))
+                        true
+                    }
+                    R.id.menu_share -> {
+                        startActivity(Intent.createChooser(Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, songInfo.url)
+                            type = "text/plain"
+                        }, null))
+                        true
+                    }
+                    else -> false
+                }
+            }
+            inflate(R.menu.main_menu)
+            menu.findItem(R.id.menu_toggle_mute)
+                ?.setTitle(if (songInfo.isMuted) R.string.unmute else R.string.mute)
+        }.show()
     }
 
     private fun changeVolume(volume: Int) {

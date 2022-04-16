@@ -3,20 +3,23 @@ package de.dertyp7214.youtubemusicremote.screens
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.widget.Button
+import android.view.View.GONE
+import android.view.View.VISIBLE
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import androidx.core.widget.doAfterTextChanged
 import androidx.preference.PreferenceManager
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
-import de.dertyp7214.youtubemusicremote.CustomWebSocket
-import de.dertyp7214.youtubemusicremote.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.SendAction
@@ -27,6 +30,8 @@ import de.dertyp7214.youtubemusicremote.types.StatusData
 class IntroActivity : AppCompatActivity() {
 
     private lateinit var inputLayout: TextInputLayout
+    private lateinit var nextButton: MaterialButton
+    private lateinit var scanQrCode: MaterialButton
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
@@ -36,9 +41,17 @@ class IntroActivity : AppCompatActivity() {
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
             } else {
                 inputLayout.editText?.setText(result.contents)
-                checkWebSocket(result.contents) {
-                    if (it) inputLayout.boxStrokeColor = Color.GREEN
-                    else inputLayout.boxStrokeColor = Color.RED
+                scanQrCode.isEnabled = false
+                checkWebSocket(result.contents) { connected, reason ->
+                    scanQrCode.isEnabled = true
+                    if (connected) {
+                        nextButton.isEnabled = true
+                        inputLayout.boxStrokeColor = Color.GREEN
+                    } else {
+                        nextButton.isEnabled = false
+                        inputLayout.boxStrokeColor = Color.RED
+                        reason?.let { inputLayout.editText?.error = it }
+                    }
                 }
             }
         }
@@ -51,28 +64,30 @@ class IntroActivity : AppCompatActivity() {
 
         val url = preferences.getString("url", null)
 
+        inputLayout = findViewById(R.id.textInputLayout)
+        scanQrCode = findViewById(R.id.scanQrCode)
+        nextButton = findViewById(R.id.next)
+
         if (url != null) {
-            checkWebSocket(url) {
-                if (it) {
+            scanQrCode.isEnabled = false
+            checkWebSocket(url) { connected, reason ->
+                scanQrCode.isEnabled = true
+                if (connected) {
                     MainActivity.URL = url
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 } else {
+                    nextButton.isEnabled = false
                     inputLayout.boxStrokeColor = Color.RED
                     inputLayout.editText?.setText(url.removePrefix("ws://"))
+                    reason?.let { inputLayout.editText?.error = it }
                 }
             }
         } else {
-            val scanQrCode = findViewById<Button>(R.id.scanQrCode)
-            val next = findViewById<Button>(R.id.next)
-
-            inputLayout = findViewById(R.id.textInputLayout)
-
             inputLayout.editText?.doAfterTextChanged {
+                nextButton.isEnabled = true
                 inputLayout.boxStrokeColor = MaterialColors.getColor(
-                    this,
-                    androidx.appcompat.R.attr.colorPrimary,
-                    Color.WHITE
+                    this, androidx.appcompat.R.attr.colorPrimary, Color.WHITE
                 )
             }
 
@@ -80,12 +95,15 @@ class IntroActivity : AppCompatActivity() {
                 barcodeLauncher.launch(ScanOptions())
             }
 
-            next.setOnClickListener {
+            nextButton.setOnClickListener {
                 inputLayout.editText?.text?.let { editable ->
                     val newUrl =
                         editable.toString().let { if (it.startsWith("ws://")) it else "ws://$it" }
-                    checkWebSocket(newUrl) {
-                        if (it) {
+                    scanQrCode.isEnabled = false
+                    nextButton.isEnabled = false
+                    checkWebSocket(newUrl) { connected, reason ->
+                        scanQrCode.isEnabled = true
+                        if (connected) {
                             inputLayout.boxStrokeColor = Color.GREEN
                             preferences.edit {
                                 putString("url", newUrl)
@@ -93,20 +111,38 @@ class IntroActivity : AppCompatActivity() {
                                 startActivity(Intent(this@IntroActivity, MainActivity::class.java))
                                 finish()
                             }
-                        } else inputLayout.boxStrokeColor = Color.RED
+                        } else {
+                            nextButton.isEnabled = false
+                            inputLayout.boxStrokeColor = Color.RED
+                            reason?.let { inputLayout.editText?.error = it }
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun checkWebSocket(url: String, callback: (connected: Boolean) -> Unit) {
+    private fun checkWebSocket(
+        url: String, callback: (connected: Boolean, reason: String?) -> Unit
+    ) {
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+        progressBar.visibility = VISIBLE
+        inputLayout.isEnabled = false
+
+        val cb: (Boolean, String?) -> Unit = { p0, p1 ->
+            runOnUiThread {
+                progressBar.visibility = GONE
+                inputLayout.isEnabled = true
+                inputLayout.requestFocus()
+                callback(p0, p1)
+            }
+        }
+
         val customWebSocketListener = CustomWebSocketListener()
 
         try {
             val webSocket = CustomWebSocket(
-                if (url.startsWith("ws://")) url else "ws://$url",
-                customWebSocketListener
+                if (url.startsWith("ws://")) url else "ws://$url", customWebSocketListener
             )
 
             customWebSocketListener.onMessage { _, text ->
@@ -118,28 +154,28 @@ class IntroActivity : AppCompatActivity() {
                             val statusData =
                                 gson.fromJson(socketResponse.data, StatusData::class.java)
 
-                            if (statusData.name == "ytmd") callback(true)
-                            else callback(false)
+                            if (statusData.name == "ytmd") cb(true, null)
+                            else cb(false, "Invalid name")
                             webSocket.close()
                         }
                         else -> {}
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    callback(false)
+                    cb(false, e.localizedMessage)
                     webSocket.close()
                 }
             }
 
             customWebSocketListener.onFailure { _, throwable, _ ->
                 throwable.printStackTrace()
-                callback(false)
+                cb(false, throwable.localizedMessage)
             }
 
             webSocket.send(SendAction(Action.STATUS))
         } catch (e: Exception) {
             e.printStackTrace()
-            callback(false)
+            cb(false, e.localizedMessage)
         }
     }
 }

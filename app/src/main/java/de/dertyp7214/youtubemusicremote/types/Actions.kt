@@ -36,9 +36,16 @@ enum class Action {
     @SerializedName("volume")
     VOLUME,
 
+    @SerializedName("videoId")
+    VIDEO_ID,
+
     @SerializedName("status")
     STATUS
 }
+
+data class VideoIdData(
+    val videoId: String
+)
 
 data class StatusData(
     val name: String

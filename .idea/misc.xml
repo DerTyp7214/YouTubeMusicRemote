@@ -7,6 +7,7 @@
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_disliked.xml" value="0.3455" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_like.xml" value="0.3455" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_liked.xml" value="0.3455" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_menu.xml" value="0.344" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_next.xml" value="0.343" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_pause.xml" value="0.343" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_pause_pause.xml" value="0.3245" />
@@ -16,6 +17,7 @@
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_repeat.xml" value="0.343" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_repeat_off.xml" value="0.3455" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_repeat_once.xml" value="0.3455" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_search.xml" value="0.344" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_share.xml" value="0.3455" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_shuffle.xml" value="0.343" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/ic_volume.xml" value="0.3455" />
@@ -23,9 +25,12 @@
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/drawable/top_round.xml" value="0.343" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/activity_intro.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/activity_you_tube_search.xml" value="0.3307291666666667" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/fragment_controls.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/fragment_cover.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/fragment_song_info.xml" value="0.34479166666666666" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/youtube_search_item.xml" value="0.34479166666666666" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/menu/main_menu.xml" value="0.34479166666666666" />
       </map>
     </option>
   </component>

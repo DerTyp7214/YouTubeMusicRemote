@@ -1,10 +1,11 @@
-package de.dertyp7214.youtubemusicremote
+package de.dertyp7214.youtubemusicremote.components
 
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 
+@Suppress("unused")
 class CustomWebSocketListener : WebSocketListener() {
     private var onClosedCallback: (WebSocket, code: Int, reason: String) -> Unit = { _, _, _ -> }
     private var onClosingCallback: (WebSocket, code: Int, reason: String) -> Unit = { _, _, _ -> }

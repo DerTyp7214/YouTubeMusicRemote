@@ -22,6 +22,9 @@
         android:theme="@style/Theme.YouTubeMusicRemote"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".screens.YouTubeSearchActivity"
+            android:exported="false" />
+        <activity
             android:name=".screens.IntroActivity"
             android:exported="true">
             <intent-filter>

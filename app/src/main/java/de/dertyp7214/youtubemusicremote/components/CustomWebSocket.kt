@@ -1,4 +1,4 @@
-package de.dertyp7214.youtubemusicremote
+package de.dertyp7214.youtubemusicremote.components
 
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
@@ -23,5 +23,14 @@ class CustomWebSocket(
         okHttpClient.dispatcher().executorService().shutdown()
         okHttpClient.connectionPool().evictAll()
         okHttpClient.cache()?.close()
+    }
+
+    fun setInstance() {
+        webSocketInstance = this
+    }
+
+    companion object {
+        var webSocketInstance: CustomWebSocket? = null
+            private set
     }
 }
