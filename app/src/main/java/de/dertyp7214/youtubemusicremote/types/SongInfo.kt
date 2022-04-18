@@ -1,7 +1,6 @@
 package de.dertyp7214.youtubemusicremote.types
 
 import com.google.gson.annotations.SerializedName
-import de.dertyp7214.youtubemusicremote.core.CoverData
 
 data class SongInfo(
     val title: String = "",

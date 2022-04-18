@@ -9,16 +9,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
 import de.dertyp7214.youtubemusicremote.types.SongInfo
+import kotlin.math.roundToInt
 
 typealias Callback = () -> Unit
 
@@ -87,13 +88,54 @@ class ControlsFragment : Fragment() {
     fun setSongInfo(songInfo: SongInfo) {
         if (currentSongInfo == songInfo) return
 
-        val coverData = songInfo.coverData ?: return
+        shuffle?.setOnClickListener { shuffleCallback() }
+        previous?.setOnClickListener { previousCallback() }
+        playPause?.setOnClickListener { playPauseCallback() }
+        next?.setOnClickListener { nextCallback() }
+        repeat?.setOnClickListener { repeatCallback() }
+        like?.setOnClickListener { likeCallback() }
+        dislike?.setOnClickListener { dislikeCallback() }
+        seekBar?.onProgressChanged { progress, userInput ->
+            if (userInput) seekBarCallback(progress)
+        }
 
         title?.changeText(songInfo.title)
         artist?.changeText(songInfo.artist)
 
         progress?.changeText(songInfo.elapsedSeconds.toHumanReadable(true))
         duration?.changeText(songInfo.songDuration.toHumanReadable(true))
+
+        title?.isSelected = true
+        artist?.isSelected = true
+
+        like?.setImageResource(if (songInfo.liked) R.drawable.ic_liked else R.drawable.ic_like)
+        dislike?.setImageResource(if (songInfo.disliked) R.drawable.ic_disliked else R.drawable.ic_dislike)
+
+        repeat?.setImageResource(
+            when (songInfo.repeatMode) {
+                RepeatMode.ALL -> R.drawable.ic_repeat
+                RepeatMode.ONE -> R.drawable.ic_repeat_once
+                else -> R.drawable.ic_repeat_off
+            }
+        )
+
+        playPause?.let { playPause ->
+            val context = try {
+                requireContext()
+            } catch (_: Exception) {
+                null
+            }
+            if (currentSongInfo.isPaused != songInfo.isPaused && context != null) {
+                val drawable = ContextCompat.getDrawable(
+                    requireContext(),
+                    if (songInfo.isPaused == false) R.drawable.ic_play_pause else R.drawable.ic_pause_play
+                ) as AnimatedVectorDrawable
+                playPause.setImageDrawable(drawable)
+                drawable.start()
+            }
+        }
+
+        val coverData = songInfo.coverData ?: return
 
         seekBar?.let { seekBar ->
             val duration = songInfo.songDuration.toInt()
@@ -113,21 +155,34 @@ class ControlsFragment : Fragment() {
             ) {
                 playPause.backgroundTintList = ColorStateList.valueOf(it)
             }
-
-            if (currentSongInfo.isPaused != songInfo.isPaused) {
-                val drawable = ContextCompat.getDrawable(
-                    requireContext(),
-                    if (songInfo.isPaused == false) R.drawable.ic_play_pause else R.drawable.ic_pause_play
-                ) as AnimatedVectorDrawable
-                playPause.setImageDrawable(drawable)
-                drawable.start()
-            }
         }
 
-        val luminance = ColorUtils.calculateLuminance(coverData.dominant).toFloat()
+        val luminance = ColorUtils.calculateLuminance(
+            coverData.background?.let {
+                val self = layout
+                val activity = try {
+                    requireActivity()
+                } catch (_: Exception) {
+                    null
+                }
+                if (self != null && activity != null) {
+                    val bitmap = it.toBitmap()
+                    val screenHeight = activity.window.decorView.height.toFloat()
+                    val selfHeight = self.height.toFloat()
+                    val ratio = bitmap.height / screenHeight
+                    val convertedSelfHeight = selfHeight * ratio
+                    bitmap.resize(
+                        0,
+                        (bitmap.height - convertedSelfHeight).roundToInt(),
+                        bitmap.width,
+                        convertedSelfHeight.roundToInt()
+                    ).toDrawable(activity)
+                } else it
+            }?.getDominantColor(coverData.dominant) ?: coverData.dominant
+        ).toFloat()
         val seekColor = ColorUtils.blendARGB(
             getFallBackColor(coverData.muted, coverData.vibrant),
-            if (luminance < .5) Color.BLACK else Color.WHITE,
+            if (luminance < .5) Color.WHITE else Color.BLACK,
             .6f * luminance
         )
 
@@ -140,7 +195,7 @@ class ControlsFragment : Fragment() {
             }
         }
 
-        val controlsColor = coverData.controlsColor
+        val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 
         shuffle?.animateImageTintList(controlsColor, Color.BLACK)
         previous?.animateImageTintList(controlsColor, Color.BLACK)
@@ -150,25 +205,11 @@ class ControlsFragment : Fragment() {
         like?.animateImageTintList(controlsColor, Color.BLACK)
         dislike?.animateImageTintList(controlsColor, Color.BLACK)
 
-        like?.setImageResource(if (songInfo.liked) R.drawable.ic_liked else R.drawable.ic_like)
-        dislike?.setImageResource(if (songInfo.disliked) R.drawable.ic_disliked else R.drawable.ic_dislike)
-
-        repeat?.setImageResource(
-            when (songInfo.repeatMode) {
-                RepeatMode.ALL -> R.drawable.ic_repeat
-                RepeatMode.ONE -> R.drawable.ic_repeat_once
-                else -> R.drawable.ic_repeat_off
-            }
-        )
-
         progress?.animateTextColor(controlsColor)
         duration?.animateTextColor(controlsColor)
 
         title?.animateTextColor(controlsColor)
         artist?.animateTextColor(controlsColor)
-
-        title?.isSelected = true
-        artist?.isSelected = true
 
         val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 0)
         if (oldBackgroundTint != backgroundColor) {
@@ -179,21 +220,6 @@ class ControlsFragment : Fragment() {
                 oldBackgroundTint = backgroundColor
             }
         }
-
-        shuffle?.setOnClickListener { shuffleCallback() }
-        previous?.setOnClickListener { previousCallback() }
-        playPause?.setOnClickListener { playPauseCallback() }
-        next?.setOnClickListener { nextCallback() }
-        repeat?.setOnClickListener { repeatCallback() }
-        like?.setOnClickListener { likeCallback() }
-        dislike?.setOnClickListener { dislikeCallback() }
-        seekBar?.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-            override fun onStartTrackingTouch(bar: SeekBar?) {}
-            override fun onStopTrackingTouch(bar: SeekBar?) {}
-            override fun onProgressChanged(bar: SeekBar?, progress: Int, userInput: Boolean) {
-                if (userInput) seekBarCallback(progress)
-            }
-        })
 
         currentSongInfo = songInfo
     }

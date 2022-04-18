@@ -1,26 +1,26 @@
 package de.dertyp7214.youtubemusicremote.fragments
 
-import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import com.google.android.material.card.MaterialCardView
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.animateColors
+import de.dertyp7214.youtubemusicremote.core.fitToScreen
 import de.dertyp7214.youtubemusicremote.core.getFallBackColor
 import de.dertyp7214.youtubemusicremote.types.SongInfo
-import kotlin.math.roundToInt
 
 class CoverFragment : Fragment() {
 
+    private var currentSongInfo = SongInfo()
+
     private var cover: ImageView? = null
     private var card: MaterialCardView? = null
+
     private var root: View? = null
 
     override fun onCreateView(
@@ -38,6 +38,8 @@ class CoverFragment : Fragment() {
     }
 
     fun setSongInfo(songInfo: SongInfo) {
+        if (currentSongInfo == songInfo) return
+
         val coverData = songInfo.coverData ?: return
 
         val cardColor =
@@ -50,20 +52,16 @@ class CoverFragment : Fragment() {
 
         cover?.setImageDrawable(coverData.cover)
 
-        val bitmap = coverData.background?.toBitmap()
-        root?.let { rootLayout ->
-            if (bitmap != null) {
-                val aspectRatio = rootLayout.width.toFloat() / rootLayout.height.toFloat()
-
-                val image = Bitmap.createBitmap(
-                    bitmap,
-                    ((bitmap.width * (1 - aspectRatio)) / 2).roundToInt(),
-                    0,
-                    (bitmap.width * aspectRatio).roundToInt(),
-                    bitmap.height
-                )
-                rootLayout.background = BitmapDrawable(resources, image)
-            }
+        val activity = try {
+            requireActivity()
+        } catch (_: Exception) {
+            null
         }
+        if (activity != null) {
+            val bitmap = coverData.background?.fitToScreen(activity)
+            if (bitmap != null) root?.background = bitmap
+        }
+
+        currentSongInfo = songInfo
     }
 }

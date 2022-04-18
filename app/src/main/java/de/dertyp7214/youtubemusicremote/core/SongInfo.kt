@@ -2,32 +2,18 @@ package de.dertyp7214.youtubemusicremote.core
 
 import android.app.Activity
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.request.RequestOptions
+import de.dertyp7214.youtubemusicremote.types.CoverData
 import de.dertyp7214.youtubemusicremote.types.SongInfo
 import jp.wasabeef.glide.transformations.BlurTransformation
 import jp.wasabeef.glide.transformations.gpu.BrightnessFilterTransformation
 
-data class CoverData(
-    var background: Drawable? = null,
-    var cover: Drawable? = null,
-    var dominant: Int = -1,
-    var vibrant: Int = -1,
-    var darkVibrant: Int = -1,
-    var lightVibrant: Int = -1,
-    var muted: Int = -1,
-    var darkMuted: Int = -1,
-    var lightMuted: Int = -1,
-
-    var controlsColor: Int = -1
-)
-
 fun SongInfo.parseImageColors(activity: Activity, currentSongInfo: SongInfo): SongInfo {
-    if (currentSongInfo.imageSrc != imageSrc) {
+    if (currentSongInfo.imageSrc == imageSrc) {
         coverData = currentSongInfo.coverData
         return this
     }
@@ -63,16 +49,7 @@ fun SongInfo.parseImageColors(activity: Activity, currentSongInfo: SongInfo): So
         ).submit().get()
     }
 
-    coverData!!.controlsColor = if (isDark(
-            ColorUtils.blendARGB(
-                coverData!!.dominant,
-                coverData!!.dominant.darkenColor(
-                    .5f * luminance
-                ),
-                1f
-            )
-        )
-    ) Color.WHITE else Color.BLACK
+    coverData!!.parsedDominant = coverData!!.dominant.darkenColor(.5f * luminance)
 
     return this
 }
