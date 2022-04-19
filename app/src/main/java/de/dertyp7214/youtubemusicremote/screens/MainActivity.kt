@@ -15,6 +15,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.MutableLiveData
 import com.google.android.material.card.MaterialCardView
 import com.google.gson.Gson
 import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
@@ -52,7 +53,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private lateinit var controlFrame: FrameLayout
     private lateinit var mainFrame: FrameLayout
 
-    private var currentSongInfo: SongInfo = SongInfo()
+    private var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData(SongInfo())
     private var oldSongInfo: SongInfo = SongInfo()
 
     private val volumeHandler by lazy { Handler(mainLooper) }
@@ -182,14 +183,26 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
                 when (socketResponse.action) {
                     Action.SONG_INFO -> {
-                        currentSongInfo = gson.fromJson(socketResponse.data, SongInfo::class.java)
+                        currentSongInfo.postValue(
+                            gson.fromJson(
+                                socketResponse.data,
+                                SongInfo::class.java
+                            )
+                        )
                     }
                     else -> {}
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            currentSongInfo.parseImageColorsAsync(this, oldSongInfo) {
+        }
+
+        customWebSocketListener.onFailure { _, throwable, _ ->
+            throwable.printStackTrace()
+        }
+
+        currentSongInfo.observe(this) { songInfo ->
+            songInfo.parseImageColorsAsync(this, oldSongInfo) {
                 runOnUiThread {
                     setSongInfo(it)
 
@@ -199,10 +212,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     oldSongInfo = it
                 }
             }
-        }
-
-        customWebSocketListener.onFailure { _, throwable, _ ->
-            throwable.printStackTrace()
         }
 
         search.setOnClickListener {
@@ -230,17 +239,19 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     override fun onTouch(p0: View?, p1: MotionEvent?): Boolean = true
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        return when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                changeVolume(currentSongInfo.volume - 5)
-                true
+        return currentSongInfo.value?.let { songInfo ->
+            when (keyCode) {
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    changeVolume(songInfo.volume - 5)
+                    true
+                }
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    changeVolume(songInfo.volume + 5)
+                    true
+                }
+                else -> super.onKeyDown(keyCode, event)
             }
-            KeyEvent.KEYCODE_VOLUME_UP -> {
-                changeVolume(currentSongInfo.volume + 5)
-                true
-            }
-            else -> super.onKeyDown(keyCode, event)
-        }
+        } ?: super.onKeyDown(keyCode, event)
     }
 
     private fun showMenu(v: View, songInfo: SongInfo) {
@@ -269,7 +280,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     }
 
     private fun changeVolume(volume: Int) {
-        val color = (currentSongInfo.coverData?.dominant ?: Color.BLACK).let {
+        val color = (currentSongInfo.value?.coverData?.dominant ?: Color.BLACK).let {
             it.darkenColor(.7f * ColorUtils.calculateLuminance(it).toFloat())
         }
         val foregroundColor = ColorUtils.setAlphaComponent(
@@ -292,7 +303,9 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        currentSongInfo.volume = volume
-        webSocket.send(SendAction(Action.VOLUME, VolumeData(currentSongInfo.volume)))
+        currentSongInfo.value?.let { songInfo ->
+            songInfo.volume = volume
+            webSocket.send(SendAction(Action.VOLUME, VolumeData(volume)))
+        }
     }
 }
