@@ -150,32 +150,32 @@ fun TextView.changeTextWithLinks(
     fields: List<Field>,
     callback: (field: Field) -> Unit = {}
 ) {
-    if (this.text != text) {
-        val spannableString = SpannableString(text)
-        fields.forEach { field ->
-            if (text.contains(field.text)) {
-                val startIndex = text.indexOf(field.text)
-                val endIndex = startIndex + field.text.length
-                spannableString.setSpan(
-                    object : ClickableSpan() {
-                        override fun onClick(view: View) {
-                            callback(field)
-                        }
+    val spannableString = SpannableString(text)
+    fields.forEach { field ->
+        if (text.contains(field.text)) {
+            val startIndex = text.indexOf(field.text)
+            val endIndex = startIndex + field.text.length
+            spannableString.setSpan(
+                object : ClickableSpan() {
+                    override fun onClick(view: View) {
+                        callback(field)
+                    }
 
-                        override fun updateDrawState(ds: TextPaint) {
-                            ds.color = ds.linkColor
-                            ds.isUnderlineText = false
-                        }
-                    },
-                    startIndex, endIndex,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                spannableString.setSpan(
-                    ForegroundColorSpan(textColors.defaultColor),
-                    startIndex, endIndex, 0
-                )
-            }
+                    override fun updateDrawState(ds: TextPaint) {
+                        ds.color = ds.linkColor
+                        ds.isUnderlineText = false
+                    }
+                },
+                startIndex, endIndex,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            spannableString.setSpan(
+                ForegroundColorSpan(textColors.defaultColor),
+                startIndex, endIndex, 0
+            )
         }
+    }
+    if ("${this.text}" != "$spannableString" && (fields.isEmpty() || fields.any { text.contains(it.text) })) {
         this.text = spannableString
         movementMethod = LinkMovementMethod.getInstance()
     }

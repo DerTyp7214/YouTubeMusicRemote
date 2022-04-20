@@ -45,6 +45,7 @@
                 android:ellipsize="marquee"
                 android:maxLines="1"
                 android:singleLine="true"
+                android:textColorHighlight="#0FFF"
                 android:textSize="20sp"
                 tools:text="TextView" />
 
@@ -55,6 +56,7 @@
                 android:ellipsize="marquee"
                 android:maxLines="1"
                 android:singleLine="true"
+                android:textColorHighlight="#0FFF"
                 tools:text="TextView" />
         </LinearLayout>
 

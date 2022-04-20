@@ -86,6 +86,9 @@ class ControlsFragment : Fragment() {
 
         layout = v.findViewById(R.id.layout)
 
+        title?.isSelected = true
+        artist?.isSelected = true
+
         return v
     }
 
@@ -111,9 +114,6 @@ class ControlsFragment : Fragment() {
 
         progress?.changeText(songInfo.elapsedSeconds.toHumanReadable(true))
         duration?.changeText(songInfo.songDuration.toHumanReadable(true))
-
-        title?.isSelected = true
-        artist?.isSelected = true
 
         like?.setImageResource(if (songInfo.liked) R.drawable.ic_liked else R.drawable.ic_like)
         dislike?.setImageResource(if (songInfo.disliked) R.drawable.ic_disliked else R.drawable.ic_dislike)
