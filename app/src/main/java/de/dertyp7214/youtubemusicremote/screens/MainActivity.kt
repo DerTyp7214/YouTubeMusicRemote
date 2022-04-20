@@ -14,8 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.card.MaterialCardView
 import com.google.gson.Gson
 import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
@@ -25,7 +25,9 @@ import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
 import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
+import de.dertyp7214.youtubemusicremote.fragments.YouTubeApiFragment
 import de.dertyp7214.youtubemusicremote.types.*
+import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
 import java.lang.Float.max
 import kotlin.math.roundToInt
 
@@ -50,8 +52,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private lateinit var volumeWrapper: ConstraintLayout
     private lateinit var mainContent: ConstraintLayout
 
+    private lateinit var youtubeSearchFrame: FrameLayout
     private lateinit var controlFrame: FrameLayout
     private lateinit var mainFrame: FrameLayout
+    private lateinit var pageLayout: FrameLayout
 
     private var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData(SongInfo())
     private var oldSongInfo: SongInfo = SongInfo()
@@ -61,8 +65,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private val dp8 by lazy { 8.dpToPx(this) }
     private val dpN74 by lazy { (-74).dpToPx(this) }
 
+    private val youTubeApiFragment by lazy { YouTubeApiFragment() }
     private val controlsFragment by lazy { ControlsFragment() }
     private val coverFragment by lazy { CoverFragment() }
+
+    private val youtubeViewModel by lazy { ViewModelProvider(this)[YouTubeViewModel::class.java] }
 
     private var volumeOpen = false
 
@@ -70,7 +77,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
 
         window.setFlags(
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -87,20 +93,39 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         volumeWrapper = findViewById(R.id.volumeWrapper)
         mainContent = findViewById(R.id.mainContent)
 
-        controlFrame = findViewById<FrameLayout>(R.id.controlFrame)
-        mainFrame = findViewById<FrameLayout>(R.id.mainFrame)
+        youtubeSearchFrame = findViewById(R.id.youtubeSearch)
+        controlFrame = findViewById(R.id.controlFrame)
+        mainFrame = findViewById(R.id.mainFrame)
+        pageLayout = findViewById(R.id.pageLayout)
 
         customWebSocketListener = CustomWebSocketListener()
 
         val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction
-            .add(controlFrame.id, controlsFragment)
-            .add(mainFrame.id, coverFragment)
-            .commit()
+        fragmentTransaction.add(youtubeSearchFrame.id, youTubeApiFragment)
+            .add(controlFrame.id, controlsFragment).add(mainFrame.id, coverFragment).commit()
 
         val groupMargin = getStatusBarHeight() + 32.dpToPx(this)
-        group.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            setMargins(0, groupMargin, 0, 0)
+        group.setMargins(0, groupMargin, 0, 0)
+
+        val pageHeight = resources.displayMetrics.heightPixels
+        val youtubeTopMargin = getStatusBarHeight() + 16.dpToPx(this)
+        youtubeSearchFrame.setHeight(pageHeight)
+        youtubeSearchFrame.setMargins(0, (pageHeight - youtubeTopMargin).inv(), 0, 0)
+
+        fun setMargins(open: Boolean) {
+            animateInts(if (open) pageHeight else 0, if (open) 0 else pageHeight) { marginTop ->
+                youtubeSearchFrame.setMargins(
+                    0,
+                    marginTop.inv().let { if (open) it + youtubeTopMargin else it },
+                    0,
+                    0
+                )
+                pageLayout.setMargins(0, 0, 0, marginTop - pageHeight)
+            }
+        }
+
+        youtubeViewModel.observerSearchOpen(this) { open ->
+            setMargins(open)
         }
 
         webSocket = CustomWebSocket(URL, customWebSocketListener, gson = gson)
@@ -126,27 +151,22 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                             val activity = this
                             val bitmap = it.toBitmap()
                             val screenHeight = activity.window.decorView.height.toFloat()
-                            val groupHeight = group.height.toFloat()
+                            val groupHeight = group.height.toFloat() + groupMargin
                             val ratio = bitmap.height / screenHeight
                             bitmap.resize(
-                                0,
-                                0,
-                                bitmap.width,
-                                (groupHeight * ratio).roundToInt()
+                                0, 0, bitmap.width, (groupHeight * ratio).roundToInt()
                             ).toDrawable(activity)
                         } else it
                     }?.getDominantColor(coverData.parsedDominant) ?: coverData.parsedDominant
                 )
             ) {
                 window.decorView.windowInsetsController?.setSystemBarsAppearance(
-                    0,
-                    APPEARANCE_LIGHT_STATUS_BARS
+                    0, APPEARANCE_LIGHT_STATUS_BARS
                 )
                 Color.WHITE
             } else {
                 window.decorView.windowInsetsController?.setSystemBarsAppearance(
-                    APPEARANCE_LIGHT_STATUS_BARS,
-                    APPEARANCE_LIGHT_STATUS_BARS
+                    APPEARANCE_LIGHT_STATUS_BARS, APPEARANCE_LIGHT_STATUS_BARS
                 )
                 Color.BLACK
             }
@@ -185,8 +205,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     Action.SONG_INFO -> {
                         currentSongInfo.postValue(
                             gson.fromJson(
-                                socketResponse.data,
-                                SongInfo::class.java
+                                socketResponse.data, SongInfo::class.java
                             )
                         )
                     }
@@ -206,6 +225,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 runOnUiThread {
                     setSongInfo(it)
 
+                    youTubeApiFragment.setSongInfo(it)
                     controlsFragment.setSongInfo(it)
                     coverFragment.setSongInfo(it)
 
@@ -215,7 +235,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         search.setOnClickListener {
-            startActivity(Intent(this, YouTubeSearchActivity::class.java))
+            youtubeViewModel.setSearchOpen(true)
         }
 
         controlsFragment.passCallbacks(shuffle = { webSocket.send(SendAction(Action.SHUFFLE)) },
@@ -233,6 +253,13 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         super.onResume()
         webSocket = CustomWebSocket(URL, customWebSocketListener, gson = gson)
         webSocket.setInstance()
+    }
+
+    override fun onBackPressed() {
+        if (youtubeViewModel.getSearchOpen() == true) {
+            youtubeViewModel.setSearchOpen(false)
+            youtubeViewModel.setChannelId(null)
+        } else super.onBackPressed()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -284,8 +311,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             it.darkenColor(.7f * ColorUtils.calculateLuminance(it).toFloat())
         }
         val foregroundColor = ColorUtils.setAlphaComponent(
-            color,
-            (128f * max(ColorUtils.calculateLuminance(color).toFloat(), .5f)).roundToInt()
+            color, (128f * max(ColorUtils.calculateLuminance(color).toFloat(), .5f)).roundToInt()
         )
 
         volumeHandler.removeCallbacksAndMessages(null)

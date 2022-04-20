@@ -23,7 +23,7 @@ import de.dertyp7214.youtubemusicremote.types.VideoIdData
 @SuppressLint("NotifyDataSetChanged")
 class YouTubeSearchActivity : AppCompatActivity() {
 
-    private val api = YoutubeSearchApi(apiKey = "AIzaSyAQXrCk9RHyL8NbYhCoGfj7U_ifBcVuSsE")
+    private val api = YoutubeSearchApi.instance
 
     private val webSocket = CustomWebSocket.webSocketInstance
 
@@ -47,6 +47,8 @@ class YouTubeSearchActivity : AppCompatActivity() {
             finish()
         }
 
+        val channelId = intent.extras?.getString("channelId")
+
         recyclerView.adapter = youTubeRecyclerViewAdapter
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.setHasFixedSize(true)
@@ -66,7 +68,7 @@ class YouTubeSearchActivity : AppCompatActivity() {
 
             if (searching.value == true) return
             searching.value = true
-            api.searchAsync(query) {
+            api?.searchAsync(query, channelId = channelId) {
                 items.clear()
                 items.addAll(it)
                 youTubeRecyclerViewAdapter.notifyDataSetChanged()
@@ -82,5 +84,7 @@ class YouTubeSearchActivity : AppCompatActivity() {
         }
 
         searchButton.setOnClickListener { search() }
+
+        if (intent.getBooleanExtra("instantSearch", false)) search()
     }
 }

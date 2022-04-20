@@ -20,6 +20,11 @@ class YouTubeRecyclerViewAdapter(
     private val callback: (videoId: String) -> Unit
 ) : RecyclerView.Adapter<YouTubeRecyclerViewAdapter.ViewHolder>() {
 
+    var textColor: Int = -1
+        set(value) {
+            field = value
+        }
+
     class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val thumbnail: ImageView = v.findViewById(R.id.thumbnail)
         val channelName: TextView = v.findViewById(R.id.channel)
@@ -38,6 +43,9 @@ class YouTubeRecyclerViewAdapter(
 
         holder.title.text = item.snippet.title
         holder.channelName.text = item.snippet.channelTitle
+
+        holder.title.setTextColor(textColor)
+        holder.channelName.setTextColor(textColor)
 
         item.snippet.getThumbnail()?.let { youTubeThumbnail ->
             glide.asDrawable().load(youTubeThumbnail.url).into(holder.thumbnail)

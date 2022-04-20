@@ -20,10 +20,16 @@ data class SongInfo(
     val disliked: Boolean = false,
     val repeatMode: RepeatMode = RepeatMode.NONE,
     var volume: Int = 0,
+    val fields: List<Field> = listOf(),
     val isMuted: Boolean = false,
 
     @Transient
     var coverData: CoverData? = null
+)
+
+data class Field(
+    val text: String,
+    val link: String
 )
 
 data class Image(

@@ -14,11 +14,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
 import de.dertyp7214.youtubemusicremote.types.SongInfo
+import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
 import kotlin.math.roundToInt
 
 typealias Callback = () -> Unit
@@ -56,6 +58,8 @@ class ControlsFragment : Fragment() {
     private var layout: View? = null
 
     private var oldBackgroundTint = Color.WHITE
+
+    private val youtubeViewModel by lazy { ViewModelProvider(requireActivity())[YouTubeViewModel::class.java] }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -100,7 +104,10 @@ class ControlsFragment : Fragment() {
         }
 
         title?.changeText(songInfo.title)
-        artist?.changeText(songInfo.artist)
+        artist?.changeTextWithLinks(songInfo.artist, songInfo.fields) { field ->
+            youtubeViewModel.setSearchOpen(true)
+            youtubeViewModel.setChannelId(field.link.split("/").last())
+        }
 
         progress?.changeText(songInfo.elapsedSeconds.toHumanReadable(true))
         duration?.changeText(songInfo.songDuration.toHumanReadable(true))
@@ -125,6 +132,7 @@ class ControlsFragment : Fragment() {
             } catch (_: Exception) {
                 null
             }
+
             if (currentSongInfo.isPaused != songInfo.isPaused && context != null) {
                 val drawable = ContextCompat.getDrawable(
                     requireContext(),

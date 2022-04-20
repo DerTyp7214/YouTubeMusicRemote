@@ -9,13 +9,23 @@ class YoutubeSearchApi(
     private val apiKey: String = "",
     private val gson: Gson = Gson()
 ) {
+    companion object {
+        var instance: YoutubeSearchApi? = null
+            private set
+    }
+
+    fun saveInstance() {
+        instance = this
+    }
+
     fun search(
-        q: String,
+        q: String = "",
         maxResults: Int = 50,
         parts: List<String> = arrayListOf("id", "snippet"),
         safeSearch: String = "none",
         type: String = "video",
         videoCategory: String = "10",
+        channelId: String? = null,
         key: String = apiKey,
         filter: (YouTubeSearchItem) -> Boolean = { it.snippet.channelTitle.endsWith(" - Topic") }
     ): List<YouTubeSearchItem> {
@@ -24,11 +34,12 @@ class YoutubeSearchApi(
             builder.append("${if (index == 0) "?" else "&"}part=$part")
         }
         builder.append("&maxResults=$maxResults")
-        builder.append("&q=${URLEncoder.encode(q, "utf-8")}")
+        if (q.isNotEmpty()) builder.append("&q=${URLEncoder.encode(q, "utf-8")}")
         builder.append("&safeSearch=$safeSearch")
         builder.append("&type=$type")
         builder.append("&videoCategory=$videoCategory")
         builder.append("&key=$key")
+        if (channelId != null) builder.append("&channelId=$channelId")
 
         val response = URL(builder.toString()).readText()
 
@@ -42,15 +53,19 @@ class YoutubeSearchApi(
     }
 
     fun searchAsync(
-        q: String,
+        q: String = "",
         maxResults: Int = 50,
         parts: List<String> = arrayListOf("id", "snippet"),
         safeSearch: String = "none",
         type: String = "video",
         videoCategory: String = "10",
+        channelId: String? = null,
         key: String = apiKey,
         callback: (List<YouTubeSearchItem>) -> Unit
     ) {
-        doAsync({ search(q, maxResults, parts, safeSearch, type, videoCategory, key) }, callback)
+        doAsync(
+            { search(q, maxResults, parts, safeSearch, type, videoCategory, channelId, key) },
+            callback
+        )
     }
 }

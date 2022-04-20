@@ -4,6 +4,12 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -12,6 +18,7 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginTop
 import com.bumptech.glide.request.FutureTarget
+import de.dertyp7214.youtubemusicremote.types.Field
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,14 +68,15 @@ fun animateInts(
     }
 }
 
-fun View.animateRightMargin(from: Int, to: Int, duration: Long = 250) = animateInts(from, to, duration) {
-    setMargins(
-        marginLeft,
-        marginTop,
-        it,
-        marginBottom
-    )
-}
+fun View.animateRightMargin(from: Int, to: Int, duration: Long = 250) =
+    animateInts(from, to, duration) {
+        setMargins(
+            marginLeft,
+            marginTop,
+            it,
+            marginBottom
+        )
+    }
 
 fun animateColors(
     colorA: Int,
@@ -97,6 +105,22 @@ fun ImageView.animateImageTintList(
     }
 }
 
+fun View.animateBackgroundTintList(
+    newColor: Int,
+    defaultColor: Int = Color.WHITE,
+    duration: Long = 250,
+    animating: (Int) -> Unit = {}
+) {
+    animateColors(
+        backgroundTintList?.defaultColor ?: defaultColor,
+        newColor,
+        duration
+    ) {
+        animating(it)
+        backgroundTintList = ColorStateList.valueOf(it)
+    }
+}
+
 fun View.animateForegroundTintList(
     newColor: Int,
     defaultColor: Int = Color.BLACK,
@@ -113,12 +137,48 @@ fun View.animateForegroundTintList(
     }
 }
 
-fun TextView.animateTextColor(newColor: Int) {
-    animateColors(currentTextColor, newColor) { setTextColor(it) }
+fun TextView.animateTextColor(newColor: Int, animating: (Int) -> Unit = {}) {
+    animateColors(currentTextColor, newColor) { setTextColor(it); animating(it) }
 }
 
 fun TextView.changeText(text: String) {
     if (this.text != text) this.text = text
+}
+
+fun TextView.changeTextWithLinks(
+    text: String,
+    fields: List<Field>,
+    callback: (field: Field) -> Unit = {}
+) {
+    if (this.text != text) {
+        val spannableString = SpannableString(text)
+        fields.forEach { field ->
+            if (text.contains(field.text)) {
+                val startIndex = text.indexOf(field.text)
+                val endIndex = startIndex + field.text.length
+                spannableString.setSpan(
+                    object : ClickableSpan() {
+                        override fun onClick(view: View) {
+                            callback(field)
+                        }
+
+                        override fun updateDrawState(ds: TextPaint) {
+                            ds.color = ds.linkColor
+                            ds.isUnderlineText = false
+                        }
+                    },
+                    startIndex, endIndex,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                spannableString.setSpan(
+                    ForegroundColorSpan(textColors.defaultColor),
+                    startIndex, endIndex, 0
+                )
+            }
+        }
+        this.text = spannableString
+        movementMethod = LinkMovementMethod.getInstance()
+    }
 }
 
 fun Int.darkenColor(amount: Float): Int {
