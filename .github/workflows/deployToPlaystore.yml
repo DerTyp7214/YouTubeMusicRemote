@@ -1,15 +1,6 @@
 name: Deploy to Google Play
 
 on:
-  push:
-    branches: [ staging ]
-    paths:
-      - 'app/**'
-      - 'gradle/**'
-      - 'build.gradle.kts'
-      - 'gradle.properties'
-      - 'settings.gradle.kts'
-      - '.github/workflows/deployToGoogle.yml'
   workflow_dispatch:
 
 jobs:
