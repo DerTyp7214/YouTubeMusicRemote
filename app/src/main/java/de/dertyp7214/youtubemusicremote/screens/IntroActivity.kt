@@ -18,9 +18,9 @@ import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
+import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
-import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.SendAction
 import de.dertyp7214.youtubemusicremote.types.SocketResponse
@@ -62,27 +62,31 @@ class IntroActivity : AppCompatActivity() {
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
-        val url = preferences.getString("url", null)
+        val urls = preferences.getStringSet("url", setOf())
 
         inputLayout = findViewById(R.id.textInputLayout)
         scanQrCode = findViewById(R.id.scanQrCode)
         nextButton = findViewById(R.id.next)
 
-        if (url != null) {
+        if (!urls.isNullOrEmpty()) {
             scanQrCode.isEnabled = false
-            checkWebSocket(url) { connected, reason ->
-                scanQrCode.isEnabled = true
-                if (connected) {
-                    MainActivity.URL = url
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
-                } else {
-                    nextButton.isEnabled = false
-                    inputLayout.boxStrokeColor = Color.RED
-                    inputLayout.editText?.setText(url.removePrefix("ws://"))
-                    reason?.let { inputLayout.editText?.error = it }
+            fun checkUrls(urls: List<String>, index: Int) {
+                checkWebSocket(urls[index]) { connected, reason ->
+                    scanQrCode.isEnabled = true
+                    if (connected) {
+                        MainActivity.URL = urls[index]
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish()
+                    } else {
+                        nextButton.isEnabled = false
+                        inputLayout.boxStrokeColor = Color.RED
+                        inputLayout.editText?.setText(urls[index].removePrefix("ws://"))
+                        reason?.let { inputLayout.editText?.error = it }
+                        if (index < urls.lastIndex) checkUrls(urls, index + 1)
+                    }
                 }
             }
+            checkUrls(urls.toList(), 0)
         } else {
             inputLayout.editText?.doAfterTextChanged {
                 nextButton.isEnabled = true
@@ -106,7 +110,10 @@ class IntroActivity : AppCompatActivity() {
                         if (connected) {
                             inputLayout.boxStrokeColor = Color.GREEN
                             preferences.edit {
-                                putString("url", newUrl)
+                                putStringSet("url",
+                                    arrayListOf(newUrl).apply { if (urls != null) addAll(urls) }
+                                        .toSet()
+                                )
                                 MainActivity.URL = newUrl
                                 startActivity(Intent(this@IntroActivity, MainActivity::class.java))
                                 finish()
