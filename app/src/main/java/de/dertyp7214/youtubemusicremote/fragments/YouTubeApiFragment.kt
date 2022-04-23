@@ -111,7 +111,6 @@ class YouTubeApiFragment : Fragment() {
         searchInput.backgroundTintList = ColorStateList.valueOf(color)
         loading.indeterminateTintList = ColorStateList.valueOf(color)
         searchButton.imageTintList = ColorStateList.valueOf(color)
-        youTubeRecyclerViewAdapter.textColor = color
 
         youtubeViewModel.observeChannelId(this) {
             if (it != null) search()
@@ -158,8 +157,7 @@ class YouTubeApiFragment : Fragment() {
                 searchInput.backgroundTintList = ColorStateList.valueOf(color)
                 searchButton.imageTintList = ColorStateList.valueOf(color)
             }
-            animateColors(youTubeRecyclerViewAdapter.textColor, mainColor) { color ->
-                youTubeRecyclerViewAdapter.textColor = color
+            animateColors(loading.indeterminateTintList?.defaultColor ?: -1, mainColor) { color ->
                 loading.indeterminateTintList = ColorStateList.valueOf(color)
             }
         }

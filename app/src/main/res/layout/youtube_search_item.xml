@@ -10,9 +10,9 @@
     android:foreground="?android:attr/selectableItemBackground"
     android:outlineAmbientShadowColor="@android:color/transparent"
     android:outlineSpotShadowColor="@android:color/transparent"
-    app:cardBackgroundColor="#2000"
+    app:cardBackgroundColor="#3000"
     app:cardCornerRadius="13dp"
-    app:strokeColor="@android:color/transparent"
+    app:strokeColor="#7FFF"
     app:strokeWidth="1.5dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -51,6 +51,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:textColor="@color/white"
                 android:textSize="18sp"
                 tools:text="Video Title" />
 
@@ -60,6 +61,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 tools:text="Channel name" />
         </LinearLayout>
