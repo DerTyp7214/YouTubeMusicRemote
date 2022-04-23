@@ -34,6 +34,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="32dp"
+                android:layout_marginTop="40dp"
                 android:layout_marginEnd="32dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
@@ -43,9 +44,10 @@
 
                 <ImageButton
                     android:id="@+id/search"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@android:color/transparent"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_margin="6dp"
+                    android:background="?selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_search"
                     tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
 
@@ -59,9 +61,10 @@
 
                 <ImageButton
                     android:id="@+id/menuButton"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@android:color/transparent"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_margin="6dp"
+                    android:background="?selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_menu"
                     tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
             </LinearLayout>

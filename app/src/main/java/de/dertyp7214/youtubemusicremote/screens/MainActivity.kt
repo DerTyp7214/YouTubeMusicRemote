@@ -28,6 +28,7 @@ import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
 import de.dertyp7214.youtubemusicremote.fragments.YouTubeApiFragment
 import de.dertyp7214.youtubemusicremote.types.*
 import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
+import dev.chrisbanes.insetter.applyInsetter
 import java.lang.Float.max
 import kotlin.math.roundToInt
 
@@ -104,8 +105,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         fragmentTransaction.add(youtubeSearchFrame.id, youTubeApiFragment)
             .add(controlFrame.id, controlsFragment).add(mainFrame.id, coverFragment).commit()
 
-        val groupMargin = getStatusBarHeight() + 32.dpToPx(this)
-        group.setMargins(0, groupMargin, 0, 0)
+        group.applyInsetter {
+            type(statusBars = true) {
+                margin()
+            }
+        }
 
         val pageHeight = resources.displayMetrics.heightPixels
         val youtubeTopMargin = getStatusBarHeight() + 16.dpToPx(this)
@@ -151,7 +155,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                             val activity = this
                             val bitmap = it.toBitmap()
                             val screenHeight = activity.window.decorView.height.toFloat()
-                            val groupHeight = group.height.toFloat() + groupMargin
+                            val groupHeight = group.height.toFloat() + group.getMargins().top
                             val ratio = bitmap.height / screenHeight
                             bitmap.resize(
                                 0, 0, bitmap.width, (groupHeight * ratio).roundToInt()

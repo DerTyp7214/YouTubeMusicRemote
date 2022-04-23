@@ -155,14 +155,9 @@ class ControlsFragment : Fragment() {
         playPause?.let { playPause ->
             playPause.animateImageTintList(
                 if (isDark(playPauseColor)) Color.WHITE else Color.BLACK,
-                Color.BLACK
+                -1
             )
-            animateColors(
-                playPause.backgroundTintList?.defaultColor ?: Color.WHITE,
-                playPauseColor
-            ) {
-                playPause.backgroundTintList = ColorStateList.valueOf(it)
-            }
+            playPause.animateBackgroundTintList(playPauseColor, -1)
         }
 
         val luminance = ColorUtils.calculateLuminance(

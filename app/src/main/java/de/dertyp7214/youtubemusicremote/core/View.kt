@@ -2,7 +2,7 @@ package de.dertyp7214.youtubemusicremote.core
 
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
-import androidx.core.view.updateLayoutParams
+import androidx.core.view.*
 
 data class Margins(
     val left: Int,
@@ -29,5 +29,5 @@ fun View.getMargins(): Margins {
         (layoutParams as MarginLayoutParams).let {
             Margins(it.leftMargin, it.topMargin, it.rightMargin, it.bottomMargin)
         }
-    } else Margins(0, 0, 0, 0)
+    } else Margins(marginLeft, marginTop, marginRight, marginBottom)
 }
