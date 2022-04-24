@@ -8,4 +8,7 @@
         android:id="@+id/menu_share"
         android:icon="@drawable/ic_share"
         android:title="@string/share" />
+    <item
+        android:id="@+id/add_new_url"
+        android:title="@string/add_new_url" />
 </menu>

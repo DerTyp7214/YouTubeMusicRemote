@@ -17,19 +17,12 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginTop
-import com.bumptech.glide.request.FutureTarget
 import de.dertyp7214.youtubemusicremote.types.Field
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-
-fun doInBackground(doInBackground: () -> Unit) {
-    CoroutineScope(Dispatchers.Main).launch {
-        withContext(Dispatchers.Default) { doInBackground() }
-    }
-}
 
 fun <T> doAsync(doInBackground: () -> T, getResult: (result: T) -> Unit) {
     CoroutineScope(Dispatchers.Main).launch {
@@ -41,9 +34,6 @@ fun <T> doAsync(doInBackground: () -> T, getResult: (result: T) -> Unit) {
         }
     }
 }
-
-infix fun <T> (() -> T).asyncInto(into: (T) -> Unit) = doAsync(this, into)
-infix fun <T> FutureTarget<T>.asyncInto(into: (T) -> Unit) = doAsync(::get, into)
 
 fun isDark(color: Int): Boolean {
     return ColorUtils.calculateLuminance(color) < .5
@@ -148,6 +138,7 @@ fun TextView.changeText(text: String) {
 fun TextView.changeTextWithLinks(
     text: String,
     fields: List<Field>,
+    textColor: Int = textColors.defaultColor,
     callback: (field: Field) -> Unit = {}
 ) {
     val spannableString = SpannableString(text)
@@ -170,7 +161,7 @@ fun TextView.changeTextWithLinks(
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
             spannableString.setSpan(
-                ForegroundColorSpan(textColors.defaultColor),
+                ForegroundColorSpan(textColor),
                 startIndex, endIndex, 0
             )
         }

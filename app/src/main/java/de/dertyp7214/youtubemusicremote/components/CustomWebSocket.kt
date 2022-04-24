@@ -12,11 +12,14 @@ class CustomWebSocket(
     private val okHttpClient: OkHttpClient = OkHttpClient(),
     private val gson: Gson = Gson()
 ) {
-    private val webSocket: WebSocket =
-        okHttpClient.newWebSocket(Request.Builder().url(url).build(), webSocketListener)
+    private val webSocket: WebSocket? =
+        if (url == "devUrl") null else okHttpClient.newWebSocket(
+            Request.Builder().url(url).build(),
+            webSocketListener
+        )
 
     fun send(data: Any) {
-        webSocket.send(gson.toJson(data))
+        webSocket?.send(gson.toJson(data))
     }
 
     fun close() {

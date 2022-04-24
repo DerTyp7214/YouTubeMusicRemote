@@ -106,12 +106,6 @@ class ControlsFragment : Fragment() {
             if (userInput) seekBarCallback(progress)
         }
 
-        title?.changeText(songInfo.title)
-        artist?.changeTextWithLinks(songInfo.artist, songInfo.fields) { field ->
-            youtubeViewModel.setSearchOpen(true)
-            youtubeViewModel.setChannelId(field.link.split("/").last())
-        }
-
         progress?.changeText(songInfo.elapsedSeconds.toHumanReadable(true))
         duration?.changeText(songInfo.songDuration.toHumanReadable(true))
 
@@ -213,6 +207,12 @@ class ControlsFragment : Fragment() {
 
         title?.animateTextColor(controlsColor)
         artist?.animateTextColor(controlsColor)
+
+        title?.changeText(songInfo.title)
+        artist?.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->
+            youtubeViewModel.setSearchOpen(true)
+            youtubeViewModel.setChannelId(field.link.split("/").last())
+        }
 
         val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 0)
         if (oldBackgroundTint != backgroundColor) {

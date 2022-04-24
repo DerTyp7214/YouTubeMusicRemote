@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         var URL = ""
             set(value) {
                 var url = value
-                if (!url.startsWith("ws://")) url = "ws://$url"
+                if (!url.startsWith("ws://") && url != "devUrl") url = "ws://$url"
                 field = url
             }
     }
@@ -299,6 +299,16 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                             putExtra(Intent.EXTRA_TEXT, songInfo.url)
                             type = "text/plain"
                         }, null))
+                        true
+                    }
+                    R.id.add_new_url -> {
+                        startActivity(
+                            Intent(this@MainActivity, IntroActivity::class.java).putExtra(
+                                "newUrl",
+                                true
+                            )
+                        )
+                        finish()
                         true
                     }
                     else -> false

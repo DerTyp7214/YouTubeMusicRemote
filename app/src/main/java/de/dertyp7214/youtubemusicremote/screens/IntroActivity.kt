@@ -68,7 +68,7 @@ class IntroActivity : AppCompatActivity() {
         scanQrCode = findViewById(R.id.scanQrCode)
         nextButton = findViewById(R.id.next)
 
-        if (!urls.isNullOrEmpty()) {
+        if (!urls.isNullOrEmpty() && !intent.getBooleanExtra("newUrl", false)) {
             scanQrCode.isEnabled = false
             fun checkUrls(urls: List<String>, index: Int) {
                 checkWebSocket(urls[index]) { connected, reason ->
@@ -102,7 +102,8 @@ class IntroActivity : AppCompatActivity() {
             nextButton.setOnClickListener {
                 inputLayout.editText?.text?.let { editable ->
                     val newUrl =
-                        editable.toString().let { if (it.startsWith("ws://")) it else "ws://$it" }
+                        editable.toString()
+                            .let { if (it.startsWith("ws://") || it == "devUrl") it else "ws://$it" }
                     scanQrCode.isEnabled = false
                     nextButton.isEnabled = false
                     checkWebSocket(newUrl) { connected, reason ->
@@ -110,7 +111,7 @@ class IntroActivity : AppCompatActivity() {
                         if (connected) {
                             inputLayout.boxStrokeColor = Color.GREEN
                             preferences.edit {
-                                putStringSet("url",
+                                if (newUrl != "devUrl") putStringSet("url",
                                     arrayListOf(newUrl).apply { if (urls != null) addAll(urls) }
                                         .toSet()
                                 )
@@ -132,6 +133,11 @@ class IntroActivity : AppCompatActivity() {
     private fun checkWebSocket(
         url: String, callback: (connected: Boolean, reason: String?) -> Unit
     ) {
+        if (url == "devUrl") {
+            callback(true, null)
+            return
+        }
+
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = VISIBLE
         inputLayout.isEnabled = false

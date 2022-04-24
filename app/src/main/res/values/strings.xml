@@ -10,4 +10,5 @@
     <string name="unmute">Un-Mute</string>
     <string name="share">Share</string>
     <string name="search">Search</string>
+    <string name="add_new_url">Add new Url</string>
 </resources>
