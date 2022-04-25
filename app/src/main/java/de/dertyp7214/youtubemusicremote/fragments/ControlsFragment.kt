@@ -206,7 +206,6 @@ class ControlsFragment : Fragment() {
         duration?.animateTextColor(controlsColor)
 
         title?.animateTextColor(controlsColor)
-        artist?.animateTextColor(controlsColor)
 
         title?.changeText(songInfo.title)
         artist?.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->

@@ -3,13 +3,16 @@ package de.dertyp7214.youtubemusicremote.screens
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.*
 import android.view.View.OnTouchListener
 import android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
 import android.widget.*
+import android.widget.FrameLayout.LayoutParams
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -66,9 +69,24 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private val dp8 by lazy { 8.dpToPx(this) }
     private val dpN74 by lazy { (-74).dpToPx(this) }
 
-    private val youTubeApiFragment by lazy { YouTubeApiFragment() }
-    private val controlsFragment by lazy { ControlsFragment() }
-    private val coverFragment by lazy { CoverFragment() }
+    private val youTubeApiFragment by lazy {
+        YouTubeApiFragment().resizeFragment(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
+        )
+    }
+    private val controlsFragment by lazy {
+        ControlsFragment().resizeFragment(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.WRAP_CONTENT
+        )
+    }
+    private val coverFragment by lazy {
+        CoverFragment().resizeFragment(
+            LayoutParams.MATCH_PARENT,
+            LayoutParams.MATCH_PARENT
+        )
+    }
 
     private val youtubeViewModel by lazy { ViewModelProvider(this)[YouTubeViewModel::class.java] }
 
@@ -102,8 +120,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         customWebSocketListener = CustomWebSocketListener()
 
         val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction.add(youtubeSearchFrame.id, youTubeApiFragment)
-            .add(controlFrame.id, controlsFragment).add(mainFrame.id, coverFragment).commit()
+        fragmentTransaction
+            .replace(youtubeSearchFrame.id, youTubeApiFragment)
+            .replace(controlFrame.id, controlsFragment)
+            .replace(mainFrame.id, coverFragment)
+            .commit()
 
         group.applyInsetter {
             type(statusBars = true) {
@@ -264,6 +285,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             youtubeViewModel.setSearchOpen(false)
             youtubeViewModel.setChannelId(null)
         } else super.onBackPressed()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        Log.d("REEEEE", newConfig.toString())
     }
 
     @SuppressLint("ClickableViewAccessibility")

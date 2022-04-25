@@ -166,9 +166,10 @@ fun TextView.changeTextWithLinks(
             )
         }
     }
-    if ("${this.text}" != "$spannableString" && (fields.isEmpty() || fields.any { text.contains(it.text) })) {
+    if (("${this.text}" != "$spannableString" && (fields.isEmpty() || fields.any { text.contains(it.text) })) || textColor != textColors.defaultColor) {
         this.text = spannableString
         movementMethod = LinkMovementMethod.getInstance()
+        animateTextColor(textColor)
     }
 }
 
