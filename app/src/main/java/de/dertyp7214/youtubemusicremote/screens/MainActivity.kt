@@ -3,11 +3,9 @@ package de.dertyp7214.youtubemusicremote.screens
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.*
 import android.view.View.OnTouchListener
 import android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
@@ -29,6 +27,7 @@ import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
 import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
 import de.dertyp7214.youtubemusicremote.fragments.YouTubeApiFragment
+import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.*
 import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
 import dev.chrisbanes.insetter.applyInsetter
@@ -44,6 +43,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 if (!url.startsWith("ws://") && url != "devUrl") url = "ws://$url"
                 field = url
             }
+
+        var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData(SongInfo())
     }
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
@@ -61,7 +62,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private lateinit var mainFrame: FrameLayout
     private lateinit var pageLayout: FrameLayout
 
-    private var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData(SongInfo())
     private var oldSongInfo: SongInfo = SongInfo()
 
     private val volumeHandler by lazy { Handler(mainLooper) }
@@ -71,20 +71,17 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     private val youTubeApiFragment by lazy {
         YouTubeApiFragment().resizeFragment(
-            LayoutParams.MATCH_PARENT,
-            LayoutParams.MATCH_PARENT
+            LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
     }
     private val controlsFragment by lazy {
         ControlsFragment().resizeFragment(
-            LayoutParams.MATCH_PARENT,
-            LayoutParams.WRAP_CONTENT
+            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
         )
     }
     private val coverFragment by lazy {
         CoverFragment().resizeFragment(
-            LayoutParams.MATCH_PARENT,
-            LayoutParams.MATCH_PARENT
+            LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
     }
 
@@ -101,6 +98,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
+
+        startService(Intent(this, MediaPlayer::class.java))
 
         val group = findViewById<LinearLayout>(R.id.group)
         val volume = findViewById<TextView>(R.id.volume)
@@ -120,10 +119,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         customWebSocketListener = CustomWebSocketListener()
 
         val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction
-            .replace(youtubeSearchFrame.id, youTubeApiFragment)
-            .replace(controlFrame.id, controlsFragment)
-            .replace(mainFrame.id, coverFragment)
+        fragmentTransaction.replace(youtubeSearchFrame.id, youTubeApiFragment)
+            .replace(controlFrame.id, controlsFragment).replace(mainFrame.id, coverFragment)
             .commit()
 
         group.applyInsetter {
@@ -140,10 +137,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         fun setMargins(open: Boolean) {
             animateInts(if (open) pageHeight else 0, if (open) 0 else pageHeight) { marginTop ->
                 youtubeSearchFrame.setMargins(
-                    0,
-                    marginTop.inv().let { if (open) it + youtubeTopMargin else it },
-                    0,
-                    0
+                    0, marginTop.inv().let { if (open) it + youtubeTopMargin else it }, 0, 0
                 )
                 pageLayout.setMargins(0, 0, 0, marginTop - pageHeight)
             }
@@ -222,25 +216,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        customWebSocketListener.onMessage { _, text ->
-            try {
-                val socketResponse = gson.fromJson(text, SocketResponse::class.java)
-
-                when (socketResponse.action) {
-                    Action.SONG_INFO -> {
-                        currentSongInfo.postValue(
-                            gson.fromJson(
-                                socketResponse.data, SongInfo::class.java
-                            )
-                        )
-                    }
-                    else -> {}
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
         customWebSocketListener.onFailure { _, throwable, _ ->
             throwable.printStackTrace()
         }
@@ -264,13 +239,13 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         controlsFragment.passCallbacks(shuffle = { webSocket.send(SendAction(Action.SHUFFLE)) },
-            previous = { webSocket.send(SendAction(Action.PREVIOUS)) },
-            playPause = { webSocket.send(SendAction(Action.PLAY_PAUSE)) },
-            next = { webSocket.send(SendAction(Action.NEXT)) },
+            previous = { webSocket.previous() },
+            playPause = { webSocket.playPause() },
+            next = { webSocket.next() },
             repeat = { webSocket.send(SendAction(Action.SWITCH_REPEAT)) },
-            like = { webSocket.send(SendAction(Action.LIKE)) },
-            dislike = { webSocket.send(SendAction(Action.DISLIKE)) },
-            seek = { webSocket.send(SendAction(Action.SEEK, SeekData(it))) },
+            like = { webSocket.like() },
+            dislike = { webSocket.dislike() },
+            seek = { webSocket.seek(it) },
             volume = { webSocket.send(SendAction(Action.VOLUME, VolumeData(it))) })
     }
 
@@ -285,11 +260,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             youtubeViewModel.setSearchOpen(false)
             youtubeViewModel.setChannelId(null)
         } else super.onBackPressed()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        Log.d("REEEEE", newConfig.toString())
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -330,8 +300,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     R.id.add_new_url -> {
                         startActivity(
                             Intent(this@MainActivity, IntroActivity::class.java).putExtra(
-                                "newUrl",
-                                true
+                                "newUrl", true
                             )
                         )
                         finish()

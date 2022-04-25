@@ -11,8 +11,8 @@ android {
         applicationId "de.dertyp7214.youtubemusicremote"
         minSdk 30
         targetSdk 32
-        versionCode 105
-        versionName "1.0.5"
+        versionCode 106
+        versionName "1.0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +33,7 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.media:media:1.6.0'
     implementation 'dev.chrisbanes.insetter:insetter:0.6.1'
     implementation 'com.h6ah4i.android.widget.verticalseekbar:verticalseekbar:1.0.0'
     implementation 'androidx.preference:preference-ktx:1.2.0'

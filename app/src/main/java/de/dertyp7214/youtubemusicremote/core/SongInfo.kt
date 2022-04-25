@@ -1,6 +1,6 @@
 package de.dertyp7214.youtubemusicremote.core
 
-import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
@@ -12,14 +12,14 @@ import de.dertyp7214.youtubemusicremote.types.SongInfo
 import jp.wasabeef.glide.transformations.BlurTransformation
 import jp.wasabeef.glide.transformations.gpu.BrightnessFilterTransformation
 
-fun SongInfo.parseImageColors(activity: Activity, currentSongInfo: SongInfo): SongInfo {
+fun SongInfo.parseImageColors(context: Context, currentSongInfo: SongInfo): SongInfo {
     if (currentSongInfo.imageSrc == imageSrc) {
         coverData = currentSongInfo.coverData
         return this
     }
 
     coverData = CoverData()
-    val glide = Glide.with(activity)
+    val glide = Glide.with(context)
     glide.asBitmap().load(imageSrc).apply {
         val palette = Palette.Builder(submit().get()).maximumColorCount(32).generate()
         palette.dominantSwatch?.rgb?.let { coverData!!.dominant = it }
@@ -55,7 +55,7 @@ fun SongInfo.parseImageColors(activity: Activity, currentSongInfo: SongInfo): So
 }
 
 fun SongInfo.parseImageColorsAsync(
-    activity: Activity,
+    context: Context,
     currentSongInfo: SongInfo,
     callback: (SongInfo) -> Unit
-) = doAsync({ parseImageColors(activity, currentSongInfo) }, callback)
+) = doAsync({ parseImageColors(context, currentSongInfo) }, callback)

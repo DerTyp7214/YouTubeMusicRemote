@@ -7,12 +7,42 @@ import okio.ByteString
 
 @Suppress("unused")
 class CustomWebSocketListener : WebSocketListener() {
-    private var onClosedCallback: (WebSocket, code: Int, reason: String) -> Unit = { _, _, _ -> }
-    private var onClosingCallback: (WebSocket, code: Int, reason: String) -> Unit = { _, _, _ -> }
-    private var onFailureCallback: (WebSocket, Throwable, Response?) -> Unit = { _, _, _ -> }
-    private var onMessageByteCallback: (WebSocket, ByteString) -> Unit = { _, _ -> }
-    private var onMessageCallback: (WebSocket, text: String) -> Unit = { _, _ -> }
-    private var onOpenCallback: (WebSocket, Response) -> Unit = { _, _ -> }
+    private var onClosedCallback: ArrayList<(WebSocket, code: Int, reason: String) -> Unit> =
+        arrayListOf()
+    private var onClosingCallback: ArrayList<(WebSocket, code: Int, reason: String) -> Unit> =
+        arrayListOf()
+    private var onFailureCallback: ArrayList<(WebSocket, Throwable, Response?) -> Unit> =
+        arrayListOf()
+    private var onMessageByteCallback: ArrayList<(WebSocket, ByteString) -> Unit> = arrayListOf()
+    private var onMessageCallback: ArrayList<(WebSocket, text: String) -> Unit> = arrayListOf()
+    private var onOpenCallback: ArrayList<(WebSocket, Response) -> Unit> = arrayListOf()
+
+    private operator fun ArrayList<(WebSocket, Int, String) -> Unit>.invoke(
+        webSocket: WebSocket,
+        code: Int,
+        reason: String
+    ) = forEach { it(webSocket, code, reason) }
+
+    private operator fun ArrayList<(WebSocket, Throwable, Response?) -> Unit>.invoke(
+        webSocket: WebSocket,
+        throwable: Throwable,
+        response: Response?
+    ) = forEach { it(webSocket, throwable, response) }
+
+    private operator fun ArrayList<(WebSocket, ByteString) -> Unit>.invoke(
+        webSocket: WebSocket,
+        bytes: ByteString
+    ) = forEach { it(webSocket, bytes) }
+
+    private operator fun ArrayList<(WebSocket, String) -> Unit>.invoke(
+        webSocket: WebSocket,
+        text: String
+    ) = forEach { it(webSocket, text) }
+
+    private operator fun ArrayList<(WebSocket, Response) -> Unit>.invoke(
+        webSocket: WebSocket,
+        response: Response
+    ) = forEach { it(webSocket, response) }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         onClosedCallback(webSocket, code, reason)
@@ -39,26 +69,26 @@ class CustomWebSocketListener : WebSocketListener() {
     }
 
     fun onClosed(callback: (WebSocket, code: Int, reason: String) -> Unit) {
-        onClosedCallback = callback
+        onClosedCallback.add(callback)
     }
 
     fun onClosing(callback: (WebSocket, code: Int, reason: String) -> Unit) {
-        onClosingCallback = callback
+        onClosingCallback.add(callback)
     }
 
     fun onFailure(callback: (WebSocket, Throwable, Response?) -> Unit) {
-        onFailureCallback = callback
+        onFailureCallback.add(callback)
     }
 
     fun onMessageByte(callback: (WebSocket, ByteString) -> Unit) {
-        onMessageByteCallback = callback
+        onMessageByteCallback.add(callback)
     }
 
     fun onMessage(callback: (WebSocket, text: String) -> Unit) {
-        onMessageCallback = callback
+        onMessageCallback.add(callback)
     }
 
     fun onOpen(callback: (WebSocket, Response) -> Unit) {
-        onOpenCallback = callback
+        onOpenCallback.add(callback)
     }
 }

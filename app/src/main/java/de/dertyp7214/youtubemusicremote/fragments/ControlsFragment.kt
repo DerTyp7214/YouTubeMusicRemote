@@ -86,9 +86,6 @@ class ControlsFragment : Fragment() {
 
         layout = v.findViewById(R.id.layout)
 
-        title?.isSelected = true
-        artist?.isSelected = true
-
         return v
     }
 
@@ -212,6 +209,9 @@ class ControlsFragment : Fragment() {
             youtubeViewModel.setSearchOpen(true)
             youtubeViewModel.setChannelId(field.link.split("/").last())
         }
+
+        title?.isSelected = true
+        artist?.isSelected = true
 
         val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 0)
         if (oldBackgroundTint != backgroundColor) {
