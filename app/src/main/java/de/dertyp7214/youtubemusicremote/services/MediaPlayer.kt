@@ -4,6 +4,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaMetadata
@@ -17,14 +19,19 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
+import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.core.checkWebSocket
 import de.dertyp7214.youtubemusicremote.core.parseImageColorsAsync
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.Action
+import de.dertyp7214.youtubemusicremote.types.RepeatMode
 import de.dertyp7214.youtubemusicremote.types.SocketResponse
 import de.dertyp7214.youtubemusicremote.types.SongInfo
+import android.os.Process as OsProcess
 import androidx.media.app.NotificationCompat as NotificationCompatMedia
 
 class MediaPlayer : Service() {
@@ -35,13 +42,16 @@ class MediaPlayer : Service() {
         const val ACTION_PLAY_PAUSE = "action_playPause"
         const val ACTION_NEXT = "action_next"
         const val ACTION_LIKE = "action_like"
+        const val ACTION_REPEAT = "action_repeat"
         const val ACTION_STOP = "action_stop"
         const val ACTION_REFETCH = "action_refetch"
 
         const val CHANNEL_ID = "MediaNotification"
-        const val NOTIFICATION_ID = 187
 
         private var currentSongInfo = SongInfo()
+
+        var isRunning = false
+            private set
     }
 
     val webSocket: CustomWebSocket?
@@ -107,6 +117,20 @@ class MediaPlayer : Service() {
             }
         })
 
+        if (webSocket == null) {
+            val urls = PreferenceManager.getDefaultSharedPreferences(
+                applicationContext
+            ).getStringSet("url", setOf())
+            var url: String? = null
+            fun checkUrls(urls: List<String>, index: Int) {
+                checkWebSocket(urls[index], gson) { connected, _ ->
+                    if (connected) url = urls[index]
+                    else if (index < urls.lastIndex) checkUrls(urls, index + 1)
+                }
+            }
+            checkUrls(urls?.toList() ?: listOf(), 0)
+            url?.let { CustomWebSocket(it, CustomWebSocketListener()).setInstance() }
+        }
         webSocket?.webSocketListener?.onMessage { _, text ->
             try {
                 val socketResponse = gson.fromJson(text, SocketResponse::class.java)
@@ -118,7 +142,7 @@ class MediaPlayer : Service() {
                         ).parseImageColorsAsync(applicationContext, currentSongInfo) {
                             currentSongInfo = it
                             MainActivity.currentSongInfo.postValue(it)
-                            startService(
+                            startForegroundService(
                                 Intent(
                                     this,
                                     MediaPlayer::class.java
@@ -145,12 +169,19 @@ class MediaPlayer : Service() {
             ACTION_PLAY_PAUSE -> webSocket?.playPause()
             ACTION_NEXT -> webSocket?.next()
             ACTION_LIKE -> webSocket?.like()
+            ACTION_REPEAT -> webSocket?.repeat()
+            ACTION_STOP -> {
+                webSocket?.close()
+                stopForeground(true)
+                OsProcess.killProcess(OsProcess.myPid())
+            }
             ACTION_REFETCH -> {
                 val songInfo = currentSongInfo
                 MediaStatus(
                     songInfo.isPaused == false,
                     songInfo.songDuration.toLong() * 1000,
-                    songInfo.elapsedSeconds.toLong() * 1000
+                    songInfo.elapsedSeconds.toLong() * 1000,
+                    songInfo.repeatMode
                 ).apply { if (mediaStatus.value != this) mediaStatus.value = this }
                 MetaData(
                     songInfo.title,
@@ -211,8 +242,6 @@ class MediaPlayer : Service() {
         val mediaStyle =
             NotificationCompatMedia.MediaStyle().setMediaSession(mediaSession.sessionToken)
 
-        val metaData = this.metadata.value ?: return
-
         val notification = NotificationCompat.Builder(this, CHANNEL_ID).apply {
             setSmallIcon(R.drawable.ic_launcher_small)
             setContentIntent(
@@ -227,20 +256,38 @@ class MediaPlayer : Service() {
             setDeleteIntent(generatePendingIntent(ACTION_STOP))
             setStyle(mediaStyle)
 
-            if (metaData.disliked)
-                addAction(generateAction(R.drawable.ic_disliked, "Dislike", ACTION_DISLIKE))
-            else addAction(generateAction(R.drawable.ic_dislike, "Dislike", ACTION_DISLIKE))
+            when (mediaStatus.repeatMode) {
+                RepeatMode.NONE -> addAction(
+                    generateAction(
+                        R.drawable.ic_repeat_off,
+                        "Repeat",
+                        ACTION_REPEAT
+                    )
+                )
+                RepeatMode.ONE -> addAction(
+                    generateAction(
+                        R.drawable.ic_repeat_once,
+                        "Repeat",
+                        ACTION_REPEAT
+                    )
+                )
+                RepeatMode.ALL -> addAction(
+                    generateAction(
+                        R.drawable.ic_repeat,
+                        "Repeat",
+                        ACTION_REPEAT
+                    )
+                )
+            }
             addAction(generateAction(R.drawable.ic_previous, "Previews", ACTION_PREVIOUS))
             if (mediaStatus.playing)
                 addAction(generateAction(R.drawable.ic_pause, "Pause", ACTION_PLAY_PAUSE))
             else addAction(generateAction(R.drawable.ic_play, "Play", ACTION_PLAY_PAUSE))
             addAction(generateAction(R.drawable.ic_next, "Next", ACTION_NEXT))
-            if (metaData.liked)
-                addAction(generateAction(R.drawable.ic_liked, "Like", ACTION_LIKE))
-            else addAction(generateAction(R.drawable.ic_like, "Like", ACTION_LIKE))
+            addAction(generateAction(R.drawable.ic_close, "Stop", ACTION_STOP))
         }
         mediaStyle.setShowActionsInCompactView(1, 2, 3)
-        notificationManager.notify(NOTIFICATION_ID, notification.build())
+        startForeground(1, notification.build())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -255,10 +302,21 @@ class MediaPlayer : Service() {
         return super.onUnbind(intent)
     }
 
+    override fun onCreate() {
+        isRunning = true
+        super.onCreate()
+    }
+
+    override fun onDestroy() {
+        isRunning = false
+        super.onDestroy()
+    }
+
     data class MediaStatus(
         val playing: Boolean = false,
         val duration: Long = -1,
-        val progress: Long = -1
+        val progress: Long = -1,
+        val repeatMode: RepeatMode = RepeatMode.NONE
     )
 
     data class MetaData(
@@ -269,4 +327,10 @@ class MediaPlayer : Service() {
         val disliked: Boolean = false,
         val cover: Bitmap? = null,
     )
+
+    class Restarter : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            context?.startForegroundService(Intent(context, MediaPlayer::class.java))
+        }
+    }
 }

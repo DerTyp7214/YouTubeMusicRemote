@@ -48,6 +48,10 @@ class CustomWebSocket(
         send(SendAction(Action.DISLIKE))
     }
 
+    fun repeat() {
+        send(SendAction(Action.SWITCH_REPEAT))
+    }
+
     fun close() {
         okHttpClient.dispatcher().executorService().shutdown()
         okHttpClient.connectionPool().evictAll()

@@ -28,7 +28,10 @@ import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
 import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
 import de.dertyp7214.youtubemusicremote.fragments.YouTubeApiFragment
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
-import de.dertyp7214.youtubemusicremote.types.*
+import de.dertyp7214.youtubemusicremote.types.Action
+import de.dertyp7214.youtubemusicremote.types.SendAction
+import de.dertyp7214.youtubemusicremote.types.SongInfo
+import de.dertyp7214.youtubemusicremote.types.VolumeData
 import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
 import dev.chrisbanes.insetter.applyInsetter
 import java.lang.Float.max
@@ -49,8 +52,9 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
+    private var customWebSocketListener = CustomWebSocketListener()
+
     private lateinit var webSocket: CustomWebSocket
-    private lateinit var customWebSocketListener: CustomWebSocketListener
 
     private lateinit var volumePopup: MaterialCardView
     private lateinit var volumeSlider: VerticalSeekBar
@@ -99,7 +103,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
 
-        startService(Intent(this, MediaPlayer::class.java))
+        if (CustomWebSocket.webSocketInstance == null)
+            startForegroundService(Intent(this, MediaPlayer::class.java))
 
         val group = findViewById<LinearLayout>(R.id.group)
         val volume = findViewById<TextView>(R.id.volume)
@@ -115,8 +120,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         controlFrame = findViewById(R.id.controlFrame)
         mainFrame = findViewById(R.id.mainFrame)
         pageLayout = findViewById(R.id.pageLayout)
-
-        customWebSocketListener = CustomWebSocketListener()
 
         val fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(youtubeSearchFrame.id, youTubeApiFragment)
@@ -147,7 +150,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             setMargins(open)
         }
 
-        webSocket = CustomWebSocket(URL, customWebSocketListener, gson = gson)
+        webSocket = if (CustomWebSocket.webSocketInstance == null)
+            CustomWebSocket(URL, customWebSocketListener, gson = gson)
+        else CustomWebSocket.webSocketInstance!!.also {
+            customWebSocketListener = it.webSocketListener
+        }
         webSocket.setInstance()
 
         volumeSlider.onProgressChanged { progress, userInput ->
@@ -238,11 +245,12 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             youtubeViewModel.setSearchOpen(true)
         }
 
-        controlsFragment.passCallbacks(shuffle = { webSocket.send(SendAction(Action.SHUFFLE)) },
+        controlsFragment.passCallbacks(
+            shuffle = { webSocket.send(SendAction(Action.SHUFFLE)) },
             previous = { webSocket.previous() },
             playPause = { webSocket.playPause() },
             next = { webSocket.next() },
-            repeat = { webSocket.send(SendAction(Action.SWITCH_REPEAT)) },
+            repeat = { webSocket.repeat() },
             like = { webSocket.like() },
             dislike = { webSocket.dislike() },
             seek = { webSocket.seek(it) },
@@ -342,5 +350,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             songInfo.volume = volume
             webSocket.send(SendAction(Action.VOLUME, VolumeData(volume)))
         }
+    }
+
+    override fun onDestroy() {
+        sendBroadcast(Intent(this, MediaPlayer.Restarter::class.java))
+        super.onDestroy()
     }
 }

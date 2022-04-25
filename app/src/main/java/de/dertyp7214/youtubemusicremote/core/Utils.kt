@@ -17,7 +17,10 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginTop
-import de.dertyp7214.youtubemusicremote.types.Field
+import com.google.gson.Gson
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
+import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.types.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -185,4 +188,46 @@ fun Context.getStatusBarHeight(): Int {
     val resourceId: Int = resources.getIdentifier("status_bar_height", "dimen", "android")
     if (resourceId > 0) result = resources.getDimensionPixelSize(resourceId)
     return result
+}
+
+fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit) {
+    val customWebSocketListener = CustomWebSocketListener()
+
+    try {
+        val webSocket = CustomWebSocket(
+            if (url.startsWith("ws://")) url else "ws://$url", customWebSocketListener
+        )
+
+        customWebSocketListener.onMessage { _, text ->
+            try {
+                val socketResponse = gson.fromJson(text, SocketResponse::class.java)
+
+                when (socketResponse.action) {
+                    Action.STATUS -> {
+                        val statusData =
+                            gson.fromJson(socketResponse.data, StatusData::class.java)
+
+                        if (statusData.name == "ytmd") callback(true, null)
+                        else callback(false, "Invalid name")
+                        webSocket.close()
+                    }
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                callback(false, e.localizedMessage)
+                webSocket.close()
+            }
+        }
+
+        customWebSocketListener.onFailure { _, throwable, _ ->
+            throwable.printStackTrace()
+            callback(false, throwable.localizedMessage)
+        }
+
+        webSocket.send(SendAction(Action.STATUS))
+    } catch (e: Exception) {
+        e.printStackTrace()
+        callback(false, e.localizedMessage)
+    }
 }
