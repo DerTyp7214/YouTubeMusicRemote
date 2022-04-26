@@ -11,8 +11,8 @@ android {
         applicationId "de.dertyp7214.youtubemusicremote"
         minSdk 30
         targetSdk 32
-        versionCode 110
-        versionName "1.1.0"
+        versionCode 111
+        versionName "1.1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

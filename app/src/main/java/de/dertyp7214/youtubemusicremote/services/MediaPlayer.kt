@@ -115,6 +115,13 @@ class MediaPlayer : Service() {
                 super.onSeekTo(pos)
                 webSocket?.seek((pos / 1000).toInt())
             }
+
+            override fun onStop() {
+                super.onStop()
+                startService(
+                    Intent(applicationContext, MediaPlayer::class.java).setAction(ACTION_STOP)
+                )
+            }
         })
 
         if (webSocket == null) {
@@ -234,7 +241,16 @@ class MediaPlayer : Service() {
                 if (!mediaStatus.playing) PlaybackStateCompat.STATE_PAUSED else PlaybackStateCompat.STATE_PLAYING,
                 mediaStatus.progress,
                 1f
-            ).setActions(PlaybackStateCompat.ACTION_SEEK_TO).build()
+            ).setActions(
+                PlaybackStateCompat.ACTION_SET_REPEAT_MODE
+                        or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                        or PlaybackStateCompat.ACTION_PAUSE
+                        or PlaybackStateCompat.ACTION_PLAY
+                        or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                        or PlaybackStateCompat.ACTION_STOP
+                        or PlaybackStateCompat.ACTION_SEEK_TO
+            ).build()
+
         )
     }
 
