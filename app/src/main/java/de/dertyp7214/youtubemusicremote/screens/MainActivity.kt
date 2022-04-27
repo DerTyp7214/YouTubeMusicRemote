@@ -18,6 +18,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
 import de.dertyp7214.youtubemusicremote.R
@@ -223,8 +224,16 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        customWebSocketListener.onFailure { _, throwable, _ ->
-            throwable.printStackTrace()
+        customWebSocketListener.onFailure { _, _, _ ->
+            Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE).apply {
+                setAction(R.string.reconnect) {
+                    webSocket.connect()
+                    dismiss()
+                }
+                setBackgroundTint(0xFFFF5151.toInt())
+                setTextColor(Color.WHITE)
+                setActionTextColor(0xFF5151FF.toInt())
+            }.show()
         }
 
         currentSongInfo.observe(this) { songInfo ->
@@ -246,7 +255,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         controlsFragment.passCallbacks(
-            shuffle = { webSocket.send(SendAction(Action.SHUFFLE)) },
+            shuffle = { webSocket.shuffle() },
             previous = { webSocket.previous() },
             playPause = { webSocket.playPause() },
             next = { webSocket.next() },
@@ -254,7 +263,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             like = { webSocket.like() },
             dislike = { webSocket.dislike() },
             seek = { webSocket.seek(it) },
-            volume = { webSocket.send(SendAction(Action.VOLUME, VolumeData(it))) })
+            volume = { webSocket.send(SendAction(Action.VOLUME, VolumeData(it))) }
+        )
     }
 
     override fun onResume() {

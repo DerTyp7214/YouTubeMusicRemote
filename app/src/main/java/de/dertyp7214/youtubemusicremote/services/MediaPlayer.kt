@@ -10,6 +10,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaMetadata
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.RatingCompat
@@ -43,6 +44,7 @@ class MediaPlayer : Service() {
         const val ACTION_NEXT = "action_next"
         const val ACTION_LIKE = "action_like"
         const val ACTION_REPEAT = "action_repeat"
+        const val ACTION_SHUFFLE = "action_shuffle"
         const val ACTION_STOP = "action_stop"
         const val ACTION_REFETCH = "action_refetch"
 
@@ -116,6 +118,11 @@ class MediaPlayer : Service() {
                 webSocket?.seek((pos / 1000).toInt())
             }
 
+            override fun onCustomAction(action: String?, extras: Bundle?) {
+                super.onCustomAction(action, extras)
+                handleCustomAction(action)
+            }
+
             override fun onStop() {
                 super.onStop()
                 startService(
@@ -138,45 +145,46 @@ class MediaPlayer : Service() {
             checkUrls(urls?.toList() ?: listOf(), 0)
             url?.let { CustomWebSocket(it, CustomWebSocketListener()).setInstance() }
         }
-        webSocket?.webSocketListener?.onMessage { _, text ->
-            try {
-                val socketResponse = gson.fromJson(text, SocketResponse::class.java)
+        webSocket?.webSocketListener?.apply {
+            onMessage { _, text ->
+                try {
+                    val socketResponse = gson.fromJson(text, SocketResponse::class.java)
 
-                when (socketResponse.action) {
-                    Action.SONG_INFO -> {
-                        gson.fromJson(
-                            socketResponse.data, SongInfo::class.java
-                        ).parseImageColorsAsync(applicationContext, currentSongInfo) {
-                            currentSongInfo = it
-                            MainActivity.currentSongInfo.postValue(it)
-                            startForegroundService(
-                                Intent(
-                                    this,
-                                    MediaPlayer::class.java
-                                ).setAction(ACTION_REFETCH)
-                            )
+                    when (socketResponse.action) {
+                        Action.SONG_INFO -> {
+                            gson.fromJson(
+                                socketResponse.data, SongInfo::class.java
+                            ).parseImageColorsAsync(applicationContext, currentSongInfo) {
+                                currentSongInfo = it
+                                MainActivity.currentSongInfo.postValue(it)
+                                startForegroundService(
+                                    Intent(
+                                        applicationContext,
+                                        MediaPlayer::class.java
+                                    ).setAction(ACTION_REFETCH)
+                                )
+                            }
                         }
+                        else -> {}
                     }
-                    else -> {}
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
 
         initialized = true
     }
 
-    private fun handleIntent(intent: Intent?) {
-        if (intent == null || intent.action == null) return
-
-        when (intent.action) {
+    private fun handleCustomAction(action: String?) {
+        when (action) {
             ACTION_DISLIKE -> webSocket?.dislike()
             ACTION_PREVIOUS -> webSocket?.previous()
             ACTION_PLAY_PAUSE -> webSocket?.playPause()
             ACTION_NEXT -> webSocket?.next()
             ACTION_LIKE -> webSocket?.like()
             ACTION_REPEAT -> webSocket?.repeat()
+            ACTION_SHUFFLE -> webSocket?.shuffle()
             ACTION_STOP -> {
                 webSocket?.close()
                 stopForeground(true)
@@ -200,6 +208,12 @@ class MediaPlayer : Service() {
                 ).apply { if (metadata.value != this) metadata.value = this }
             }
         }
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null || intent.action == null) return
+
+        handleCustomAction(intent.action)
     }
 
     private fun generatePendingIntent(action: String): PendingIntent {
@@ -237,20 +251,36 @@ class MediaPlayer : Service() {
 
     private fun setMediaSessionPlaybackState(mediaStatus: MediaStatus) {
         mediaSession.setPlaybackState(
-            PlaybackStateCompat.Builder().setState(
-                if (!mediaStatus.playing) PlaybackStateCompat.STATE_PAUSED else PlaybackStateCompat.STATE_PLAYING,
-                mediaStatus.progress,
-                1f
-            ).setActions(
-                PlaybackStateCompat.ACTION_SET_REPEAT_MODE
-                        or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                        or PlaybackStateCompat.ACTION_PAUSE
-                        or PlaybackStateCompat.ACTION_PLAY
-                        or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                        or PlaybackStateCompat.ACTION_STOP
-                        or PlaybackStateCompat.ACTION_SEEK_TO
-            ).build()
-
+            PlaybackStateCompat.Builder().apply {
+                setState(
+                    if (!mediaStatus.playing) PlaybackStateCompat.STATE_PAUSED else PlaybackStateCompat.STATE_PLAYING,
+                    mediaStatus.progress,
+                    1f
+                )
+                setActions(
+                    PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                            or PlaybackStateCompat.ACTION_PAUSE
+                            or PlaybackStateCompat.ACTION_PLAY
+                            or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                            or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
+                            or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
+                            or PlaybackStateCompat.ACTION_SEEK_TO
+                )
+                when (mediaStatus.repeatMode) {
+                    RepeatMode.ONE -> addCustomAction(
+                        ACTION_REPEAT,
+                        "Repeat",
+                        R.drawable.ic_repeat_once
+                    )
+                    RepeatMode.ALL -> addCustomAction(ACTION_REPEAT, "Repeat", R.drawable.ic_repeat)
+                    RepeatMode.NONE -> addCustomAction(
+                        ACTION_REPEAT,
+                        "Repeat",
+                        R.drawable.ic_repeat_off
+                    )
+                }
+                addCustomAction(ACTION_SHUFFLE, "Shuffle", R.drawable.ic_shuffle)
+            }.build()
         )
     }
 
@@ -302,6 +332,8 @@ class MediaPlayer : Service() {
             addAction(generateAction(R.drawable.ic_next, "Next", ACTION_NEXT))
             addAction(generateAction(R.drawable.ic_close, "Stop", ACTION_STOP))
         }
+        mediaStyle.setShowCancelButton(true)
+        mediaStyle.setCancelButtonIntent(generatePendingIntent(ACTION_STOP))
         mediaStyle.setShowActionsInCompactView(1, 2, 3)
         startForeground(1, notification.build())
     }

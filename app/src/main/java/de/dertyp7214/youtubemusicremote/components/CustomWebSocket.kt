@@ -9,16 +9,23 @@ import okhttp3.Request
 import okhttp3.WebSocket
 
 class CustomWebSocket(
-    url: String,
+    private val url: String,
     val webSocketListener: CustomWebSocketListener,
     private val okHttpClient: OkHttpClient = OkHttpClient(),
     private val gson: Gson = Gson()
 ) {
-    private val webSocket: WebSocket? =
-        if (url == "devUrl") null else okHttpClient.newWebSocket(
+    private var webSocket: WebSocket? = null
+
+    init {
+        connect()
+    }
+
+    fun connect() {
+        webSocket = if (url == "devUrl") null else okHttpClient.newWebSocket(
             Request.Builder().url(url).build(),
             webSocketListener
         )
+    }
 
     fun send(data: Any) {
         webSocket?.send(gson.toJson(data))
@@ -50,6 +57,10 @@ class CustomWebSocket(
 
     fun repeat() {
         send(SendAction(Action.SWITCH_REPEAT))
+    }
+
+    fun shuffle() {
+        send(SendAction(Action.SHUFFLE))
     }
 
     fun close() {

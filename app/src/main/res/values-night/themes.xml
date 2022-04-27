@@ -15,5 +15,11 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <!-- Customize your theme here. -->
         <item name="android:popupBackground">@drawable/menu_background</item>
+
+        <item name="snackbarStyle">@style/Snackbar</item>
+    </style>
+
+    <style name="Snackbar" parent="Widget.MaterialComponents.Snackbar">
+        <item name="android:layout_margin">32dp</item>
     </style>
 </resources>
