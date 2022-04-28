@@ -1,5 +1,7 @@
 package de.dertyp7214.youtubemusicremote.core
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.core.view.*
@@ -30,4 +32,11 @@ fun View.getMargins(): Margins {
             Margins(it.leftMargin, it.topMargin, it.rightMargin, it.bottomMargin)
         }
     } else Margins(marginLeft, marginTop, marginRight, marginBottom)
+}
+
+fun View.getBitmap(): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    draw(canvas)
+    return bitmap
 }

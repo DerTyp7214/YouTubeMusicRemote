@@ -20,19 +20,18 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.components.QueueBottomSheet
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
 import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
 import de.dertyp7214.youtubemusicremote.fragments.YouTubeApiFragment
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
-import de.dertyp7214.youtubemusicremote.types.Action
-import de.dertyp7214.youtubemusicremote.types.SendAction
-import de.dertyp7214.youtubemusicremote.types.SongInfo
-import de.dertyp7214.youtubemusicremote.types.VolumeData
+import de.dertyp7214.youtubemusicremote.types.*
 import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
 import dev.chrisbanes.insetter.applyInsetter
 import java.lang.Float.max
@@ -53,7 +52,14 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
+    private val queueBottomSheet = QueueBottomSheet { dialogFragment, queueItem ->
+        webSocket.send(SendAction(Action.QUEUE_VIDEO_ID, VideoIdData(queueItem.videoId)))
+        dialogFragment.dismiss()
+    }
+
     private var customWebSocketListener = CustomWebSocketListener()
+
+    private val queueItems: MutableLiveData<List<QueueItem>> = MutableLiveData()
 
     private lateinit var webSocket: CustomWebSocket
 
@@ -224,22 +230,58 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        customWebSocketListener.onFailure { _, _, _ ->
-            Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE).apply {
-                setAction(R.string.reconnect) {
-                    webSocket.connect()
-                    dismiss()
+        customWebSocketListener.onMessage { _, text ->
+            try {
+                val socketResponse = gson.fromJson(text, SocketResponse::class.java)
+
+                when (socketResponse.action) {
+                    Action.QUEUE -> {
+                        val queue: List<QueueItem> = gson.fromJson(
+                            socketResponse.data,
+                            object : TypeToken<List<QueueItem>>() {}.type
+                        )
+
+                        queueItems.postValue(queue)
+                    }
+                    else -> {}
                 }
-                setBackgroundTint(0xFFFF5151.toInt())
-                setTextColor(Color.WHITE)
-                setActionTextColor(0xFF5151FF.toInt())
-            }.show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        customWebSocketListener.onFailure { _, throwable, _ ->
+            throwable.printStackTrace()
+            Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
+                .apply {
+                    setAction(R.string.reconnect) {
+                        webSocket.connect()
+                        dismiss()
+                    }
+                    setBackgroundTint(0xFFFF5151.toInt())
+                    setTextColor(Color.WHITE)
+                    setActionTextColor(0xFF5151FF.toInt())
+                }.show()
+        }
+
+        queueItems.observe(this) {
+            if (!it.isNullOrEmpty()) queueBottomSheet.apply {
+                queueItems = it
+                songInfo = currentSongInfo.value ?: SongInfo()
+                showWithBlur(
+                    this@MainActivity,
+                    findViewById(R.id.root),
+                    window.decorView
+                )
+            }
         }
 
         currentSongInfo.observe(this) { songInfo ->
             songInfo.parseImageColorsAsync(this, oldSongInfo) {
                 runOnUiThread {
                     setSongInfo(it)
+
+                    queueBottomSheet.songInfo = it
 
                     youTubeApiFragment.setSongInfo(it)
                     controlsFragment.setSongInfo(it)
@@ -324,6 +366,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                         finish()
                         true
                     }
+                    R.id.menu_queue -> {
+                        webSocket.send(SendAction(Action.REQUEST_QUEUE))
+                        true
+                    }
                     else -> false
                 }
             }
@@ -338,7 +384,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             it.darkenColor(.7f * ColorUtils.calculateLuminance(it).toFloat())
         }
         val foregroundColor = ColorUtils.setAlphaComponent(
-            color, (128f * max(ColorUtils.calculateLuminance(color).toFloat(), .5f)).roundToInt()
+            color,
+            (128f * max(ColorUtils.calculateLuminance(color).toFloat(), .5f)).roundToInt()
         )
 
         volumeHandler.removeCallbacksAndMessages(null)

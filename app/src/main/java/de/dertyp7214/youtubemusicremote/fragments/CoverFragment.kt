@@ -32,7 +32,7 @@ class CoverFragment : Fragment() {
         cover = v.findViewById(R.id.cover)
         card = v.findViewById(R.id.card)
 
-        root = requireActivity().window.decorView
+        root = requireActivity().findViewById(R.id.root)
 
         return v
     }

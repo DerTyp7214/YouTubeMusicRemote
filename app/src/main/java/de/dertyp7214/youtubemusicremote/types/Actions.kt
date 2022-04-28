@@ -40,7 +40,16 @@ enum class Action {
     VIDEO_ID,
 
     @SerializedName("status")
-    STATUS
+    STATUS,
+
+    @SerializedName("queue")
+    QUEUE,
+
+    @SerializedName("requestQueue")
+    REQUEST_QUEUE,
+
+    @SerializedName("queueVideoId")
+    QUEUE_VIDEO_ID
 }
 
 data class VideoIdData(

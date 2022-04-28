@@ -36,6 +36,8 @@
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/fragment_cover.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/fragment_song_info.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/fragment_youtube_api.xml" value="0.2830269345874305" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/queue_bottom_sheet.xml" value="0.2705128205128205" />
+        <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/queue_item.xml" value="0.28205128205128205" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/layout/youtube_search_item.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/menu/main_menu.xml" value="0.34479166666666666" />
         <entry key="..\:/Users/lengw/AndroidStudioProjects/YouTubeMusicRemote/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1765" />
@@ -44,5 +46,4 @@
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="11" project-jdk-type="JavaSDK" />
 </project>

@@ -11,4 +11,7 @@
     <item
         android:id="@+id/add_new_url"
         android:title="@string/add_new_url" />
+    <item
+        android:id="@+id/menu_queue"
+        android:title="@string/menu_queue" />
 </menu>
