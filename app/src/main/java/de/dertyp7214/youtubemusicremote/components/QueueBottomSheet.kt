@@ -92,9 +92,10 @@ class QueueBottomSheet(
 
         coverDataLiveData.observe(this) {
             if (isShowing) {
-                onCoverDataChanged(coverData)
+                onCoverDataChanged(it)
                 blurFunction(false)
             }
+            setColors(it)
         }
 
         setColors(coverData)
