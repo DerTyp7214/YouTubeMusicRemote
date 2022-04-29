@@ -52,9 +52,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
-    private val queueBottomSheet = QueueBottomSheet(onCoverDataChanged = {
-        webSocket.send(SendAction(Action.REQUEST_QUEUE))
-    }, onLongPress = { view, queueItem ->
+    private val queueBottomSheet = QueueBottomSheet(onLongPress = { view, queueItem ->
         showMenu(
             view,
             SongInfo(
@@ -280,11 +278,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             if (!it.isNullOrEmpty()) queueBottomSheet.apply {
                 queueItems = it
                 coverData = currentSongInfo.value?.coverData ?: CoverData()
-                showWithBlur(
-                    this@MainActivity,
-                    findViewById(R.id.root),
-                    window.decorView
-                )
             }
         }
 
@@ -394,6 +387,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     }
                     R.id.menu_queue -> {
                         webSocket.send(SendAction(Action.REQUEST_QUEUE))
+                        queueBottomSheet.showWithBlur(
+                            this@MainActivity,
+                            findViewById(R.id.root),
+                            window.decorView
+                        )
                         true
                     }
                     else -> false
@@ -436,7 +434,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     }
 
     override fun onDestroy() {
-        sendBroadcast(Intent(this, MediaPlayer.Restarter::class.java))
+        //sendBroadcast(Intent(this, MediaPlayer.Restarter::class.java))
+        startService(
+            Intent(this, MediaPlayer::class.java).setAction(MediaPlayer.ACTION_STOP)
+        )
         super.onDestroy()
     }
 }
