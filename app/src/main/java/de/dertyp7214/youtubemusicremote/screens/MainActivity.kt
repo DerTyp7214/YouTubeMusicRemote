@@ -52,7 +52,19 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
-    private val queueBottomSheet = QueueBottomSheet { dialogFragment, queueItem ->
+    private val queueBottomSheet = QueueBottomSheet(onCoverDataChanged = {
+        webSocket.send(SendAction(Action.REQUEST_QUEUE))
+    }, onLongPress = { view, queueItem ->
+        showMenu(
+            view,
+            SongInfo(
+                title = queueItem.title,
+                artist = queueItem.artist,
+                url = "https://music.youtube.com/watch?v=${queueItem.videoId}"
+            ),
+            R.menu.queue_menu
+        )
+    }) { dialogFragment, queueItem ->
         webSocket.send(SendAction(Action.QUEUE_VIDEO_ID, VideoIdData(queueItem.videoId)))
         dialogFragment.dismiss()
     }
@@ -267,7 +279,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         queueItems.observe(this) {
             if (!it.isNullOrEmpty()) queueBottomSheet.apply {
                 queueItems = it
-                songInfo = currentSongInfo.value ?: SongInfo()
+                coverData = currentSongInfo.value?.coverData ?: CoverData()
                 showWithBlur(
                     this@MainActivity,
                     findViewById(R.id.root),
@@ -281,7 +293,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 runOnUiThread {
                     setSongInfo(it)
 
-                    queueBottomSheet.songInfo = it
+                    queueBottomSheet.coverData = it.coverData ?: CoverData()
 
                     youTubeApiFragment.setSongInfo(it)
                     controlsFragment.setSongInfo(it)
@@ -341,7 +353,25 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         } ?: super.onKeyDown(keyCode, event)
     }
 
-    private fun showMenu(v: View, songInfo: SongInfo) {
+    private fun share(songInfo: SongInfo) {
+        startActivity(Intent.createChooser(Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(
+                Intent.EXTRA_TEXT, """
+                Listen to "${songInfo.title}" by "${songInfo.artist}"
+                
+                ${songInfo.url}
+            """.trimIndent()
+            )
+            type = "text/plain"
+        }, null))
+    }
+
+    private fun showMenu(
+        v: View,
+        songInfo: SongInfo,
+        menuLayout: Int = R.menu.main_menu
+    ) {
         PopupMenu(this, v, Gravity.END, 0, R.style.Theme_YouTubeMusicRemote).apply {
             setOnMenuItemClickListener {
                 when (it.itemId) {
@@ -350,11 +380,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                         true
                     }
                     R.id.menu_share -> {
-                        startActivity(Intent.createChooser(Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, songInfo.url)
-                            type = "text/plain"
-                        }, null))
+                        share(songInfo)
                         true
                     }
                     R.id.add_new_url -> {
@@ -373,7 +399,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     else -> false
                 }
             }
-            inflate(R.menu.main_menu)
+            inflate(menuLayout)
             menu.findItem(R.id.menu_toggle_mute)
                 ?.setTitle(if (songInfo.isMuted) R.string.unmute else R.string.mute)
         }.show()

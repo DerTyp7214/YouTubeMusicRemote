@@ -1,9 +1,12 @@
 package de.dertyp7214.youtubemusicremote.components
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,29 +20,35 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.card.MaterialCardView
 import de.dertyp7214.youtubemusicremote.R
-import de.dertyp7214.youtubemusicremote.core.animateTextColor
-import de.dertyp7214.youtubemusicremote.core.getFallBackColor
-import de.dertyp7214.youtubemusicremote.core.isDark
-import de.dertyp7214.youtubemusicremote.core.liveBlur
+import de.dertyp7214.youtubemusicremote.core.*
+import de.dertyp7214.youtubemusicremote.types.CoverData
 import de.dertyp7214.youtubemusicremote.types.QueueItem
-import de.dertyp7214.youtubemusicremote.types.SongInfo
 
-class QueueBottomSheet(private val onClick: (BottomSheetDialogFragment, QueueItem) -> Unit) :
+class QueueBottomSheet(
+    private val onCoverDataChanged: (CoverData) -> Unit = {},
+    private val onLongPress: (View, QueueItem) -> Unit = { _, _ -> },
+    private val onClick: (BottomSheetDialogFragment, QueueItem) -> Unit
+) :
     BottomSheetDialogFragment() {
     private val isShowing
         get() = dialog?.isShowing ?: false
 
     private val queueItemsLiveData: MutableLiveData<List<QueueItem>> = MutableLiveData()
-    private val songInfoLiveData: MutableLiveData<SongInfo> = MutableLiveData()
+    private val coverDataLiveData: MutableLiveData<CoverData> = MutableLiveData()
+
+    private var blurFunction: (Boolean) -> Unit = {}
 
     var queueItems: List<QueueItem>
         get() = queueItemsLiveData.value ?: listOf()
         set(value) = queueItemsLiveData.postValue(value)
 
-    var songInfo: SongInfo
-        get() = songInfoLiveData.value ?: SongInfo()
-        set(value) = songInfoLiveData.postValue(value)
+    var coverData: CoverData
+        get() = coverDataLiveData.value ?: CoverData()
+        set(value) {
+            if (coverData != value) coverDataLiveData.postValue(value)
+        }
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
@@ -53,69 +62,100 @@ class QueueBottomSheet(private val onClick: (BottomSheetDialogFragment, QueueIte
 
         val root: ViewGroup = v.findViewById(R.id.queueRoot)
         val recyclerView: RecyclerView = v.findViewById(R.id.queueRecyclerView)
-        val adapter = QueueItemAdapter(this, items) {
+        val adapter = QueueItemAdapter(this, items, onLongPress = onLongPress) {
             onClick(this, it)
         }
 
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        queueItemsLiveData.observe(this) {
-            items.clear()
-            items.addAll(it)
-            adapter.notifyDataSetChanged()
-        }
-
-        fun setColors(songInfo: SongInfo) {
-            val coverData = songInfo.coverData ?: return
-
+        fun setColors(coverData: CoverData) {
             val background =
                 getFallBackColor(coverData.darkVibrant, coverData.muted, coverData.vibrant)
             root.backgroundTintList = ColorStateList.valueOf(background)
 
             if (isDark(background)) adapter.textColor.postValue(Color.WHITE)
             else adapter.textColor.postValue(Color.BLACK)
+
+            adapter.strokeColor.postValue(getFallBackColor(coverData.muted, coverData.vibrant).let {
+                if (it == background) if (isDark(it)) Color.WHITE else Color.BLACK
+                else it
+            })
         }
 
-        songInfoLiveData.observe(this, ::setColors)
+        queueItemsLiveData.observe(this) { queueItemList ->
+            items.clear()
+            items.addAll(queueItemList)
+            adapter.notifyDataSetChanged()
+            setColors(coverData)
+        }
 
-        setColors(songInfo)
+        coverDataLiveData.observe(this) {
+            if (isShowing) {
+                onCoverDataChanged(coverData)
+                blurFunction(false)
+            }
+        }
+
+        setColors(coverData)
 
         return v
     }
 
     fun showWithBlur(appCompatActivity: AppCompatActivity, blurContent: View, blurView: View) {
-        if (!isShowing) {
-            liveBlur(appCompatActivity, blurContent, 2, { isShowing }) {
-                blurView.foreground = it
-            }
+        if (!isShowing && instance == null) {
+            blurFunction = { clear: Boolean ->
+                blur(appCompatActivity, blurContent) {
+                    blurView.foreground = if (clear) null else it
+                }
+            }.also { it(false) }
 
             val oldFragment = appCompatActivity.supportFragmentManager.findFragmentByTag(TAG)
 
-            if (!isAdded && oldFragment == null) show(
-                appCompatActivity.supportFragmentManager,
-                TAG
-            )
+            if (!isAdded && oldFragment == null) try {
+                show(
+                    appCompatActivity.supportFragmentManager,
+                    TAG
+                )
+                instance = this
+            } catch (_: Exception) {
+            }
         }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        blurFunction(true)
+        instance = null
     }
 
     class QueueItemAdapter(
         private val dialogFragment: BottomSheetDialogFragment,
         private val items: List<QueueItem>,
+        private val onLongPress: (View, QueueItem) -> Unit,
         private val onClick: (QueueItem) -> Unit
     ) :
         RecyclerView.Adapter<QueueItemAdapter.ViewHolder>() {
 
+        init {
+            setHasStableIds(true)
+        }
+
         private val glide = Glide.with(dialogFragment)
 
         val textColor = MutableLiveData(Color.WHITE)
+        val strokeColor = MutableLiveData(Color.WHITE)
 
         class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-            val root: ViewGroup = v.findViewById(R.id.root)
+            val root: MaterialCardView = v.findViewById(R.id.root)
             val cover: ImageView = v.findViewById(R.id.cover)
             val title: TextView = v.findViewById(R.id.title)
             val artist: TextView = v.findViewById(R.id.artist)
             val duration: TextView = v.findViewById(R.id.duration)
+        }
+
+        override fun getItemId(position: Int): Long {
+            return items[position].hashCode().toLong()
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
@@ -146,11 +186,36 @@ class QueueBottomSheet(private val onClick: (BottomSheetDialogFragment, QueueIte
 
             changeColors(textColor.value ?: Color.WHITE)
 
+            holder.root.strokeColor = strokeColor.value ?: Color.WHITE
+
             textColor.observe(dialogFragment) {
-                changeColors(it)
+                Handler(Looper.getMainLooper()).post {
+                    changeColors(it)
+                }
             }
 
-            holder.root.setOnClickListener { onClick(item) }
+            strokeColor.observe(dialogFragment) {
+                Handler(Looper.getMainLooper()).post {
+                    animateColors(holder.root.strokeColorStateList?.defaultColor ?: -1, it) {
+                        holder.root.strokeColor = it
+                    }
+                }
+            }
+
+            holder.root.setOnClickListener { if (position != 0) onClick(item) }
+            holder.root.setOnLongClickListener {
+                onLongPress(it, item)
+                true
+            }
+
+            if (position == 0) {
+                val context = dialogFragment.requireContext()
+                holder.root.strokeWidth = 2.dpToPx(context)
+                holder.root.setMargin(8.dpToPx(context))
+            } else {
+                holder.root.strokeWidth = 0
+                holder.root.setMargin(0)
+            }
         }
 
         override fun getItemCount(): Int = items.size
@@ -158,5 +223,7 @@ class QueueBottomSheet(private val onClick: (BottomSheetDialogFragment, QueueIte
 
     companion object {
         const val TAG = "QueueBottomSheet"
+
+        private var instance: QueueBottomSheet? = null
     }
 }

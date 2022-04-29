@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package de.dertyp7214.youtubemusicremote.core
 
 import android.content.Context
@@ -32,3 +34,5 @@ fun Int.dpToPx(context: Context): Int {
 fun Int.pxToDp(context: Context): Int {
     return (this / context.resources.displayMetrics.density).toInt()
 }
+
+fun Number.toMillis() = toString().toMillis()

@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package de.dertyp7214.youtubemusicremote.core
 
 import android.content.Context
@@ -6,6 +8,19 @@ import android.view.View
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import jp.wasabeef.glide.transformations.BlurTransformation
+
+fun blur(context: Context, view: View, callback: (Drawable) -> Unit) {
+    doAsync(
+        {
+            Glide.with(context).asDrawable()
+                .load(view.getBitmap()).apply(
+                    RequestOptions.bitmapTransform(
+                        BlurTransformation(10, 5)
+                    )
+                ).submit().get()
+        }, callback
+    )
+}
 
 fun liveBlur(
     context: Context,
@@ -17,18 +32,14 @@ fun liveBlur(
     fun loop(skipTimeout: Boolean = false) {
         doAsync(
             {
-                if (!skipTimeout) Thread.sleep((1000 / fps).toLong())
-                Glide.with(context).asDrawable()
-                    .load(view.getBitmap()).apply(
-                        RequestOptions.bitmapTransform(
-                            BlurTransformation(10, 5)
-                        )
-                    ).submit().get()
+                if (!skipTimeout && !active()) Thread.sleep((1000 / fps).toLong())
             }
         ) {
-            callback(it)
-            if (active()) loop()
-            else callback(null)
+            blur(context, view) {
+                callback(it)
+                if (active()) loop()
+                else callback(null)
+            }
         }
     }
     loop(true)

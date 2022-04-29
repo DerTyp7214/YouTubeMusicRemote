@@ -20,6 +20,10 @@ fun View.setMargins(left: Int, top: Int, right: Int, bottom: Int) {
     }
 }
 
+fun View.setMargin(margin: Int) {
+    setMargins(margin, margin, margin, margin)
+}
+
 fun View.setHeight(height: Int) {
     updateLayoutParams {
         this.height = height

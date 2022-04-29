@@ -27,6 +27,7 @@ import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.core.checkWebSocket
 import de.dertyp7214.youtubemusicremote.core.parseImageColorsAsync
+import de.dertyp7214.youtubemusicremote.core.toMillis
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
@@ -194,8 +195,8 @@ class MediaPlayer : Service() {
                 val songInfo = currentSongInfo
                 MediaStatus(
                     songInfo.isPaused == false,
-                    songInfo.songDuration.toLong() * 1000,
-                    songInfo.elapsedSeconds.toLong() * 1000,
+                    songInfo.songDuration.toMillis(),
+                    songInfo.elapsedSeconds.toMillis(),
                     songInfo.repeatMode
                 ).apply { if (mediaStatus.value != this) mediaStatus.value = this }
                 MetaData(
