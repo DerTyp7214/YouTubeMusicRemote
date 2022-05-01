@@ -40,13 +40,6 @@ import kotlin.math.roundToInt
 class MainActivity : AppCompatActivity(), OnTouchListener {
 
     companion object {
-        var URL = ""
-            set(value) {
-                var url = value
-                if (!url.startsWith("ws://") && url != "devUrl") url = "ws://$url"
-                field = url
-            }
-
         var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData(SongInfo())
     }
 
@@ -154,7 +147,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         youtubeSearchFrame.setHeight(pageHeight)
         youtubeSearchFrame.setMargins(0, (pageHeight - youtubeTopMargin).inv(), 0, 0)
 
+        @Suppress("NAME_SHADOWING")
         fun setMargins(open: Boolean) {
+            val pageHeight = resources.displayMetrics.heightPixels
+            val youtubeTopMargin = getStatusBarHeight() + 16.dpToPx(this)
+            youtubeSearchFrame.setHeight(pageHeight)
             animateInts(if (open) pageHeight else 0, if (open) 0 else pageHeight) { marginTop ->
                 youtubeSearchFrame.setMargins(
                     0, marginTop.inv().let { if (open) it + youtubeTopMargin else it }, 0, 0
@@ -168,7 +165,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         webSocket = if (CustomWebSocket.webSocketInstance == null)
-            CustomWebSocket(URL, customWebSocketListener, gson = gson)
+            CustomWebSocket(MediaPlayer.URL, customWebSocketListener, gson = gson)
         else CustomWebSocket.webSocketInstance!!.also {
             customWebSocketListener = it.webSocketListener
         }
@@ -265,8 +262,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
                 .apply {
                     setAction(R.string.reconnect) {
-                        webSocket.connect()
                         dismiss()
+                        webSocket.connect()
                     }
                     setBackgroundTint(0xFFFF5151.toInt())
                     setTextColor(Color.WHITE)
@@ -316,7 +313,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     override fun onResume() {
         super.onResume()
-        webSocket = CustomWebSocket(URL, customWebSocketListener, gson = gson)
+        webSocket = if (CustomWebSocket.webSocketInstance == null)
+            CustomWebSocket(MediaPlayer.URL, customWebSocketListener, gson = gson)
+        else CustomWebSocket.webSocketInstance!!.also {
+            customWebSocketListener = it.webSocketListener
+        }
         webSocket.setInstance()
     }
 

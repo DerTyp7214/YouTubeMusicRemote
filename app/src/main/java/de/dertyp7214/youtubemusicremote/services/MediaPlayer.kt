@@ -55,6 +55,13 @@ class MediaPlayer : Service() {
 
         var isRunning = false
             private set
+
+        var URL = ""
+            set(value) {
+                var url = value
+                if (!url.startsWith("ws://") && url != "devUrl") url = "ws://$url"
+                field = url
+            }
     }
 
     val webSocket: CustomWebSocket?

@@ -21,7 +21,7 @@ class CustomWebSocket(
     }
 
     fun connect() {
-        webSocket = if (url == "devUrl") null else okHttpClient.newWebSocket(
+        webSocket = if (url == "devUrl" || url.isBlank()) null else okHttpClient.newWebSocket(
             Request.Builder().url(url).build(),
             webSocketListener
         )
@@ -70,6 +70,7 @@ class CustomWebSocket(
     }
 
     fun setInstance() {
+        webSocketInstance?.close()
         webSocketInstance = this
     }
 

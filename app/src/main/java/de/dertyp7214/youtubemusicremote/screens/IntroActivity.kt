@@ -21,6 +21,7 @@ import com.journeyapps.barcodescanner.ScanOptions
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.SendAction
 import de.dertyp7214.youtubemusicremote.types.SocketResponse
@@ -74,7 +75,7 @@ class IntroActivity : AppCompatActivity() {
                 checkWebSocket(urls[index]) { connected, reason ->
                     scanQrCode.isEnabled = true
                     if (connected) {
-                        MainActivity.URL = urls[index]
+                        MediaPlayer.URL = urls[index]
                         startActivity(Intent(this, MainActivity::class.java))
                         finish()
                     } else {
@@ -115,7 +116,7 @@ class IntroActivity : AppCompatActivity() {
                                     arrayListOf(newUrl).apply { if (urls != null) addAll(urls) }
                                         .toSet()
                                 )
-                                MainActivity.URL = newUrl
+                                MediaPlayer.URL = newUrl
                                 startActivity(Intent(this@IntroActivity, MainActivity::class.java))
                                 finish()
                             }
