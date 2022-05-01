@@ -13,5 +13,10 @@
         android:title="@string/add_new_url" />
     <item
         android:id="@+id/menu_queue"
-        android:title="@string/menu_queue" />
+        android:title="@string/menu_queue"
+        android:visible="false" />
+    <item
+        android:id="@+id/menu_lyrics"
+        android:title="@string/menu_lyrics"
+        android:visible="false" />
 </menu>

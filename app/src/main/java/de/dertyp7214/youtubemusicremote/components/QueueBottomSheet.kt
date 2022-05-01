@@ -1,7 +1,6 @@
 package de.dertyp7214.youtubemusicremote.components
 
 import android.annotation.SuppressLint
-import android.content.DialogInterface
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
@@ -12,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,14 +29,9 @@ class QueueBottomSheet(
     private val onLongPress: (View, QueueItem) -> Unit = { _, _ -> },
     private val onClick: (BottomSheetDialogFragment, QueueItem) -> Unit
 ) :
-    BottomSheetDialogFragment() {
-    private val isShowing
-        get() = dialog?.isShowing ?: false
-
+    BaseBottomSheet() {
     private val queueItemsLiveData: MutableLiveData<List<QueueItem>> = MutableLiveData()
     private val coverDataLiveData: MutableLiveData<CoverData> = MutableLiveData()
-
-    private var blurFunction: (Boolean) -> Unit = {}
 
     var queueItems: List<QueueItem>
         get() = queueItemsLiveData.value ?: listOf()
@@ -101,33 +94,6 @@ class QueueBottomSheet(
         setColors(coverData)
 
         return v
-    }
-
-    fun showWithBlur(appCompatActivity: AppCompatActivity, blurContent: View, blurView: View) {
-        if (!isShowing && instance == null) {
-            blurFunction = { clear: Boolean ->
-                blur(appCompatActivity, blurContent) {
-                    blurView.foreground = if (clear) null else it
-                }
-            }.also { it(false) }
-
-            val oldFragment = appCompatActivity.supportFragmentManager.findFragmentByTag(TAG)
-
-            if (!isAdded && oldFragment == null) try {
-                show(
-                    appCompatActivity.supportFragmentManager,
-                    TAG
-                )
-                instance = this
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        blurFunction(true)
-        instance = null
     }
 
     class QueueItemAdapter(
@@ -220,11 +186,5 @@ class QueueBottomSheet(
         }
 
         override fun getItemCount(): Int = items.size
-    }
-
-    companion object {
-        const val TAG = "QueueBottomSheet"
-
-        private var instance: QueueBottomSheet? = null
     }
 }

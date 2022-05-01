@@ -25,6 +25,7 @@ import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.components.LyricsBottomSheet
 import de.dertyp7214.youtubemusicremote.components.QueueBottomSheet
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
@@ -40,8 +41,14 @@ import kotlin.math.roundToInt
 class MainActivity : AppCompatActivity(), OnTouchListener {
 
     companion object {
-        var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData(SongInfo())
+        var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData()
+        var currentLyrics: MutableLiveData<Lyrics> = MutableLiveData()
     }
+
+    private val getSongInfo: SongInfo
+        get() {
+            return currentSongInfo.value ?: SongInfo()
+        }
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
@@ -59,6 +66,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         webSocket.send(SendAction(Action.QUEUE_VIDEO_ID, VideoIdData(queueItem.videoId)))
         dialogFragment.dismiss()
     }
+
+    private val lyricsBottomSheet = LyricsBottomSheet()
 
     private var customWebSocketListener = CustomWebSocketListener()
 
@@ -250,6 +259,17 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
                         queueItems.postValue(queue)
                     }
+                    Action.LYRICS -> {
+                        val lyrics = gson.fromJson(socketResponse.data, LyricsData::class.java)
+
+                        currentLyrics.postValue(
+                            Lyrics(
+                                lyrics.lyrics,
+                                getSongInfo.videoId,
+                                getSongInfo.title
+                            )
+                        )
+                    }
                     else -> {}
                 }
             } catch (e: Exception) {
@@ -274,11 +294,22 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         queueItems.observe(this) {
             if (!it.isNullOrEmpty()) queueBottomSheet.apply {
                 queueItems = it
-                coverData = currentSongInfo.value?.coverData ?: CoverData()
+                coverData = getSongInfo.coverData ?: CoverData()
+            }
+        }
+
+        currentLyrics.observe(this) {
+            if (it.lyrics.isNotBlank()) lyricsBottomSheet.apply {
+                lyrics = it
+                coverData = getSongInfo.coverData ?: CoverData()
             }
         }
 
         currentSongInfo.observe(this) { songInfo ->
+            if (lyricsBottomSheet.isShowing && (currentLyrics.value?.videoId
+                    ?: "") != songInfo.videoId
+            )
+                webSocket.send(SendAction(Action.REQUEST_LYRICS))
             songInfo.parseImageColorsAsync(this, oldSongInfo) {
                 runOnUiThread {
                     setSongInfo(it)
@@ -306,6 +337,24 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             repeat = { webSocket.repeat() },
             like = { webSocket.like() },
             dislike = { webSocket.dislike() },
+            queue = {
+                webSocket.send(SendAction(Action.REQUEST_QUEUE))
+                queueBottomSheet.showWithBlur(
+                    this@MainActivity,
+                    findViewById(R.id.root),
+                    window.decorView
+                )
+            },
+            lyrics = {
+                webSocket.send(SendAction(Action.REQUEST_LYRICS))
+                if (lyricsBottomSheet.lyrics.videoId != getSongInfo.videoId) lyricsBottomSheet.lyrics =
+                    Lyrics("", "", "Loading")
+                lyricsBottomSheet.showWithBlur(
+                    this@MainActivity,
+                    findViewById(R.id.root),
+                    window.decorView
+                )
+            },
             seek = { webSocket.seek(it) },
             volume = { webSocket.send(SendAction(Action.VOLUME, VolumeData(it))) }
         )
@@ -389,6 +438,15 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     R.id.menu_queue -> {
                         webSocket.send(SendAction(Action.REQUEST_QUEUE))
                         queueBottomSheet.showWithBlur(
+                            this@MainActivity,
+                            findViewById(R.id.root),
+                            window.decorView
+                        )
+                        true
+                    }
+                    R.id.menu_lyrics -> {
+                        webSocket.send(SendAction(Action.REQUEST_LYRICS))
+                        lyricsBottomSheet.showWithBlur(
                             this@MainActivity,
                             findViewById(R.id.root),
                             window.decorView

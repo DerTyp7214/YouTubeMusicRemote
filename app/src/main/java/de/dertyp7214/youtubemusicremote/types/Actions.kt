@@ -49,7 +49,13 @@ enum class Action {
     REQUEST_QUEUE,
 
     @SerializedName("queueVideoId")
-    QUEUE_VIDEO_ID
+    QUEUE_VIDEO_ID,
+
+    @SerializedName("lyrics")
+    LYRICS,
+
+    @SerializedName("requestLyrics")
+    REQUEST_LYRICS
 }
 
 data class VideoIdData(
@@ -66,4 +72,8 @@ data class SeekData(
 
 data class VolumeData(
     val volume: Int
+)
+
+data class LyricsData(
+    val lyrics: String
 )

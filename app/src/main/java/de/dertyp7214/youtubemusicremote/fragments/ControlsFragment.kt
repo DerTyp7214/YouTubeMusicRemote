@@ -35,6 +35,8 @@ class ControlsFragment : Fragment() {
     private var repeatCallback: Callback = {}
     private var likeCallback: Callback = {}
     private var dislikeCallback: Callback = {}
+    private var queueCallback: Callback = {}
+    private var lyricsCallback: Callback = {}
     private var seekBarCallback: (seconds: Int) -> Unit = {}
     private var volumeCallback: (volume: Int) -> Unit = {}
 
@@ -46,6 +48,9 @@ class ControlsFragment : Fragment() {
 
     private var like: ImageButton? = null
     private var dislike: ImageButton? = null
+
+    private var queue: ImageButton? = null
+    private var lyrics: ImageButton? = null
 
     private var title: TextView? = null
     private var artist: TextView? = null
@@ -76,6 +81,9 @@ class ControlsFragment : Fragment() {
         like = v.findViewById(R.id.like)
         dislike = v.findViewById(R.id.dislike)
 
+        queue = v.findViewById(R.id.queueButton)
+        lyrics = v.findViewById(R.id.lyricsButton)
+
         title = v.findViewById(R.id.title)
         artist = v.findViewById(R.id.artist)
 
@@ -99,6 +107,8 @@ class ControlsFragment : Fragment() {
         repeat?.setOnClickListener { repeatCallback() }
         like?.setOnClickListener { likeCallback() }
         dislike?.setOnClickListener { dislikeCallback() }
+        queue?.setOnClickListener { queueCallback() }
+        lyrics?.setOnClickListener { lyricsCallback() }
         seekBar?.onProgressChanged { progress, userInput ->
             if (userInput) seekBarCallback(progress)
         }
@@ -199,6 +209,9 @@ class ControlsFragment : Fragment() {
         like?.animateImageTintList(controlsColor, Color.BLACK)
         dislike?.animateImageTintList(controlsColor, Color.BLACK)
 
+        queue?.animateImageTintList(controlsColor, Color.BLACK)
+        lyrics?.animateImageTintList(controlsColor, Color.BLACK)
+
         progress?.animateTextColor(controlsColor)
         duration?.animateTextColor(controlsColor)
 
@@ -234,6 +247,8 @@ class ControlsFragment : Fragment() {
         repeat: Callback = {},
         like: Callback = {},
         dislike: Callback = {},
+        queue: Callback = {},
+        lyrics: Callback = {},
         seek: (seconds: Int) -> Unit = {},
         volume: (volume: Int) -> Unit = {}
     ) {
@@ -244,6 +259,8 @@ class ControlsFragment : Fragment() {
         repeatCallback = repeat
         likeCallback = like
         dislikeCallback = dislike
+        queueCallback = queue
+        lyricsCallback = lyrics
         seekBarCallback = seek
         volumeCallback = volume
     }
