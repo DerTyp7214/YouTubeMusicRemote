@@ -248,7 +248,7 @@ class IntroActivity : AppCompatActivity() {
         try {
             val webSocket = CustomWebSocket(
                 if (url.startsWith("ws://")) url else "ws://$url", customWebSocketListener
-            )
+            ).setUp()
 
             customWebSocketListener.onMessage { _, text ->
                 try {

@@ -11,20 +11,24 @@ import okhttp3.WebSocket
 class CustomWebSocket(
     private val url: String,
     val webSocketListener: CustomWebSocketListener,
-    private val okHttpClient: OkHttpClient = OkHttpClient(),
     private val gson: Gson = Gson()
 ) {
     private var webSocket: WebSocket? = null
+    private var okHttpClient: OkHttpClient? = null
 
-    init {
-        connect()
-    }
-
-    fun connect() {
-        webSocket = if (url == "devUrl" || url.isBlank()) null else okHttpClient.newWebSocket(
+    fun setUp(): CustomWebSocket {
+        okHttpClient = OkHttpClient.Builder().retryOnConnectionFailure(true).build()
+        webSocket = if (url == "devUrl" || url.isBlank()) null else okHttpClient?.newWebSocket(
             Request.Builder().url(url).build(),
             webSocketListener
         )
+        return this
+    }
+
+    fun reconnect(): CustomWebSocket {
+        close()
+        setUp()
+        return this
     }
 
     fun send(data: Any) {
@@ -64,9 +68,10 @@ class CustomWebSocket(
     }
 
     fun close() {
-        okHttpClient.dispatcher().executorService().shutdown()
-        okHttpClient.connectionPool().evictAll()
-        okHttpClient.cache()?.close()
+        okHttpClient?.dispatcher()?.executorService()?.shutdown()
+        okHttpClient?.connectionPool()?.evictAll()
+        okHttpClient?.cache()?.close()
+        webSocket?.cancel()
     }
 
     fun setInstance() {

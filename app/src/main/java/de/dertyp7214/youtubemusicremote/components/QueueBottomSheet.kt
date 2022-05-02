@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -67,13 +68,10 @@ class QueueBottomSheet(
                 getFallBackColor(coverData.darkVibrant, coverData.muted, coverData.vibrant)
             root.backgroundTintList = ColorStateList.valueOf(background)
 
-            if (isDark(background)) adapter.textColor.postValue(Color.WHITE)
-            else adapter.textColor.postValue(Color.BLACK)
+            val textColor = if (isDark(background)) Color.WHITE else Color.BLACK
 
-            adapter.strokeColor.postValue(getFallBackColor(coverData.muted, coverData.vibrant).let {
-                if (it == background) if (isDark(it)) Color.WHITE else Color.BLACK
-                else it
-            })
+            adapter.textColor.postValue(textColor)
+            adapter.strokeColor.postValue(ColorUtils.setAlphaComponent(textColor, 128))
         }
 
         queueItemsLiveData.observe(this) { queueItemList ->

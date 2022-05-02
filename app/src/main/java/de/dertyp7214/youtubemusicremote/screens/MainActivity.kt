@@ -277,13 +277,13 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        customWebSocketListener.onFailure { _, throwable, _ ->
+        customWebSocketListener.onFailure { _, throwable, reason ->
             throwable.printStackTrace()
             Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
                 .apply {
                     setAction(R.string.reconnect) {
                         dismiss()
-                        webSocket.connect()
+                        webSocket.reconnect()
                     }
                     setBackgroundTint(0xFFFF5151.toInt())
                     setTextColor(Color.WHITE)
