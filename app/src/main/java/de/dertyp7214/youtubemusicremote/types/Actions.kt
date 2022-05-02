@@ -55,7 +55,10 @@ enum class Action {
     LYRICS,
 
     @SerializedName("requestLyrics")
-    REQUEST_LYRICS
+    REQUEST_LYRICS,
+
+    @SerializedName("requestSongInfo")
+    REQUEST_SONG_INFO
 }
 
 data class VideoIdData(

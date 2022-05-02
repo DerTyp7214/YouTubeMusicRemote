@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package de.dertyp7214.youtubemusicremote.core
 
 import android.app.Activity
@@ -53,3 +55,10 @@ fun Drawable.resize(
 
 fun Drawable.getDominantColor(fallback: Int = Color.BLACK) =
     Palette.Builder(toBitmap()).maximumColorCount(32).generate().dominantSwatch?.rgb ?: fallback
+
+fun Drawable.blur(
+    context: Context,
+    radius: Int = 10,
+    sampling: Int = 5,
+    callback: (Drawable) -> Unit
+) = toBitmap().blur(context, radius, sampling, callback)

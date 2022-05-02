@@ -26,13 +26,11 @@ import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.core.checkWebSocket
+import de.dertyp7214.youtubemusicremote.core.delayed
 import de.dertyp7214.youtubemusicremote.core.parseImageColorsAsync
 import de.dertyp7214.youtubemusicremote.core.toMillis
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
-import de.dertyp7214.youtubemusicremote.types.Action
-import de.dertyp7214.youtubemusicremote.types.RepeatMode
-import de.dertyp7214.youtubemusicremote.types.SocketResponse
-import de.dertyp7214.youtubemusicremote.types.SongInfo
+import de.dertyp7214.youtubemusicremote.types.*
 import android.os.Process as OsProcess
 import androidx.media.app.NotificationCompat as NotificationCompatMedia
 
@@ -180,6 +178,8 @@ class MediaPlayer : Service() {
                 }
             }
         }
+
+        delayed { webSocket?.send(SendAction(Action.REQUEST_SONG_INFO)) }
 
         initialized = true
     }

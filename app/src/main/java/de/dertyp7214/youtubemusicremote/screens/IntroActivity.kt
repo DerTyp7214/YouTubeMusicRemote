@@ -1,18 +1,25 @@
 package de.dertyp7214.youtubemusicremote.screens
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.LightingColorFilter
 import android.os.Bundle
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.graphics.ColorUtils
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.MutableLiveData
 import androidx.preference.PreferenceManager
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
@@ -21,11 +28,12 @@ import com.journeyapps.barcodescanner.ScanOptions
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
+import de.dertyp7214.youtubemusicremote.core.blur
+import de.dertyp7214.youtubemusicremote.core.fitToScreen
+import de.dertyp7214.youtubemusicremote.core.getFallBackColor
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
-import de.dertyp7214.youtubemusicremote.types.Action
-import de.dertyp7214.youtubemusicremote.types.SendAction
-import de.dertyp7214.youtubemusicremote.types.SocketResponse
-import de.dertyp7214.youtubemusicremote.types.StatusData
+import de.dertyp7214.youtubemusicremote.types.*
+import dev.chrisbanes.insetter.applyInsetter
 
 
 class IntroActivity : AppCompatActivity() {
@@ -33,6 +41,9 @@ class IntroActivity : AppCompatActivity() {
     private lateinit var inputLayout: TextInputLayout
     private lateinit var nextButton: MaterialButton
     private lateinit var scanQrCode: MaterialButton
+    private lateinit var progressBar: ProgressBar
+
+    private val coverLiveData = MutableLiveData<CoverData>()
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
@@ -47,19 +58,71 @@ class IntroActivity : AppCompatActivity() {
                     scanQrCode.isEnabled = true
                     if (connected) {
                         nextButton.isEnabled = true
-                        inputLayout.boxStrokeColor = Color.GREEN
+                        setInputColor(inputLayout, Color.GREEN)
                     } else {
                         nextButton.isEnabled = false
-                        inputLayout.boxStrokeColor = Color.RED
+                        setInputColor(inputLayout, Color.RED)
                         reason?.let { inputLayout.editText?.error = it }
                     }
                 }
             }
         }
 
+    @SuppressLint("SetTextI18n")
+    private fun setInputColor(inputLayout: TextInputLayout, color: Int? = null) {
+        if (color == null) {
+            if (coverLiveData.value == null) ContextCompat.getDrawable(
+                this,
+                R.mipmap.ic_launcher
+            )?.blur(this) {
+                coverLiveData.postValue(
+                    CoverData(
+                        it,
+                        vibrant = ColorUtils.blendARGB(Color.CYAN, Color.GRAY, .5f)
+                    )
+                )
+            } else coverLiveData.postValue(coverLiveData.value)
+
+            coverLiveData.observe(this) { coverData ->
+                window.decorView.background = coverData.background?.fitToScreen(this)?.apply {
+                    colorFilter = LightingColorFilter(0xFF7B7B7B.toInt(), 0x00000000)
+                }
+
+                val coverColor = getFallBackColor(coverData.vibrant, coverData.muted)
+
+                if (inputLayout.boxStrokeColor != Color.GREEN) setInputColor(
+                    inputLayout,
+                    coverColor
+                )
+
+                scanQrCode.rippleColor =
+                    ColorStateList.valueOf(ColorUtils.blendARGB(coverColor, Color.BLACK, .3f))
+                scanQrCode.backgroundTintList = ColorStateList.valueOf(coverColor)
+
+                nextButton.rippleColor = ColorStateList.valueOf(coverColor)
+                nextButton.strokeColor = ColorStateList.valueOf(coverColor)
+                nextButton.setTextColor(coverColor)
+
+                progressBar.indeterminateTintList = ColorStateList.valueOf(coverColor)
+            }
+        } else {
+            inputLayout.boxStrokeColor = color
+            inputLayout.setHelperTextColor(ColorStateList.valueOf(color))
+            inputLayout.hintTextColor = ColorStateList.valueOf(color)
+            inputLayout.backgroundTintList = ColorStateList.valueOf(color)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_intro)
+
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
+
+        var initialized = false
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
@@ -68,65 +131,93 @@ class IntroActivity : AppCompatActivity() {
         inputLayout = findViewById(R.id.textInputLayout)
         scanQrCode = findViewById(R.id.scanQrCode)
         nextButton = findViewById(R.id.next)
+        progressBar = findViewById(R.id.progressBar)
 
-        if (!urls.isNullOrEmpty() && !intent.getBooleanExtra("newUrl", false)) {
-            scanQrCode.isEnabled = false
-            fun checkUrls(urls: List<String>, index: Int) {
-                checkWebSocket(urls[index]) { connected, reason ->
-                    scanQrCode.isEnabled = true
-                    if (connected) {
-                        MediaPlayer.URL = urls[index]
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
-                    } else {
-                        nextButton.isEnabled = false
-                        inputLayout.boxStrokeColor = Color.RED
-                        inputLayout.editText?.setText(urls[index].removePrefix("ws://"))
-                        reason?.let { inputLayout.editText?.error = it }
-                        if (index < urls.lastIndex) checkUrls(urls, index + 1)
-                    }
-                }
+        findViewById<ViewGroup>(R.id.bottomBar).applyInsetter {
+            type(navigationBars = true) {
+                margin()
             }
-            checkUrls(urls.toList(), 0)
-        } else {
-            inputLayout.editText?.doAfterTextChanged {
-                nextButton.isEnabled = true
-                inputLayout.boxStrokeColor = MaterialColors.getColor(
-                    this, androidx.appcompat.R.attr.colorPrimary, Color.WHITE
-                )
-            }
+        }
 
-            scanQrCode.setOnClickListener {
-                barcodeLauncher.launch(ScanOptions())
-            }
+        MainActivity.currentSongInfo.observe(this) {
+            if (it.coverData != null && coverLiveData.value != it.coverData)
+                coverLiveData.postValue(it.coverData!!)
+        }
 
-            nextButton.setOnClickListener {
-                inputLayout.editText?.text?.let { editable ->
-                    val newUrl =
-                        editable.toString()
-                            .let { if (it.startsWith("ws://") || it == "devUrl") it else "ws://$it" }
+        window.decorView.rootView.viewTreeObserver.addOnGlobalLayoutListener {
+            if (!initialized) {
+                MainActivity.currentSongInfo.value?.coverData?.let { coverLiveData.postValue(it) }
+                setInputColor(inputLayout)
+
+                if (!urls.isNullOrEmpty() && !intent.getBooleanExtra("newUrl", false)) {
                     scanQrCode.isEnabled = false
-                    nextButton.isEnabled = false
-                    checkWebSocket(newUrl) { connected, reason ->
-                        scanQrCode.isEnabled = true
-                        if (connected) {
-                            inputLayout.boxStrokeColor = Color.GREEN
-                            preferences.edit {
-                                if (newUrl != "devUrl") putStringSet("url",
-                                    arrayListOf(newUrl).apply { if (urls != null) addAll(urls) }
-                                        .toSet()
-                                )
-                                MediaPlayer.URL = newUrl
-                                startActivity(Intent(this@IntroActivity, MainActivity::class.java))
+                    fun checkUrls(urls: List<String>, index: Int) {
+                        checkWebSocket(urls[index]) { connected, reason ->
+                            scanQrCode.isEnabled = true
+                            if (connected) {
+                                MediaPlayer.URL = urls[index]
+                                startActivity(Intent(this, MainActivity::class.java))
                                 finish()
+                            } else {
+                                nextButton.isEnabled = false
+                                setInputColor(inputLayout, Color.RED)
+                                inputLayout.editText?.setText(urls[index].removePrefix("ws://"))
+                                reason?.let { inputLayout.editText?.error = it }
+                                if (index < urls.lastIndex) checkUrls(urls, index + 1)
                             }
-                        } else {
+                        }
+                    }
+                    checkUrls(urls.toList(), 0)
+                } else {
+                    inputLayout.editText?.doAfterTextChanged {
+                        nextButton.isEnabled = true
+                        setInputColor(inputLayout)
+                    }
+
+                    scanQrCode.setOnClickListener {
+                        barcodeLauncher.launch(ScanOptions())
+                    }
+
+                    nextButton.setOnClickListener {
+                        inputLayout.editText?.text?.let { editable ->
+                            val newUrl =
+                                editable.toString()
+                                    .let { if (it.startsWith("ws://") || it == "devUrl") it else "ws://$it" }
+                            scanQrCode.isEnabled = false
                             nextButton.isEnabled = false
-                            inputLayout.boxStrokeColor = Color.RED
-                            reason?.let { inputLayout.editText?.error = it }
+                            checkWebSocket(newUrl) { connected, reason ->
+                                scanQrCode.isEnabled = true
+                                if (connected) {
+                                    setInputColor(inputLayout, Color.GREEN)
+                                    preferences.edit {
+                                        if (newUrl != "devUrl") putStringSet("url",
+                                            arrayListOf(newUrl).apply {
+                                                if (urls != null) addAll(
+                                                    urls
+                                                )
+                                            }
+                                                .toSet()
+                                        )
+                                        MediaPlayer.URL = newUrl
+                                        startActivity(
+                                            Intent(
+                                                this@IntroActivity,
+                                                MainActivity::class.java
+                                            )
+                                        )
+                                        finish()
+                                    }
+                                } else {
+                                    nextButton.isEnabled = false
+                                    setInputColor(inputLayout, Color.RED)
+                                    reason?.let { inputLayout.editText?.error = it }
+                                }
+                            }
                         }
                     }
                 }
+
+                initialized = true
             }
         }
     }

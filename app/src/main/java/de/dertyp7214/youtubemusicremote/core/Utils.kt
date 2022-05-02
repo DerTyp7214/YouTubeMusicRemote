@@ -4,6 +4,8 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextPaint
@@ -230,3 +232,6 @@ fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit
         callback(false, e.localizedMessage)
     }
 }
+
+fun delayed(timeout: Long = 200, callback: () -> Unit) =
+    Handler(Looper.getMainLooper()).postDelayed(callback, timeout)

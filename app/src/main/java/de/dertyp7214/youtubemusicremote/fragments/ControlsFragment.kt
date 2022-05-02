@@ -152,7 +152,7 @@ class ControlsFragment : Fragment() {
             seekBar.setProgress(songInfo.elapsedSeconds, true)
         }
 
-        val playPauseColor = getFallBackColor(coverData.muted, coverData.vibrant)
+        val playPauseColor = getFallBackColor(coverData.vibrant, coverData.muted)
         playPause?.let { playPause ->
             playPause.animateImageTintList(
                 if (isDark(playPauseColor)) Color.WHITE else Color.BLACK,
@@ -185,7 +185,7 @@ class ControlsFragment : Fragment() {
             }?.getDominantColor(coverData.dominant) ?: coverData.dominant
         ).toFloat()
         val seekColor = ColorUtils.blendARGB(
-            getFallBackColor(coverData.muted, coverData.vibrant),
+            getFallBackColor(coverData.vibrant, coverData.muted),
             if (luminance < .5) Color.WHITE else Color.BLACK,
             .6f * luminance
         )
@@ -201,21 +201,23 @@ class ControlsFragment : Fragment() {
 
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 
-        shuffle?.animateImageTintList(controlsColor, Color.BLACK)
-        previous?.animateImageTintList(controlsColor, Color.BLACK)
-        next?.animateImageTintList(controlsColor, Color.BLACK)
-        repeat?.animateImageTintList(controlsColor, Color.BLACK)
+        title?.animateTextColor(controlsColor) {
+            val tintList = ColorStateList.valueOf(it)
 
-        like?.animateImageTintList(controlsColor, Color.BLACK)
-        dislike?.animateImageTintList(controlsColor, Color.BLACK)
+            shuffle?.imageTintList = tintList
+            previous?.imageTintList = tintList
+            next?.imageTintList = tintList
+            repeat?.imageTintList = tintList
 
-        queue?.animateImageTintList(controlsColor, Color.BLACK)
-        lyrics?.animateImageTintList(controlsColor, Color.BLACK)
+            like?.imageTintList = tintList
+            dislike?.imageTintList = tintList
 
-        progress?.animateTextColor(controlsColor)
-        duration?.animateTextColor(controlsColor)
+            queue?.imageTintList = tintList
+            lyrics?.imageTintList = tintList
 
-        title?.animateTextColor(controlsColor)
+            progress?.setTextColor(it)
+            duration?.setTextColor(it)
+        }
 
         title?.changeText(songInfo.title)
         artist?.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->

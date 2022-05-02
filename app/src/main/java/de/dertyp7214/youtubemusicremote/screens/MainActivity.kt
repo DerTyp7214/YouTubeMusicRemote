@@ -349,6 +349,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 webSocket.send(SendAction(Action.REQUEST_LYRICS))
                 if (lyricsBottomSheet.lyrics.videoId != getSongInfo.videoId) lyricsBottomSheet.lyrics =
                     Lyrics("", "", "Loading")
+                getSongInfo.coverData?.let { lyricsBottomSheet.coverData = it }
                 lyricsBottomSheet.showWithBlur(
                     this@MainActivity,
                     findViewById(R.id.root),
@@ -432,7 +433,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                                 "newUrl", true
                             )
                         )
-                        finish()
                         true
                     }
                     R.id.menu_queue -> {
