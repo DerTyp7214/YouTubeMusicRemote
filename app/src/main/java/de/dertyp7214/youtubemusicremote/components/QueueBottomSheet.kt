@@ -3,6 +3,7 @@ package de.dertyp7214.youtubemusicremote.components
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.card.MaterialCardView
 import de.dertyp7214.youtubemusicremote.R
@@ -87,6 +90,20 @@ class QueueBottomSheet(
                 blurFunction(false)
             }
             setColors(it)
+        }
+
+        state.observe(this) { state ->
+            when (state) {
+                BottomSheetBehavior.STATE_EXPANDED -> {
+                    root.background = ColorDrawable(Color.WHITE)
+                    setColors(coverData)
+                }
+                else -> {
+                    root.background =
+                        ContextCompat.getDrawable(requireContext(), R.drawable.top_round)
+                    setColors(coverData)
+                }
+            }
         }
 
         setColors(coverData)

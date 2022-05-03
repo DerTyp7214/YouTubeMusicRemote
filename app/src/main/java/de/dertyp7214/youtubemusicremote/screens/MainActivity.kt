@@ -361,16 +361,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         )
     }
 
-    override fun onResume() {
-        super.onResume()
-        webSocket = if (CustomWebSocket.webSocketInstance == null)
-            CustomWebSocket(MediaPlayer.URL, customWebSocketListener, gson = gson)
-        else CustomWebSocket.webSocketInstance!!.also {
-            customWebSocketListener = it.webSocketListener
-        }
-        webSocket.setInstance()
-    }
-
     override fun onBackPressed() {
         if (youtubeViewModel.getSearchOpen() == true) {
             youtubeViewModel.setSearchOpen(false)

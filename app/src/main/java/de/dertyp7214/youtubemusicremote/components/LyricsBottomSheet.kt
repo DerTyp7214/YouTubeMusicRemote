@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
@@ -15,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.MutableLiveData
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.dpToPx
 import de.dertyp7214.youtubemusicremote.core.getFallBackColor
@@ -91,6 +93,20 @@ class LyricsBottomSheet : BaseBottomSheet() {
 
                 coverDataLiveData.observe(this@LyricsBottomSheet) {
                     setColors(it)
+                }
+
+                state.observe(this@LyricsBottomSheet) { state ->
+                    when (state) {
+                        BottomSheetBehavior.STATE_EXPANDED -> {
+                            scrollView.background = ColorDrawable(Color.WHITE)
+                            setColors(coverData)
+                        }
+                        else -> {
+                            scrollView.background =
+                                ContextCompat.getDrawable(requireContext(), R.drawable.top_round)
+                            setColors(coverData)
+                        }
+                    }
                 }
 
                 setLyrics(lyrics.lyrics)

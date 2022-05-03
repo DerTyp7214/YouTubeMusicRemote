@@ -17,7 +17,7 @@ class CustomWebSocket(
     private var okHttpClient: OkHttpClient? = null
 
     fun setUp(): CustomWebSocket {
-        okHttpClient = OkHttpClient.Builder().retryOnConnectionFailure(true).build()
+        okHttpClient = OkHttpClient.Builder().build()
         webSocket = if (url == "devUrl" || url.isBlank()) null else okHttpClient?.newWebSocket(
             Request.Builder().url(url).build(),
             webSocketListener

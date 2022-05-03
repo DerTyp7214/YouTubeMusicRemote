@@ -1,7 +1,10 @@
 package de.dertyp7214.youtubemusicremote.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.WallpaperManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.LightingColorFilter
@@ -13,11 +16,13 @@ import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.MutableLiveData
+import androidx.palette.graphics.Palette
 import androidx.preference.PreferenceManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputLayout
@@ -34,9 +39,12 @@ import de.dertyp7214.youtubemusicremote.core.getFallBackColor
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.*
 import dev.chrisbanes.insetter.applyInsetter
+import kotlin.math.roundToInt
 
 
 class IntroActivity : AppCompatActivity() {
+
+    private val code = (Math.random() * 100).roundToInt()
 
     private lateinit var inputLayout: TextInputLayout
     private lateinit var nextButton: MaterialButton
@@ -68,20 +76,43 @@ class IntroActivity : AppCompatActivity() {
             }
         }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == code && grantResults.first() == PackageManager.PERMISSION_GRANTED)
+            setInputColor(inputLayout)
+    }
+
     @SuppressLint("SetTextI18n")
     private fun setInputColor(inputLayout: TextInputLayout, color: Int? = null) {
         if (color == null) {
-            if (coverLiveData.value == null) ContextCompat.getDrawable(
+            fun fetchCoverData() {
+                if (coverLiveData.value == null) WallpaperManager.getInstance(this).drawable?.apply {
+                    val vibrant = Palette.Builder(toBitmap()).maximumColorCount(32).generate().let {
+                        it.getVibrantColor(it.getMutedColor(it.getDominantColor(Color.CYAN)))
+                    }
+                    blur(this@IntroActivity) {
+                        coverLiveData.postValue(
+                            CoverData(
+                                it,
+                                vibrant = vibrant
+                            )
+                        )
+                    }
+                } else coverLiveData.postValue(coverLiveData.value)
+            }
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) ActivityCompat.requestPermissions(
                 this,
-                R.mipmap.ic_launcher
-            )?.blur(this) {
-                coverLiveData.postValue(
-                    CoverData(
-                        it,
-                        vibrant = ColorUtils.blendARGB(Color.CYAN, Color.GRAY, .5f)
-                    )
-                )
-            } else coverLiveData.postValue(coverLiveData.value)
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                code
+            ) else fetchCoverData()
 
             coverLiveData.observe(this) { coverData ->
                 window.decorView.background = coverData.background?.fitToScreen(this)?.apply {
@@ -248,7 +279,7 @@ class IntroActivity : AppCompatActivity() {
         try {
             val webSocket = CustomWebSocket(
                 if (url.startsWith("ws://")) url else "ws://$url", customWebSocketListener
-            ).setUp()
+            )
 
             customWebSocketListener.onMessage { _, text ->
                 try {
@@ -274,9 +305,13 @@ class IntroActivity : AppCompatActivity() {
 
             customWebSocketListener.onFailure { _, throwable, _ ->
                 throwable.printStackTrace()
-                cb(false, throwable.localizedMessage)
+                throwable.localizedMessage.let { message ->
+                    if (message.equals("socket closed", true)) cb(true, "")
+                    else cb(false, message)
+                }
             }
 
+            webSocket.setUp()
             webSocket.send(SendAction(Action.STATUS))
         } catch (e: Exception) {
             e.printStackTrace()

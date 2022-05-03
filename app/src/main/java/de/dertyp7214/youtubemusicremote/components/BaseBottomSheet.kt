@@ -1,8 +1,13 @@
 package de.dertyp7214.youtubemusicremote.components
 
+import android.app.Dialog
 import android.content.DialogInterface
+import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.dertyp7214.youtubemusicremote.core.blur
 
@@ -10,14 +15,16 @@ open class BaseBottomSheet : BottomSheetDialogFragment() {
     val isShowing
         get() = dialog?.isShowing ?: false
 
+    internal val state: MutableLiveData<Int> = MutableLiveData()
+
     internal open var blurFunction: (Boolean) -> Unit = {}
 
     fun showWithBlur(appCompatActivity: AppCompatActivity, blurContent: View, blurView: View) {
         if (!isShowing && instance == null) {
             blurFunction = { clear: Boolean ->
-                blur(appCompatActivity, blurContent) {
-                    blurView.foreground = if (clear) null else it
-                }
+                if (!clear) blur(appCompatActivity, blurContent) {
+                    blurView.foreground = it
+                } else blurView.foreground = null
             }.also { it(false) }
 
             val oldFragment = appCompatActivity.supportFragmentManager.findFragmentByTag(
@@ -39,6 +46,21 @@ open class BaseBottomSheet : BottomSheetDialogFragment() {
         super.onDismiss(dialog)
         blurFunction(true)
         instance = null
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        return super.onCreateDialog(savedInstanceState).let {
+            val dialog = it as BottomSheetDialog
+            val behavior: BottomSheetBehavior<*> = dialog.behavior
+            behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+                override fun onStateChanged(bottomSheet: View, newState: Int) {
+                    if (newState == BottomSheetBehavior.STATE_HIDDEN) dismiss()
+                    state.postValue(newState)
+                }
+            })
+            dialog
+        }
     }
 
     companion object {
