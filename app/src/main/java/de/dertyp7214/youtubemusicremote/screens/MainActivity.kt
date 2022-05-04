@@ -277,7 +277,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        customWebSocketListener.onFailure { _, throwable, reason ->
+        customWebSocketListener.onFailure { _, throwable, _ ->
             throwable.printStackTrace()
             Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
                 .apply {
@@ -453,6 +453,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     }
 
     private fun changeVolume(volume: Int) {
+        if (!::mainContent.isInitialized || !::volumeWrapper.isInitialized) return
+
         val color = (currentSongInfo.value?.coverData?.dominant ?: Color.BLACK).let {
             it.darkenColor(.7f * ColorUtils.calculateLuminance(it).toFloat())
         }

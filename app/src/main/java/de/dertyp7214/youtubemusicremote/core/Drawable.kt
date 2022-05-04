@@ -36,21 +36,24 @@ fun Drawable.fitToScreen(activity: Activity): Drawable {
 fun Drawable.resize(context: Context, x: Int, y: Int, width: Int, height: Int) =
     BitmapDrawable(context.resources, Bitmap.createBitmap(toBitmap(), x, y, width, height))
 
+data class Size(
+    val x: Int,
+    val y: Int,
+    val width: Int,
+    val height: Int,
+)
+
 fun Drawable.resize(
     context: Context,
-    onResize: (width: Int, height: Int, callback: (x: Int, y: Int, width: Int, height: Int) -> Unit) -> Unit,
-    callback: (Drawable) -> Unit
-) {
+    onResize: (width: Int, height: Int) -> Size
+): Drawable {
     val bitmap = toBitmap()
 
-    onResize(bitmap.width, bitmap.height) { x, y, width, height ->
-        callback(
-            BitmapDrawable(
-                context.resources,
-                Bitmap.createBitmap(bitmap, x, y, width, height)
-            )
-        )
-    }
+    val size = onResize(bitmap.width, bitmap.height)
+    return BitmapDrawable(
+        context.resources,
+        Bitmap.createBitmap(bitmap, size.x, size.y, size.width, size.height)
+    )
 }
 
 fun Drawable.getDominantColor(fallback: Int = Color.BLACK) =

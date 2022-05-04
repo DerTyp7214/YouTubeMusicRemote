@@ -27,6 +27,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 fun <T> doAsync(doInBackground: () -> T, getResult: (result: T) -> Unit) {
     CoroutineScope(Dispatchers.Main).launch {
@@ -49,10 +51,7 @@ fun getFallBackColor(vararg colors: Int): Int {
 }
 
 fun animateInts(
-    intA: Int,
-    intB: Int,
-    duration: Long = 250,
-    callback: (Int) -> Unit
+    intA: Int, intB: Int, duration: Long = 250, callback: (Int) -> Unit
 ) {
     if (!((intA - 1)..(intA + 1)).contains(intB)) {
         val animator = ValueAnimator.ofInt(intA, intB)
@@ -65,10 +64,7 @@ fun animateInts(
 fun View.animateRightMargin(from: Int, to: Int, duration: Long = 250) =
     animateInts(from, to, duration) {
         setMargins(
-            marginLeft,
-            marginTop,
-            it,
-            marginBottom
+            marginLeft, marginTop, it, marginBottom
         )
     }
 
@@ -89,10 +85,7 @@ fun animateColors(
 }
 
 fun ImageView.animateImageTintList(
-    newColor: Int,
-    defaultColor: Int = Color.BLACK,
-    duration: Long = 250,
-    animating: () -> Unit = {}
+    newColor: Int, defaultColor: Int = Color.BLACK, duration: Long = 250, animating: () -> Unit = {}
 ) {
     animateColors(imageTintList?.defaultColor ?: defaultColor, newColor, duration, animating) {
         imageTintList = ColorStateList.valueOf(it)
@@ -106,9 +99,7 @@ fun View.animateBackgroundTintList(
     animating: (Int) -> Unit = {}
 ) {
     animateColors(
-        backgroundTintList?.defaultColor ?: defaultColor,
-        newColor,
-        duration
+        backgroundTintList?.defaultColor ?: defaultColor, newColor, duration
     ) {
         animating(it)
         backgroundTintList = ColorStateList.valueOf(it)
@@ -116,16 +107,10 @@ fun View.animateBackgroundTintList(
 }
 
 fun View.animateForegroundTintList(
-    newColor: Int,
-    defaultColor: Int = Color.BLACK,
-    duration: Long = 250,
-    animating: () -> Unit = {}
+    newColor: Int, defaultColor: Int = Color.BLACK, duration: Long = 250, animating: () -> Unit = {}
 ) {
     animateColors(
-        foregroundTintList?.defaultColor ?: defaultColor,
-        newColor,
-        duration,
-        animating
+        foregroundTintList?.defaultColor ?: defaultColor, newColor, duration, animating
     ) {
         foregroundTintList = ColorStateList.valueOf(it)
     }
@@ -160,13 +145,10 @@ fun TextView.changeTextWithLinks(
                         ds.color = ds.linkColor
                         ds.isUnderlineText = false
                     }
-                },
-                startIndex, endIndex,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                }, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
             )
             spannableString.setSpan(
-                ForegroundColorSpan(textColor),
-                startIndex, endIndex, 0
+                ForegroundColorSpan(textColor), startIndex, endIndex, 0
             )
         }
     }
@@ -205,8 +187,7 @@ fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit
 
                 when (socketResponse.action) {
                     Action.STATUS -> {
-                        val statusData =
-                            gson.fromJson(socketResponse.data, StatusData::class.java)
+                        val statusData = gson.fromJson(socketResponse.data, StatusData::class.java)
 
                         if (statusData.name == "ytmd") callback(true, null)
                         else callback(false, "Invalid name")
@@ -235,3 +216,21 @@ fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit
 
 fun delayed(timeout: Long = 200, callback: () -> Unit) =
     Handler(Looper.getMainLooper()).postDelayed(callback, timeout)
+
+fun getColorDifference(a: Int, b: Int): Double {
+    val lab1 = doubleArrayOf(.0, .0, .0)
+    val lab2 = doubleArrayOf(.0, .0, .0)
+    ColorUtils.colorToLAB(a, lab1)
+    ColorUtils.colorToLAB(b, lab2)
+    return sqrt(
+        (lab2[0] - lab1[0]).pow(2.0) + (lab2[1] - lab1[1]).pow(2.0) + (lab2[2] - lab1[2]).pow(2.0)
+    )
+}
+
+fun invertColor(color: Int): Int {
+    val a = Color.alpha(color)
+    val r = Color.red(color)
+    val g = Color.green(color)
+    val b = Color.blue(color)
+    return Color.argb(a, a - r, a - g, a - b)
+}

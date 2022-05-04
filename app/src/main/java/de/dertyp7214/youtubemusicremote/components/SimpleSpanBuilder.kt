@@ -4,7 +4,7 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.CharacterStyle
 
-class SimpleSpanBuilder() {
+class SimpleSpanBuilder {
     class Span {
         private var startIndex: Int = 0
         internal var text: String

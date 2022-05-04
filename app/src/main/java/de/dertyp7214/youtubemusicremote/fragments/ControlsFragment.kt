@@ -23,46 +23,71 @@ import de.dertyp7214.youtubemusicremote.types.SongInfo
 import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
 import kotlin.math.roundToInt
 
-typealias Callback = () -> Unit
+fun interface Callback {
+    operator fun invoke()
+}
+
+fun interface CallbackT<T> {
+    operator fun invoke(data: T)
+}
 
 class ControlsFragment : Fragment() {
     private var currentSongInfo = SongInfo()
 
-    private var shuffleCallback: Callback = {}
-    private var previousCallback: Callback = {}
-    private var playPauseCallback: Callback = {}
-    private var nextCallback: Callback = {}
-    private var repeatCallback: Callback = {}
-    private var likeCallback: Callback = {}
-    private var dislikeCallback: Callback = {}
-    private var queueCallback: Callback = {}
-    private var lyricsCallback: Callback = {}
-    private var seekBarCallback: (seconds: Int) -> Unit = {}
-    private var volumeCallback: (volume: Int) -> Unit = {}
+    private var shuffleCallback: Callback = Callback { }
+    private var previousCallback: Callback = Callback {}
+    private var playPauseCallback: Callback = Callback {}
+    private var nextCallback: Callback = Callback {}
+    private var repeatCallback: Callback = Callback {}
+    private var likeCallback: Callback = Callback {}
+    private var dislikeCallback: Callback = Callback {}
+    private var queueCallback: Callback = Callback {}
+    private var lyricsCallback: Callback = Callback {}
+    private var seekBarCallback: CallbackT<Int> = CallbackT {}
+    private var volumeCallback: CallbackT<Int> = CallbackT {}
 
-    private var shuffle: ImageButton? = null
-    private var previous: ImageButton? = null
-    private var playPause: FloatingActionButton? = null
-    private var next: ImageButton? = null
-    private var repeat: ImageButton? = null
+    private lateinit var shuffle: ImageButton
+    private lateinit var previous: ImageButton
+    private lateinit var playPause: FloatingActionButton
+    private lateinit var next: ImageButton
+    private lateinit var repeat: ImageButton
 
-    private var like: ImageButton? = null
-    private var dislike: ImageButton? = null
+    private lateinit var like: ImageButton
+    private lateinit var dislike: ImageButton
 
-    private var queue: ImageButton? = null
-    private var lyrics: ImageButton? = null
+    private lateinit var queue: ImageButton
+    private lateinit var lyrics: ImageButton
 
-    private var title: TextView? = null
-    private var artist: TextView? = null
+    private lateinit var title: TextView
+    private lateinit var artist: TextView
 
-    private var progress: TextView? = null
-    private var duration: TextView? = null
+    private lateinit var progress: TextView
+    private lateinit var duration: TextView
 
-    private var seekBar: SeekBar? = null
+    private lateinit var seekBar: SeekBar
 
-    private var layout: View? = null
+    private lateinit var layout: View
+
+    private val initialized
+        get() = ::shuffle.isInitialized &&
+                ::previous.isInitialized &&
+                ::playPause.isInitialized &&
+                ::next.isInitialized &&
+                ::repeat.isInitialized &&
+                ::like.isInitialized &&
+                ::dislike.isInitialized &&
+                ::queue.isInitialized &&
+                ::lyrics.isInitialized &&
+                ::title.isInitialized &&
+                ::artist.isInitialized &&
+                ::progress.isInitialized &&
+                ::duration.isInitialized &&
+                ::seekBar.isInitialized &&
+                ::layout.isInitialized
 
     private var oldBackgroundTint = Color.WHITE
+
+    private var luminance = 0f
 
     private val youtubeViewModel by lazy { ViewModelProvider(requireActivity())[YouTubeViewModel::class.java] }
 
@@ -98,28 +123,28 @@ class ControlsFragment : Fragment() {
     }
 
     fun setSongInfo(songInfo: SongInfo) {
-        if (currentSongInfo == songInfo) return
+        if (currentSongInfo == songInfo || !initialized) return
 
-        shuffle?.setOnClickListener { shuffleCallback() }
-        previous?.setOnClickListener { previousCallback() }
-        playPause?.setOnClickListener { playPauseCallback() }
-        next?.setOnClickListener { nextCallback() }
-        repeat?.setOnClickListener { repeatCallback() }
-        like?.setOnClickListener { likeCallback() }
-        dislike?.setOnClickListener { dislikeCallback() }
-        queue?.setOnClickListener { queueCallback() }
-        lyrics?.setOnClickListener { lyricsCallback() }
-        seekBar?.onProgressChanged { progress, userInput ->
+        shuffle.setOnClickListener { shuffleCallback() }
+        previous.setOnClickListener { previousCallback() }
+        playPause.setOnClickListener { playPauseCallback() }
+        next.setOnClickListener { nextCallback() }
+        repeat.setOnClickListener { repeatCallback() }
+        like.setOnClickListener { likeCallback() }
+        dislike.setOnClickListener { dislikeCallback() }
+        queue.setOnClickListener { queueCallback() }
+        lyrics.setOnClickListener { lyricsCallback() }
+        seekBar.onProgressChanged { progress, userInput ->
             if (userInput) seekBarCallback(progress)
         }
 
-        progress?.changeText(songInfo.elapsedSeconds.toHumanReadable(true))
-        duration?.changeText(songInfo.songDuration.toHumanReadable(true))
+        progress.changeText(songInfo.elapsedSeconds.toHumanReadable(true))
+        duration.changeText(songInfo.songDuration.toHumanReadable(true))
 
-        like?.setImageResource(if (songInfo.liked) R.drawable.ic_liked else R.drawable.ic_like)
-        dislike?.setImageResource(if (songInfo.disliked) R.drawable.ic_disliked else R.drawable.ic_dislike)
+        like.setImageResource(if (songInfo.liked) R.drawable.ic_liked else R.drawable.ic_like)
+        dislike.setImageResource(if (songInfo.disliked) R.drawable.ic_disliked else R.drawable.ic_dislike)
 
-        repeat?.setImageResource(
+        repeat.setImageResource(
             when (songInfo.repeatMode) {
                 RepeatMode.ALL -> R.drawable.ic_repeat
                 RepeatMode.ONE -> R.drawable.ic_repeat_once
@@ -127,132 +152,150 @@ class ControlsFragment : Fragment() {
             }
         )
 
-        playPause?.let { playPause ->
-            val context = try {
-                requireContext()
-            } catch (_: Exception) {
-                null
-            }
-
-            if (currentSongInfo.isPaused != songInfo.isPaused && context != null) {
-                val drawable = ContextCompat.getDrawable(
-                    requireContext(),
-                    if (songInfo.isPaused == false) R.drawable.ic_play_pause else R.drawable.ic_pause_play
-                ) as AnimatedVectorDrawable
-                playPause.setImageDrawable(drawable)
-                drawable.start()
-            }
+        val context = try {
+            requireContext()
+        } catch (_: Exception) {
+            null
         }
 
-        val coverData = songInfo.coverData ?: return
+        if (currentSongInfo.isPaused != songInfo.isPaused && context != null) {
+            val drawable = ContextCompat.getDrawable(
+                requireContext(),
+                if (songInfo.isPaused == false) R.drawable.ic_play_pause else R.drawable.ic_pause_play
+            ) as AnimatedVectorDrawable
+            playPause.setImageDrawable(drawable)
+            drawable.start()
+        }
 
-        seekBar?.let { seekBar ->
+        seekBar.let { seekBar ->
             val duration = songInfo.songDuration.toInt()
             if (seekBar.max != duration) seekBar.max = duration
             seekBar.setProgress(songInfo.elapsedSeconds, true)
         }
 
-        val playPauseColor = getFallBackColor(coverData.vibrant, coverData.muted)
-        playPause?.let { playPause ->
-            playPause.animateImageTintList(
-                if (isDark(playPauseColor)) Color.WHITE else Color.BLACK,
-                -1
-            )
-            playPause.animateBackgroundTintList(playPauseColor, -1)
+        title.isSelected = true
+        artist.isSelected = true
+
+        val coverData = songInfo.coverData ?: return
+
+        if (currentSongInfo.coverData == coverData && currentSongInfo.fields != songInfo.fields) {
+            currentSongInfo = songInfo
+            return
         }
 
-        val luminance = ColorUtils.calculateLuminance(
+        var vibrant = coverData.vibrant
+        luminance = ColorUtils.calculateLuminance(
             coverData.background?.let {
-                val self = layout
                 val activity = try {
                     requireActivity()
                 } catch (_: Exception) {
                     null
                 }
-                if (self != null && activity != null) {
+                if (activity != null) {
                     val bitmap = it.toBitmap()
                     val screenHeight = activity.window.decorView.height.toFloat()
-                    val selfHeight = self.height.toFloat()
+                    val selfHeight = layout.height.toFloat()
                     val ratio = bitmap.height / screenHeight
                     val convertedSelfHeight = selfHeight * ratio
+                    val yB = (bitmap.height - convertedSelfHeight).roundToInt()
                     bitmap.resize(
                         0,
-                        (bitmap.height - convertedSelfHeight).roundToInt(),
+                        yB,
                         bitmap.width,
                         convertedSelfHeight.roundToInt()
                     ).toDrawable(activity)
-                } else it
-            }?.getDominantColor(coverData.dominant) ?: coverData.dominant
-        ).toFloat()
-        val seekColor = ColorUtils.blendARGB(
-            getFallBackColor(coverData.vibrant, coverData.muted),
-            if (luminance < .5) Color.WHITE else Color.BLACK,
-            .6f * luminance
-        )
 
-        seekBar?.let { seekBar ->
-            animateColors(seekBar.progressTintList?.defaultColor ?: Color.WHITE, seekColor) {
-                seekBar.progressTintList = ColorStateList.valueOf(it)
-            }
-            animateColors(seekBar.thumbTintList?.defaultColor ?: Color.WHITE, seekColor) {
-                seekBar.thumbTintList = ColorStateList.valueOf(it)
-            }
-        }
+                    val bitmap2 = it.fitToScreen(activity).toBitmap()
+                    val ratio2 = bitmap2.height / screenHeight
+                    val location = intArrayOf(0, 0)
+                    seekBar.getLocationOnScreen(location)
+
+                    val x = (location[0] * ratio2).roundToInt()
+                    val y = (location[1] * ratio2).roundToInt()
+                    val seekbarBackground = bitmap2.resize(
+                        x, y, bitmap2.width - (x * 2),
+                        (seekBar.height * ratio2).roundToInt()
+                    ).toDrawable(activity)
+                    if (getColorDifference(
+                            seekbarBackground.getDominantColor(coverData.vibrant),
+                            coverData.vibrant
+                        ) < 10
+                    ) vibrant = invertColor(coverData.vibrant)
+                    it.getDominantColor(coverData.dominant)
+                } else it.getDominantColor(coverData.dominant)
+            } ?: coverData.dominant
+        ).toFloat()
 
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 
-        title?.animateTextColor(controlsColor) {
-            val tintList = ColorStateList.valueOf(it)
-
-            shuffle?.imageTintList = tintList
-            previous?.imageTintList = tintList
-            next?.imageTintList = tintList
-            repeat?.imageTintList = tintList
-
-            like?.imageTintList = tintList
-            dislike?.imageTintList = tintList
-
-            queue?.imageTintList = tintList
-            lyrics?.imageTintList = tintList
-
-            progress?.setTextColor(it)
-            duration?.setTextColor(it)
-        }
-
-        title?.changeText(songInfo.title)
-        artist?.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->
+        title.changeText(songInfo.title)
+        artist.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->
             youtubeViewModel.setSearchOpen(true)
             youtubeViewModel.setChannelId(field.link.split("/").last())
         }
 
-        title?.isSelected = true
-        artist?.isSelected = true
+        val playPauseColor = getFallBackColor(vibrant, coverData.muted)
+        playPause.animateImageTintList(
+            if (isDark(playPauseColor)) Color.WHITE else Color.BLACK,
+            -1
+        )
+        playPause.animateBackgroundTintList(playPauseColor, -1) {
+            playPause.outlineSpotShadowColor = it
+            playPause.outlineAmbientShadowColor = it
+        }
+
+        val seekColor = ColorUtils.blendARGB(
+            getFallBackColor(vibrant, coverData.muted),
+            if (luminance < .5) Color.WHITE else Color.BLACK,
+            .6f * luminance
+        )
+
+        animateColors(seekBar.progressTintList?.defaultColor ?: Color.WHITE, seekColor) {
+            seekBar.progressTintList = ColorStateList.valueOf(it)
+            seekBar.thumbTintList = ColorStateList.valueOf(it)
+        }
+
+        title.animateTextColor(controlsColor) {
+            val tintList = ColorStateList.valueOf(it)
+
+            shuffle.imageTintList = tintList
+            previous.imageTintList = tintList
+            next.imageTintList = tintList
+            repeat.imageTintList = tintList
+
+            like.imageTintList = tintList
+            dislike.imageTintList = tintList
+
+            queue.imageTintList = tintList
+            lyrics.imageTintList = tintList
+
+            progress.setTextColor(it)
+            duration.setTextColor(it)
+        }
 
         val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 0)
         if (oldBackgroundTint != backgroundColor) {
-            layout?.let { view ->
-                animateColors(oldBackgroundTint, backgroundColor) {
-                    view.background.setTint(it)
-                }
-                oldBackgroundTint = backgroundColor
+            animateColors(oldBackgroundTint, backgroundColor) {
+                layout.background.setTint(it)
             }
+            oldBackgroundTint = backgroundColor
         }
 
         currentSongInfo = songInfo
     }
 
     fun passCallbacks(
-        shuffle: Callback = {},
-        previous: Callback = {},
-        playPause: Callback = {},
-        next: Callback = {},
-        repeat: Callback = {},
-        like: Callback = {},
-        dislike: Callback = {},
-        queue: Callback = {},
-        lyrics: Callback = {},
-        seek: (seconds: Int) -> Unit = {},
-        volume: (volume: Int) -> Unit = {}
+        shuffle: Callback = Callback {},
+        previous: Callback = Callback {},
+        playPause: Callback = Callback {},
+        next: Callback = Callback {},
+        repeat: Callback = Callback {},
+        like: Callback = Callback {},
+        dislike: Callback = Callback {},
+        queue: Callback = Callback {},
+        lyrics: Callback = Callback {},
+        seek: CallbackT<Int> = CallbackT {},
+        volume: CallbackT<Int> = CallbackT {}
     ) {
         shuffleCallback = shuffle
         previousCallback = previous

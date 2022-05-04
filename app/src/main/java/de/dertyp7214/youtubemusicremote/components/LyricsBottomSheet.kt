@@ -25,7 +25,6 @@ import de.dertyp7214.youtubemusicremote.types.CoverData
 import de.dertyp7214.youtubemusicremote.types.Lyrics
 
 class LyricsBottomSheet : BaseBottomSheet() {
-
     private val lyricsLiveData: MutableLiveData<Lyrics> = MutableLiveData()
     private val coverDataLiveData: MutableLiveData<CoverData> = MutableLiveData()
 

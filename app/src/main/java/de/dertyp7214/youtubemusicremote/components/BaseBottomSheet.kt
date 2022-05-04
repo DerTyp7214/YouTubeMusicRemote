@@ -10,14 +10,17 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.dertyp7214.youtubemusicremote.core.blur
+import java.lang.Float.max
+import java.lang.Float.min
+import kotlin.math.roundToInt
 
 open class BaseBottomSheet : BottomSheetDialogFragment() {
     val isShowing
         get() = dialog?.isShowing ?: false
 
-    internal val state: MutableLiveData<Int> = MutableLiveData()
+    protected val state: MutableLiveData<Int> = MutableLiveData()
 
-    internal open var blurFunction: (Boolean) -> Unit = {}
+    protected open var blurFunction: (Boolean) -> Unit = {}
 
     fun showWithBlur(appCompatActivity: AppCompatActivity, blurContent: View, blurView: View) {
         if (!isShowing && instance == null) {
@@ -59,6 +62,10 @@ open class BaseBottomSheet : BottomSheetDialogFragment() {
                     state.postValue(newState)
                 }
             })
+            val height = requireActivity().window.decorView.height.toFloat()
+            val width = requireActivity().window.decorView.width.toFloat()
+            val peekHeight = max(height, width) - min(height, width) * 9 / 16
+            behavior.setPeekHeight(peekHeight.roundToInt(), true)
             dialog
         }
     }

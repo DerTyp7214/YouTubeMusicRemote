@@ -161,7 +161,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
-        <de.dertyp7214.youtubemusicremote.components.CustomFloatingActionButton
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/playPause"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

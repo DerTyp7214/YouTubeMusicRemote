@@ -18,10 +18,13 @@ class CoverFragment : Fragment() {
 
     private var currentSongInfo = SongInfo()
 
-    private var cover: ImageView? = null
-    private var card: MaterialCardView? = null
+    private lateinit var cover: ImageView
+    private lateinit var card: MaterialCardView
 
-    private var root: View? = null
+    private lateinit var root: View
+
+    private val initialized
+        get() = ::cover.isInitialized && ::card.isInitialized && ::root.isInitialized
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,19 +41,21 @@ class CoverFragment : Fragment() {
     }
 
     fun setSongInfo(songInfo: SongInfo) {
-        if (currentSongInfo == songInfo) return
+        if (currentSongInfo == songInfo || !initialized) return
 
         val coverData = songInfo.coverData ?: return
 
+        if (currentSongInfo.coverData == coverData) return
+
         val cardColor =
             getFallBackColor(coverData.vibrant, coverData.lightMuted, coverData.muted)
-        animateColors(card?.strokeColorStateList?.defaultColor ?: Color.WHITE, cardColor) {
-            card?.outlineAmbientShadowColor = it
-            card?.outlineSpotShadowColor = it
-            card?.strokeColor = it
+        animateColors(card.strokeColorStateList?.defaultColor ?: Color.WHITE, cardColor) {
+            card.outlineAmbientShadowColor = it
+            card.outlineSpotShadowColor = it
+            card.strokeColor = it
         }
 
-        cover?.setImageDrawable(coverData.cover)
+        cover.setImageDrawable(coverData.cover)
 
         val activity = try {
             requireActivity()
@@ -59,7 +64,7 @@ class CoverFragment : Fragment() {
         }
         if (activity != null) {
             val bitmap = coverData.background?.fitToScreen(activity)
-            if (bitmap != null) root?.background = bitmap
+            if (bitmap != null) root.background = bitmap
         }
 
         currentSongInfo = songInfo

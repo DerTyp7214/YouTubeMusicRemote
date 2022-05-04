@@ -10,7 +10,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import jp.wasabeef.glide.transformations.BlurTransformation
 
-
 fun Bitmap.toDrawable(context: Context): Drawable = BitmapDrawable(context.resources, this)
 
 fun Bitmap.resize(x: Int, y: Int, width: Int, height: Int): Bitmap =
