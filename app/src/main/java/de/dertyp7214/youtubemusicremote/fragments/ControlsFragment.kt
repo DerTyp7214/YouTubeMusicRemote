@@ -178,7 +178,7 @@ class ControlsFragment : Fragment() {
 
         val coverData = songInfo.coverData ?: return
 
-        if (currentSongInfo.coverData == coverData && currentSongInfo.fields != songInfo.fields) {
+        if (currentSongInfo.coverData == coverData && currentSongInfo.fields == songInfo.fields) {
             currentSongInfo = songInfo
             return
         }
@@ -186,12 +186,8 @@ class ControlsFragment : Fragment() {
         var vibrant = coverData.vibrant
         luminance = ColorUtils.calculateLuminance(
             coverData.background?.let {
-                val activity = try {
-                    requireActivity()
-                } catch (_: Exception) {
-                    null
-                }
-                if (activity != null) {
+                try {
+                    val activity = requireActivity()
                     val bitmap = it.toBitmap()
                     val screenHeight = activity.window.decorView.height.toFloat()
                     val selfHeight = layout.height.toFloat()
@@ -222,7 +218,9 @@ class ControlsFragment : Fragment() {
                         ) < 10
                     ) vibrant = invertColor(coverData.vibrant)
                     it.getDominantColor(coverData.dominant)
-                } else it.getDominantColor(coverData.dominant)
+                } catch (_: Exception) {
+                    it.getDominantColor(coverData.dominant)
+                }
             } ?: coverData.dominant
         ).toFloat()
 
