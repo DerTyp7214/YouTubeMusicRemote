@@ -46,7 +46,9 @@
             tools:replace="screenOrientation" />
 
         <service android:name=".services.MediaPlayer" />
+
         <receiver android:name=".services.MediaPlayer$Restarter" />
+        <receiver android:name="androidx.mediarouter.media.MediaTransferReceiver" />
     </application>
 
 </manifest>

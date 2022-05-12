@@ -55,10 +55,28 @@ enum class Action {
     LYRICS,
 
     @SerializedName("requestLyrics")
-    REQUEST_LYRICS,
+    REQUEST_LYRICS
+}
 
-    @SerializedName("requestSongInfo")
-    REQUEST_SONG_INFO
+@Suppress("unused")
+enum class SongInfoAction {
+    @SerializedName("default")
+    DEFAULT,
+
+    @SerializedName("video-src-changed")
+    VIDEO_SRC_CHANGED,
+
+    @SerializedName("playPaused")
+    PLAY_PAUSED,
+
+    @SerializedName("playerStatus")
+    PLAYER_STATUS,
+
+    @SerializedName("elapsedSecondsChanged")
+    ELAPSED_SECONDS_CHANGED,
+
+    @SerializedName("volumeChange")
+    VOLUME_CHANGE
 }
 
 data class VideoIdData(

@@ -22,10 +22,25 @@ data class SongInfo(
     var volume: Int = 0,
     val fields: List<Field> = listOf(),
     val isMuted: Boolean = false,
+    val action: SongInfoAction = SongInfoAction.DEFAULT,
 
     @Transient
     var coverData: CoverData? = null
-)
+) {
+    infix fun almostEquals(other: Any?): Boolean {
+        return other is SongInfo
+                && other.fields == fields
+                && other.title == title
+                && other.artist == artist
+                && other.coverData == coverData
+                && other.isPaused == isPaused
+                && other.album == album
+                && other.liked == liked
+                && other.disliked == disliked
+                && other.repeatMode == repeatMode
+                && other.videoId == videoId
+    }
+}
 
 data class Field(
     val text: String,

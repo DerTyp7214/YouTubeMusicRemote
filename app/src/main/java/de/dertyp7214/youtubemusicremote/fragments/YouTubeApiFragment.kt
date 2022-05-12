@@ -166,7 +166,7 @@ class YouTubeApiFragment : Fragment() {
     }
 
     fun setSongInfo(songInfo: SongInfo) {
-        if (currentSongInfo.value == songInfo) return
+        if (!songInfo.srcChanged(currentSongInfo.value)) return
 
         currentSongInfo.value = songInfo
     }

@@ -20,15 +20,13 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
+import androidx.mediarouter.media.MediaRouter
 import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
-import de.dertyp7214.youtubemusicremote.core.checkWebSocket
-import de.dertyp7214.youtubemusicremote.core.delayed
-import de.dertyp7214.youtubemusicremote.core.parseImageColorsAsync
-import de.dertyp7214.youtubemusicremote.core.toMillis
+import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
@@ -101,6 +99,11 @@ class MediaPlayer : Service() {
             mediaStatus.value?.let { status -> buildNotification(status) }
         }
 
+        MediaRouter.getInstance(this).apply {
+            addProvider(CustomMediaRouteProvider(this@MediaPlayer))
+            setMediaSessionCompat(mediaSession)
+        }
+
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
             override fun onPlay() {
                 super.onPlay()
@@ -164,9 +167,11 @@ class MediaPlayer : Service() {
                             gson.fromJson(
                                 socketResponse.data, SongInfo::class.java
                             ).parseImageColorsAsync(applicationContext, currentSongInfo) {
+                                val newNotification =
+                                    it.srcChanged(currentSongInfo) || it.playPaused || it.playerStatus
                                 currentSongInfo = it
                                 MainActivity.currentSongInfo.postValue(it)
-                                startForegroundService(
+                                if (newNotification) startForegroundService(
                                     Intent(
                                         applicationContext,
                                         MediaPlayer::class.java

@@ -178,51 +178,52 @@ class ControlsFragment : Fragment() {
 
         val coverData = songInfo.coverData ?: return
 
-        if (currentSongInfo.coverData == coverData && currentSongInfo.fields == songInfo.fields) {
+        if (currentSongInfo almostEquals songInfo) {
             currentSongInfo = songInfo
             return
         }
 
         var vibrant = coverData.vibrant
-        luminance = ColorUtils.calculateLuminance(
-            coverData.background?.let {
-                try {
-                    val activity = requireActivity()
-                    val bitmap = it.toBitmap()
-                    val screenHeight = activity.window.decorView.height.toFloat()
-                    val selfHeight = layout.height.toFloat()
-                    val ratio = bitmap.height / screenHeight
-                    val convertedSelfHeight = selfHeight * ratio
-                    val yB = (bitmap.height - convertedSelfHeight).roundToInt()
-                    bitmap.resize(
-                        0,
-                        yB,
-                        bitmap.width,
-                        convertedSelfHeight.roundToInt()
-                    ).toDrawable(activity)
+        if (songInfo.srcChanged(currentSongInfo))
+            luminance = ColorUtils.calculateLuminance(
+                coverData.background?.let {
+                    try {
+                        val activity = requireActivity()
+                        val bitmap = it.toBitmap()
+                        val screenHeight = activity.window.decorView.height.toFloat()
+                        val selfHeight = layout.height.toFloat()
+                        val ratio = bitmap.height / screenHeight
+                        val convertedSelfHeight = selfHeight * ratio
+                        val yB = (bitmap.height - convertedSelfHeight).roundToInt()
+                        bitmap.resize(
+                            0,
+                            yB,
+                            bitmap.width,
+                            convertedSelfHeight.roundToInt()
+                        ).toDrawable(activity)
 
-                    val bitmap2 = it.fitToScreen(activity).toBitmap()
-                    val ratio2 = bitmap2.height / screenHeight
-                    val location = intArrayOf(0, 0)
-                    seekBar.getLocationOnScreen(location)
+                        val bitmap2 = it.fitToScreen(activity).toBitmap()
+                        val ratio2 = bitmap2.height / screenHeight
+                        val location = intArrayOf(0, 0)
+                        seekBar.getLocationOnScreen(location)
 
-                    val x = (location[0] * ratio2).roundToInt()
-                    val y = (location[1] * ratio2).roundToInt()
-                    val seekbarBackground = bitmap2.resize(
-                        x, y, bitmap2.width - (x * 2),
-                        (seekBar.height * ratio2).roundToInt()
-                    ).toDrawable(activity)
-                    if (getColorDifference(
-                            seekbarBackground.getDominantColor(coverData.vibrant),
-                            coverData.vibrant
-                        ) < 10
-                    ) vibrant = invertColor(coverData.vibrant)
-                    it.getDominantColor(coverData.dominant)
-                } catch (_: Exception) {
-                    it.getDominantColor(coverData.dominant)
-                }
-            } ?: coverData.dominant
-        ).toFloat()
+                        val x = (location[0] * ratio2).roundToInt()
+                        val y = (location[1] * ratio2).roundToInt()
+                        val seekbarBackground = bitmap2.resize(
+                            x, y, bitmap2.width - (x * 2),
+                            (seekBar.height * ratio2).roundToInt()
+                        ).toDrawable(activity)
+                        if (getColorDifference(
+                                seekbarBackground.getDominantColor(coverData.vibrant),
+                                coverData.vibrant
+                            ) < 10
+                        ) vibrant = invertColor(coverData.vibrant)
+                        it.getDominantColor(coverData.dominant)
+                    } catch (_: Exception) {
+                        it.getDominantColor(coverData.dominant)
+                    }
+                } ?: coverData.dominant
+            ).toFloat()
 
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 

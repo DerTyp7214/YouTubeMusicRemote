@@ -16,4 +16,7 @@
     <string name="reconnect">Reconnect</string>
     <string name="menu_queue">Queue</string>
     <string name="menu_lyrics">Lyrics</string>
+    <string name="media_route_provider_service">MediaRoute Provider Service</string>
+    <string name="custom_route_description">YouTube Remote</string>
+    <string name="custom_route">YouTube Remote</string>
 </resources>

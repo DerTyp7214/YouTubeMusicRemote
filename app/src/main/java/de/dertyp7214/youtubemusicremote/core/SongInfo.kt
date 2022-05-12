@@ -9,6 +9,7 @@ import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.request.RequestOptions
 import de.dertyp7214.youtubemusicremote.types.CoverData
 import de.dertyp7214.youtubemusicremote.types.SongInfo
+import de.dertyp7214.youtubemusicremote.types.SongInfoAction
 import jp.wasabeef.glide.transformations.BlurTransformation
 import jp.wasabeef.glide.transformations.gpu.BrightnessFilterTransformation
 
@@ -46,8 +47,7 @@ fun SongInfo.parseImageColors(context: Context, currentSongInfo: SongInfo): Song
                     MultiTransformation(
                         BrightnessFilterTransformation(
                             -(.5f * luminance)
-                        ),
-                        BlurTransformation(25, 5)
+                        ), BlurTransformation(25, 5)
                     )
                 )
             ).submit().get()
@@ -61,7 +61,16 @@ fun SongInfo.parseImageColors(context: Context, currentSongInfo: SongInfo): Song
 }
 
 fun SongInfo.parseImageColorsAsync(
-    context: Context,
-    currentSongInfo: SongInfo,
-    callback: (SongInfo) -> Unit
+    context: Context, currentSongInfo: SongInfo, callback: (SongInfo) -> Unit
 ) = doAsync({ parseImageColors(context, currentSongInfo) }, callback)
+
+fun SongInfo.srcChanged(currentSongInfo: SongInfo? = this): Boolean {
+    return srcChanged || currentSongInfo == SongInfo()
+}
+
+val SongInfo.srcChanged: Boolean
+    get() = action == SongInfoAction.VIDEO_SRC_CHANGED
+val SongInfo.playPaused: Boolean
+    get() = action == SongInfoAction.PLAY_PAUSED
+val SongInfo.playerStatus: Boolean
+    get() = action == SongInfoAction.PLAYER_STATUS
