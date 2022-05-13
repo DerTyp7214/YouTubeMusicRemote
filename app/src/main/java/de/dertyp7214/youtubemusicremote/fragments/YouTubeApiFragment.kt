@@ -148,7 +148,7 @@ class YouTubeApiFragment : Fragment() {
                                 (groupHeight * ratio).roundToInt()
                             ).toDrawable(activity)
                         } else it
-                    }?.getDominantColor(coverData.parsedDominant) ?: coverData.parsedDominant
+                    }?.dominantColor ?: coverData.parsedDominant
                 )
             ) Color.WHITE else Color.BLACK
 

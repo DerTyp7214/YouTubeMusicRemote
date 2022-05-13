@@ -194,6 +194,9 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
 
             val coverData = songInfo.coverData ?: return
+
+            if (!songInfo.srcChanged(oldSongInfo) && !songInfo.playPaused) return
+
             val controlsColor = if (isDark(
                     coverData.background?.let {
                         if (group != null) {
@@ -206,7 +209,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                                 0, 0, bitmap.width, (groupHeight * ratio).roundToInt()
                             ).toDrawable(activity)
                         } else it
-                    }?.getDominantColor(coverData.parsedDominant) ?: coverData.parsedDominant
+                    }?.dominantColor ?: coverData.parsedDominant
                 )
             ) {
                 window.decorView.windowInsetsController?.setSystemBarsAppearance(

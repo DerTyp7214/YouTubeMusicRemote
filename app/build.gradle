@@ -11,12 +11,11 @@ android {
         applicationId "de.dertyp7214.youtubemusicremote"
         minSdk 30
         targetSdk 32
-        versionCode 122
-        versionName "1.2.2"
+        versionCode 123
+        versionName "1.2.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -43,7 +42,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.12.12'
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'

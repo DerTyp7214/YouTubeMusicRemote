@@ -5,12 +5,11 @@ package de.dertyp7214.youtubemusicremote.core
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.toBitmap
-import androidx.palette.graphics.Palette
 import kotlin.math.roundToInt
+
 
 fun Drawable.fitToScreen(activity: Activity): Drawable {
     val bitmap = toBitmap()
@@ -56,8 +55,13 @@ fun Drawable.resize(
     )
 }
 
-fun Drawable.getDominantColor(fallback: Int = Color.BLACK) =
-    Palette.Builder(toBitmap()).maximumColorCount(32).generate().dominantSwatch?.rgb ?: fallback
+val Drawable.dominantColor: Int
+    get() {
+        val newBitmap = Bitmap.createScaledBitmap(toBitmap(), 1, 1, true)
+        val color = newBitmap.getPixel(0, 0)
+        newBitmap.recycle()
+        return color
+    }
 
 fun Drawable.blur(
     context: Context,

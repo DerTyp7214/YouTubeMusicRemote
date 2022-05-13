@@ -88,6 +88,7 @@ class ControlsFragment : Fragment() {
     private var oldBackgroundTint = Color.WHITE
 
     private var luminance = 0f
+    private var vibrant = 0
 
     private val youtubeViewModel by lazy { ViewModelProvider(requireActivity())[YouTubeViewModel::class.java] }
 
@@ -183,8 +184,8 @@ class ControlsFragment : Fragment() {
             return
         }
 
-        var vibrant = coverData.vibrant
-        if (songInfo.srcChanged(currentSongInfo))
+        if (songInfo.srcChanged(currentSongInfo) || songInfo.playPaused) {
+            vibrant = coverData.vibrant
             luminance = ColorUtils.calculateLuminance(
                 coverData.background?.let {
                     try {
@@ -195,7 +196,7 @@ class ControlsFragment : Fragment() {
                         val ratio = bitmap.height / screenHeight
                         val convertedSelfHeight = selfHeight * ratio
                         val yB = (bitmap.height - convertedSelfHeight).roundToInt()
-                        bitmap.resize(
+                        val drawable = bitmap.resize(
                             0,
                             yB,
                             bitmap.width,
@@ -214,16 +215,17 @@ class ControlsFragment : Fragment() {
                             (seekBar.height * ratio2).roundToInt()
                         ).toDrawable(activity)
                         if (getColorDifference(
-                                seekbarBackground.getDominantColor(coverData.vibrant),
+                                seekbarBackground.dominantColor,
                                 coverData.vibrant
-                            ) < 10
+                            ) < 18
                         ) vibrant = invertColor(coverData.vibrant)
-                        it.getDominantColor(coverData.dominant)
+                        drawable.dominantColor
                     } catch (_: Exception) {
-                        it.getDominantColor(coverData.dominant)
+                        it.dominantColor
                     }
                 } ?: coverData.dominant
             ).toFloat()
+        }
 
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 
