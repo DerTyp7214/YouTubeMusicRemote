@@ -11,6 +11,7 @@ import android.view.View.OnTouchListener
 import android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
 import android.widget.*
 import android.widget.FrameLayout.LayoutParams
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -362,13 +363,17 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             seek = { webSocket.seek(it) },
             volume = { webSocket.send(SendAction(Action.VOLUME, VolumeData(it))) }
         )
-    }
 
-    override fun onBackPressed() {
-        if (youtubeViewModel.getSearchOpen() == true) {
-            youtubeViewModel.setSearchOpen(false)
-            youtubeViewModel.setChannelId(null)
-        } else super.onBackPressed()
+        onBackPressedDispatcher.addCallback(this, true) {
+            if (youtubeViewModel.getSearchOpen() == true) {
+                youtubeViewModel.setSearchOpen(false)
+                youtubeViewModel.setChannelId(null)
+            } else {
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")

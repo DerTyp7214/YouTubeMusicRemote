@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import de.dertyp7214.youtubemusicremote.BuildConfig
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
@@ -184,56 +186,53 @@ class ControlsFragment : Fragment() {
             return
         }
 
-        if (songInfo.srcChanged(currentSongInfo) || songInfo.playPaused) {
-            vibrant = coverData.vibrant
-            luminance = ColorUtils.calculateLuminance(
-                coverData.background?.let {
-                    try {
-                        val activity = requireActivity()
-                        val bitmap = it.toBitmap()
-                        val screenHeight = activity.window.decorView.height.toFloat()
-                        val selfHeight = layout.height.toFloat()
-                        val ratio = bitmap.height / screenHeight
-                        val convertedSelfHeight = selfHeight * ratio
-                        val yB = (bitmap.height - convertedSelfHeight).roundToInt()
-                        val drawable = bitmap.resize(
-                            0,
-                            yB,
-                            bitmap.width,
-                            convertedSelfHeight.roundToInt()
-                        ).toDrawable(activity)
+        vibrant = coverData.vibrant
+        luminance = ColorUtils.calculateLuminance(
+            coverData.background?.let {
+                try {
+                    val activity = requireActivity()
+                    val bitmap = it.toBitmap()
+                    val screenHeight = activity.window.decorView.height.toFloat()
+                    val selfHeight = layout.height.toFloat()
+                    val ratio = bitmap.height / screenHeight
+                    val convertedSelfHeight = selfHeight * ratio
+                    val yB = (bitmap.height - convertedSelfHeight).roundToInt()
+                    val drawable = bitmap.resize(
+                        0,
+                        yB,
+                        bitmap.width,
+                        convertedSelfHeight.roundToInt()
+                    ).toDrawable(activity)
 
-                        val bitmap2 = it.fitToScreen(activity).toBitmap()
-                        val ratio2 = bitmap2.height / screenHeight
-                        val location = intArrayOf(0, 0)
-                        seekBar.getLocationOnScreen(location)
+                    val bitmap2 = it.fitToScreen(activity).toBitmap()
+                    val ratio2 = bitmap2.height / screenHeight
+                    val location = intArrayOf(0, 0)
+                    seekBar.getLocationOnScreen(location)
 
-                        val x = (location[0] * ratio2).roundToInt()
-                        val y = (location[1] * ratio2).roundToInt()
-                        val seekbarBackground = bitmap2.resize(
-                            x, y, bitmap2.width - (x * 2),
-                            (seekBar.height * ratio2).roundToInt()
-                        ).toDrawable(activity)
-                        if (getColorDifference(
-                                seekbarBackground.dominantColor,
-                                coverData.vibrant
-                            ) < 18
-                        ) vibrant = invertColor(coverData.vibrant)
-                        drawable.dominantColor
-                    } catch (_: Exception) {
-                        it.dominantColor
+                    val x = (location[0] * ratio2).roundToInt()
+                    val y = (location[1] * ratio2).roundToInt()
+                    val seekbarBackground = bitmap2.resize(
+                        x, y, bitmap2.width - (x * 2),
+                        (seekBar.height * ratio2).roundToInt()
+                    ).toDrawable(activity)
+                    val debug: (Number) -> Unit = { number ->
+                        if (BuildConfig.DEBUG) Integer.toHexString(number.toInt()).let { s ->
+                            val color = s.length >= 6
+                            if (color) Log.d("COLOR", s)
+                            else Log.d("DIFF", number.toString())
+                        }
                     }
-                } ?: coverData.dominant
-            ).toFloat()
-        }
-
-        val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
-
-        title.changeText(songInfo.title)
-        artist.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->
-            youtubeViewModel.setSearchOpen(true)
-            youtubeViewModel.setChannelId(field.link.split("/").last())
-        }
+                    if (getColorDifference(
+                            seekbarBackground.dominantColor.also(debug),
+                            coverData.vibrant.also(debug)
+                        ).also(debug) < 18
+                    ) vibrant = invertColor(coverData.vibrant)
+                    drawable.dominantColor
+                } catch (_: Exception) {
+                    it.dominantColor
+                }
+            } ?: coverData.dominant
+        ).toFloat()
 
         val playPauseColor = getFallBackColor(vibrant, coverData.muted)
         playPause.animateImageTintList(
@@ -254,6 +253,14 @@ class ControlsFragment : Fragment() {
         animateColors(seekBar.progressTintList?.defaultColor ?: Color.WHITE, seekColor) {
             seekBar.progressTintList = ColorStateList.valueOf(it)
             seekBar.thumbTintList = ColorStateList.valueOf(it)
+        }
+
+        val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
+
+        title.changeText(songInfo.title)
+        artist.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->
+            youtubeViewModel.setSearchOpen(true)
+            youtubeViewModel.setChannelId(field.link.split("/").last())
         }
 
         title.animateTextColor(controlsColor) {

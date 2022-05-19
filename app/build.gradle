@@ -5,14 +5,15 @@ plugins {
 
 android {
     namespace 'de.dertyp7214.youtubemusicremote'
-    compileSdk 32
+    compileSdkPreview = "Tiramisu"
+    buildToolsVersion = "33.0.0 rc4"
 
     defaultConfig {
         applicationId "de.dertyp7214.youtubemusicremote"
         minSdk 30
         targetSdk 32
-        versionCode 123
-        versionName "1.2.3"
+        versionCode 124
+        versionName "1.2.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
