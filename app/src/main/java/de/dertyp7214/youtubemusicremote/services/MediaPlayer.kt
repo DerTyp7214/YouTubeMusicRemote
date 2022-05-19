@@ -203,7 +203,7 @@ class MediaPlayer : Service() {
             ACTION_SHUFFLE -> webSocket?.shuffle()
             ACTION_STOP -> {
                 webSocket?.close()
-                stopForeground(true)
+                stopForeground(STOP_FOREGROUND_REMOVE)
                 OsProcess.killProcess(OsProcess.myPid())
             }
             ACTION_REFETCH -> {
