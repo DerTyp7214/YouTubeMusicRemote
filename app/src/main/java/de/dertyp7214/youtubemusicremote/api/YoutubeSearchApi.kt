@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package de.dertyp7214.youtubemusicremote.api
 
 import com.google.gson.Gson

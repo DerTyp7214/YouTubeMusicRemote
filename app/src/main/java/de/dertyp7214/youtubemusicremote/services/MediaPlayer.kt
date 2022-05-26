@@ -18,6 +18,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.mediarouter.media.MediaRouter
@@ -305,6 +306,7 @@ class MediaPlayer : Service() {
             NotificationCompatMedia.MediaStyle().setMediaSession(mediaSession.sessionToken)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID).apply {
+            setLargeIcon(ContextCompat.getDrawable(this@MediaPlayer, R.drawable.ic_launcher_monochrome)?.toBitmap())
             setSmallIcon(R.drawable.ic_launcher_small)
             setContentIntent(
                 PendingIntent.getActivity(
@@ -346,7 +348,7 @@ class MediaPlayer : Service() {
                 addAction(generateAction(R.drawable.ic_pause, "Pause", ACTION_PLAY_PAUSE))
             else addAction(generateAction(R.drawable.ic_play, "Play", ACTION_PLAY_PAUSE))
             addAction(generateAction(R.drawable.ic_next, "Next", ACTION_NEXT))
-            addAction(generateAction(R.drawable.ic_close, "Stop", ACTION_STOP))
+            addAction(generateAction(R.drawable.ic_shuffle, "Stop", ACTION_SHUFFLE))
         }
         mediaStyle.setShowCancelButton(true)
         mediaStyle.setCancelButtonIntent(generatePendingIntent(ACTION_STOP))

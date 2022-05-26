@@ -12,7 +12,7 @@ import de.dertyp7214.youtubemusicremote.R
 
 class CustomMediaRouteProvider(context: Context) : MediaRouteProvider(context) {
     companion object {
-        const val CATEGORY_CUSTOM_ROUTE = "de.dertyp7214.youtubemusicremote.CATEGORY_CUSTOM_ROUTE"
+        private const val CATEGORY_CUSTOM_ROUTE = "de.dertyp7214.youtubemusicremote.CATEGORY_CUSTOM_ROUTE"
 
         val CONTROL_FILTERS_BASIC = listOf(
             IntentFilter().apply {

@@ -19,7 +19,6 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
@@ -283,7 +282,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
         customWebSocketListener.onFailure { _, throwable, _ ->
             throwable.printStackTrace()
-            Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
+            webSocket.reconnect()
+            /*Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
                 .apply {
                     setAction(R.string.reconnect) {
                         dismiss()
@@ -292,7 +292,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     setBackgroundTint(0xFFFF5151.toInt())
                     setTextColor(Color.WHITE)
                     setActionTextColor(0xFF5151FF.toInt())
-                }.show()
+                }.show()*/
         }
 
         queueItems.observe(this) {
@@ -493,7 +493,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     }
 
     override fun onDestroy() {
-        //sendBroadcast(Intent(this, MediaPlayer.Restarter::class.java))
         startService(
             Intent(this, MediaPlayer::class.java).setAction(MediaPlayer.ACTION_STOP)
         )

@@ -68,9 +68,9 @@ class CustomWebSocket(
     }
 
     fun close() {
-        okHttpClient?.dispatcher()?.executorService()?.shutdown()
-        okHttpClient?.connectionPool()?.evictAll()
-        okHttpClient?.cache()?.close()
+        okHttpClient?.dispatcher?.executorService?.shutdown()
+        okHttpClient?.connectionPool?.evictAll()
+        okHttpClient?.cache?.close()
         webSocket?.cancel()
     }
 

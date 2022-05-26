@@ -1,6 +1,7 @@
 package de.dertyp7214.youtubemusicremote.core
 
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -166,6 +167,7 @@ fun Int.darkenColor(amount: Float): Int {
     })
 }
 
+@SuppressLint("InternalInsetResource", "DiscouragedApi")
 fun Context.getStatusBarHeight(): Int {
     var result = 0
     val resourceId: Int = resources.getIdentifier("status_bar_height", "dimen", "android")
