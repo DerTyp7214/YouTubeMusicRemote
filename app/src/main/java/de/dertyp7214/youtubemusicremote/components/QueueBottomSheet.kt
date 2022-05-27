@@ -30,8 +30,8 @@ import de.dertyp7214.youtubemusicremote.types.QueueItem
 
 class QueueBottomSheet(
     private val onCoverDataChanged: (CoverData) -> Unit = {},
-    private val onLongPress: (View, QueueItem) -> Unit = { _, _ -> },
-    private val onClick: (BottomSheetDialogFragment, QueueItem) -> Unit
+    private val onLongPress: (QueueBottomSheet, View, QueueItem) -> Unit = { _, _, _ -> },
+    private val onClick: (QueueBottomSheet, QueueItem) -> Unit
 ) :
     BaseBottomSheet() {
     private val queueItemsLiveData: MutableLiveData<List<QueueItem>> = MutableLiveData()
@@ -59,7 +59,9 @@ class QueueBottomSheet(
 
         val root: ViewGroup = v.findViewById(R.id.queueRoot)
         val recyclerView: RecyclerView = v.findViewById(R.id.queueRecyclerView)
-        val adapter = QueueItemAdapter(this, items, onLongPress = onLongPress) {
+        val adapter = QueueItemAdapter(this, items, onLongPress = { view, item ->
+            onLongPress(this, view, item)
+        }) {
             onClick(this, it)
         }
 

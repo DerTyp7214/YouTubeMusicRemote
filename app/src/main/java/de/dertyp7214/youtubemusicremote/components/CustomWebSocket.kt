@@ -1,9 +1,7 @@
 package de.dertyp7214.youtubemusicremote.components
 
 import com.google.gson.Gson
-import de.dertyp7214.youtubemusicremote.types.Action
-import de.dertyp7214.youtubemusicremote.types.SeekData
-import de.dertyp7214.youtubemusicremote.types.SendAction
+import de.dertyp7214.youtubemusicremote.types.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -65,6 +63,26 @@ class CustomWebSocket(
 
     fun shuffle() {
         send(SendAction(Action.SHUFFLE))
+    }
+
+    fun volume(volume: Int) {
+        send(SendAction(Action.VOLUME, VolumeData(volume)))
+    }
+
+    fun playQueueItemNext(videoId: String) {
+        send(SendAction(Action.PLAY_QUEUE_ITEM_NEXT, QueueData(videoId)))
+    }
+
+    fun addQueueItemToQueue(videoId: String) {
+        send(SendAction(Action.ADD_QUEUE_ITEM_TO_QUEUE, QueueData(videoId)))
+    }
+
+    fun removeQueueItemFromQueue(videoId: String, position: Int) {
+        send(SendAction(Action.REMOVE_QUEUE_ITEM_FROM_QUEUE, RemoveQueueData(videoId, position)))
+    }
+
+    fun search(query: String) {
+        send(SendAction(Action.SEARCH, SearchData(query)))
     }
 
     fun close() {

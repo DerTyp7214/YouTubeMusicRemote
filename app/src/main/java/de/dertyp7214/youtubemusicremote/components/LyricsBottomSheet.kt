@@ -29,7 +29,7 @@ class LyricsBottomSheet : BaseBottomSheet() {
     private val coverDataLiveData: MutableLiveData<CoverData> = MutableLiveData()
 
     var lyrics: Lyrics
-        get() = lyricsLiveData.value ?: Lyrics("", "", "")
+        get() = lyricsLiveData.value ?: Lyrics.Empty
         set(value) = lyricsLiveData.postValue(value)
 
     var coverData: CoverData
@@ -59,18 +59,36 @@ class LyricsBottomSheet : BaseBottomSheet() {
                 fun setLyrics(lyrics: String) {
                     text = lyrics.let { text ->
                         val lines = text.split('\n')
-                        var spannable = SimpleSpanBuilder() + SimpleSpanBuilder.Span(
-                            "${this@LyricsBottomSheet.lyrics.title}\n\n",
-                            StyleSpan(Typeface.BOLD),
-                            RelativeSizeSpan(1.8f)
-                        )
-                        lines.forEach { line ->
-                            spannable += if (line.trim().startsWith("[")) SimpleSpanBuilder.Span(
-                                "\n$line\n",
+                        var spannable = this@LyricsBottomSheet.lyrics.run {
+                            var spannable = SimpleSpanBuilder() + SimpleSpanBuilder.Span(
+                                if (isEmpty) "Loading\n\n" else "$title\n",
                                 StyleSpan(Typeface.BOLD),
-                                RelativeSizeSpan(1.2f)
+                                RelativeSizeSpan(1.8f)
                             )
-                            else SimpleSpanBuilder.Span("$line\n")
+                            if (!isEmpty) {
+                                spannable += SimpleSpanBuilder.Span(
+                                    "by\n",
+                                    StyleSpan(Typeface.BOLD),
+                                    RelativeSizeSpan(.8f)
+                                )
+                                spannable += SimpleSpanBuilder.Span(
+                                    "$author\n\n",
+                                    StyleSpan(Typeface.BOLD),
+                                    RelativeSizeSpan(1.3f)
+                                )
+                            }
+                            spannable
+                        }
+                        lines.forEach { line ->
+                            if (!line.contains(this@LyricsBottomSheet.lyrics.title, true))
+                                spannable += if (line.trim()
+                                        .startsWith("[")
+                                ) SimpleSpanBuilder.Span(
+                                    "\n$line\n",
+                                    StyleSpan(Typeface.BOLD),
+                                    RelativeSizeSpan(1.2f)
+                                )
+                                else SimpleSpanBuilder.Span("$line\n")
                         }
                         spannable.build()
                     }

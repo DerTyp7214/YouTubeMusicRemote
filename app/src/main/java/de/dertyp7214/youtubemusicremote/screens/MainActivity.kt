@@ -52,20 +52,24 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
-    private val queueBottomSheet = QueueBottomSheet(onLongPress = { view, queueItem ->
-        showMenu(
-            view,
-            SongInfo(
-                title = queueItem.title,
-                artist = queueItem.artist,
-                url = "https://music.youtube.com/watch?v=${queueItem.videoId}"
-            ),
-            R.menu.queue_menu
-        )
-    }) { dialogFragment, queueItem ->
-        webSocket.send(SendAction(Action.QUEUE_VIDEO_ID, VideoIdData(queueItem.videoId)))
-        dialogFragment.dismiss()
-    }
+    private val queueBottomSheet =
+        QueueBottomSheet(onLongPress = { queueBottomSheet, view, queueItem ->
+            showMenu(
+                view,
+                SongInfo(
+                    title = queueItem.title,
+                    artist = queueItem.artist,
+                    videoId = queueItem.videoId,
+                    volume = queueBottomSheet.queueItems.filter { it.videoId == queueItem.videoId }
+                        .indexOf(queueItem),
+                    url = "https://music.youtube.com/watch?v=${queueItem.videoId}"
+                ),
+                R.menu.queue_menu
+            )
+        }) { dialogFragment, queueItem ->
+            webSocket.send(SendAction(Action.QUEUE_VIDEO_ID, VideoIdData(queueItem.videoId)))
+            dialogFragment.dismiss()
+        }
 
     private val lyricsBottomSheet = LyricsBottomSheet()
 
@@ -269,7 +273,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                             Lyrics(
                                 lyrics.lyrics,
                                 getSongInfo.videoId,
-                                getSongInfo.title
+                                getSongInfo.title,
+                                getSongInfo.artist
                             )
                         )
                     }
@@ -312,8 +317,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         currentSongInfo.observe(this) { songInfo ->
             if (lyricsBottomSheet.isShowing && (currentLyrics.value?.videoId
                     ?: "") != songInfo.videoId
-            )
-                webSocket.send(SendAction(Action.REQUEST_LYRICS))
+            ) webSocket.send(SendAction(Action.REQUEST_LYRICS))
             songInfo.parseImageColorsAsync(this, oldSongInfo) {
                 runOnUiThread {
                     setSongInfo(it)
@@ -352,7 +356,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             lyrics = {
                 webSocket.send(SendAction(Action.REQUEST_LYRICS))
                 if (lyricsBottomSheet.lyrics.videoId != getSongInfo.videoId) lyricsBottomSheet.lyrics =
-                    Lyrics("", "", "Loading")
+                    Lyrics.Empty
                 getSongInfo.coverData?.let { lyricsBottomSheet.coverData = it }
                 lyricsBottomSheet.showWithBlur(
                     this@MainActivity,
@@ -361,7 +365,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 )
             },
             seek = { webSocket.seek(it) },
-            volume = { webSocket.send(SendAction(Action.VOLUME, VolumeData(it))) }
+            volume = { webSocket.volume(it) }
         )
 
         onBackPressedDispatcher.addCallback(this, true) {
@@ -453,6 +457,18 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                             findViewById(R.id.root),
                             window.decorView
                         )
+                        true
+                    }
+                    R.id.menu_play_next -> {
+                        webSocket.playQueueItemNext(songInfo.videoId)
+                        true
+                    }
+                    R.id.menu_add_to_queue -> {
+                        webSocket.addQueueItemToQueue(songInfo.videoId)
+                        true
+                    }
+                    R.id.menu_remove_from_queue -> {
+                        webSocket.removeQueueItemFromQueue(songInfo.videoId, songInfo.volume)
                         true
                     }
                     else -> false

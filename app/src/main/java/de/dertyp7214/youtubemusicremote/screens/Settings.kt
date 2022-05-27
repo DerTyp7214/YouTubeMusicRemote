@@ -163,8 +163,8 @@ class Settings : AppCompatActivity() {
 
         window.decorView.rootView.viewTreeObserver.addOnGlobalLayoutListener {
             if (!initialized) {
-                MainActivity.currentSongInfo.value?.coverData?.let { coverLiveData.postValue(it) }
                 setColors()
+                MainActivity.currentSongInfo.value?.coverData?.let { coverLiveData.postValue(it) }
                 initialized = true
             }
         }

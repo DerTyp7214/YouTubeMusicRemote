@@ -175,8 +175,8 @@ class IntroActivity : AppCompatActivity() {
 
         window.decorView.rootView.viewTreeObserver.addOnGlobalLayoutListener {
             if (!initialized) {
-                MainActivity.currentSongInfo.value?.coverData?.let { coverLiveData.postValue(it) }
                 setInputColor(inputLayout)
+                MainActivity.currentSongInfo.value?.coverData?.let { coverLiveData.postValue(it) }
 
                 if (!urls.isNullOrEmpty() && !intent.getBooleanExtra("newUrl", false)) {
                     scanQrCode.isEnabled = false

@@ -55,7 +55,19 @@ enum class Action {
     LYRICS,
 
     @SerializedName("requestLyrics")
-    REQUEST_LYRICS
+    REQUEST_LYRICS,
+
+    @SerializedName("playQueueItemNext")
+    PLAY_QUEUE_ITEM_NEXT,
+
+    @SerializedName("addQueueItemToQueue")
+    ADD_QUEUE_ITEM_TO_QUEUE,
+
+    @SerializedName("removeQueueItemFromQueue")
+    REMOVE_QUEUE_ITEM_FROM_QUEUE,
+
+    @SerializedName("search")
+    SEARCH
 }
 
 @Suppress("unused")
@@ -97,4 +109,17 @@ data class VolumeData(
 
 data class LyricsData(
     val lyrics: String
+)
+
+data class QueueData(
+    val videoId: String
+)
+
+class RemoveQueueData(
+    val videoId: String,
+    val position: Int
+)
+
+data class SearchData(
+    val query: String
 )

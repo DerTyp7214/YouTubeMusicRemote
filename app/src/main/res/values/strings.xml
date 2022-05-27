@@ -28,4 +28,7 @@
     <string name="settings_from_playstore">Installed from PlayStore</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="remove_from_queue">Remove from Queue</string>
+    <string name="add_to_queue">Add to Queue</string>
+    <string name="play_next">Play next</string>
 </resources>
