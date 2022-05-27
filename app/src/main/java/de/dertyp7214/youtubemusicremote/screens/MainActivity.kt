@@ -152,14 +152,14 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         val pageHeight = resources.displayMetrics.heightPixels
-        val youtubeTopMargin = getStatusBarHeight() + 16.dpToPx(this)
+        val youtubeTopMargin = getStatusBarHeight()
         youtubeSearchFrame.setHeight(pageHeight)
         youtubeSearchFrame.setMargins(0, (pageHeight - youtubeTopMargin).inv(), 0, 0)
 
         @Suppress("NAME_SHADOWING")
         fun setMargins(open: Boolean) {
             val pageHeight = resources.displayMetrics.heightPixels
-            val youtubeTopMargin = getStatusBarHeight() + 16.dpToPx(this)
+            val youtubeTopMargin = getStatusBarHeight()
             youtubeSearchFrame.setHeight(pageHeight)
             animateInts(if (open) pageHeight else 0, if (open) 0 else pageHeight) { marginTop ->
                 youtubeSearchFrame.setMargins(
@@ -417,6 +417,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         PopupMenu(this, v, Gravity.END, 0, R.style.Theme_YouTubeMusicRemote).apply {
             setOnMenuItemClickListener {
                 when (it.itemId) {
+                    R.id.menu_settings -> {
+                        startActivity(Intent(this@MainActivity, Settings::class.java))
+                        true
+                    }
                     R.id.menu_toggle_mute -> {
                         webSocket.send(SendAction(Action.MUTE_UNMUTE))
                         true

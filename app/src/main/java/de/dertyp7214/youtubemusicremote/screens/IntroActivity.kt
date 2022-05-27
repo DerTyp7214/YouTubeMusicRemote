@@ -1,7 +1,6 @@
 package de.dertyp7214.youtubemusicremote.screens
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -86,7 +85,6 @@ class IntroActivity : AppCompatActivity() {
             setInputColor(inputLayout)
     }
 
-    @SuppressLint("SetTextI18n")
     private fun setInputColor(inputLayout: TextInputLayout, color: Int? = null) {
         if (color == null) {
             fun fetchCoverData() {

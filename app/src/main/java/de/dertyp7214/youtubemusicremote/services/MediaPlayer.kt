@@ -306,7 +306,12 @@ class MediaPlayer : Service() {
             NotificationCompatMedia.MediaStyle().setMediaSession(mediaSession.sessionToken)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID).apply {
-            setLargeIcon(ContextCompat.getDrawable(this@MediaPlayer, R.drawable.ic_launcher_monochrome)?.toBitmap())
+            setLargeIcon(
+                ContextCompat.getDrawable(
+                    this@MediaPlayer,
+                    R.drawable.ic_launcher_monochrome
+                )?.toBitmap()
+            )
             setSmallIcon(R.drawable.ic_launcher_small)
             setContentIntent(
                 PendingIntent.getActivity(
@@ -320,7 +325,9 @@ class MediaPlayer : Service() {
             setDeleteIntent(generatePendingIntent(ACTION_STOP))
             setStyle(mediaStyle)
 
-            when (mediaStatus.repeatMode) {
+            val useRating = useRatingInNotification
+
+            if (!useRating) when (mediaStatus.repeatMode) {
                 RepeatMode.NONE -> addAction(
                     generateAction(
                         R.drawable.ic_repeat_off,
@@ -342,13 +349,18 @@ class MediaPlayer : Service() {
                         ACTION_REPEAT
                     )
                 )
-            }
+            } else if (metadata.value?.disliked == true)
+                addAction(generateAction(R.drawable.ic_disliked, "Dislike", ACTION_DISLIKE))
+            else addAction(generateAction(R.drawable.ic_dislike, "Dislike", ACTION_DISLIKE))
             addAction(generateAction(R.drawable.ic_previous, "Previews", ACTION_PREVIOUS))
             if (mediaStatus.playing)
                 addAction(generateAction(R.drawable.ic_pause, "Pause", ACTION_PLAY_PAUSE))
             else addAction(generateAction(R.drawable.ic_play, "Play", ACTION_PLAY_PAUSE))
             addAction(generateAction(R.drawable.ic_next, "Next", ACTION_NEXT))
-            addAction(generateAction(R.drawable.ic_shuffle, "Stop", ACTION_SHUFFLE))
+            if (!useRating) addAction(generateAction(R.drawable.ic_shuffle, "Stop", ACTION_SHUFFLE))
+            else if (metadata.value?.liked == true)
+                addAction(generateAction(R.drawable.ic_liked, "Like", ACTION_LIKE))
+            else addAction(generateAction(R.drawable.ic_like, "Like", ACTION_LIKE))
         }
         mediaStyle.setShowCancelButton(true)
         mediaStyle.setCancelButtonIntent(generatePendingIntent(ACTION_STOP))

@@ -8,6 +8,9 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <color name="toolbarBackground">#65000000</color>
+    <color name="statusBarBackground">#B2000000</color>
+
     <color name="ic_launcher_background">#DC3D3D</color>
     <color name="ic_launcher_foreground">#ffffff</color>
 </resources>

@@ -137,9 +137,7 @@ class YouTubeApiFragment : Fragment() {
                             val bitmap = it.toBitmap()
                             val screenHeight = activity.window.decorView.height.toFloat()
                             val groupHeight =
-                                searchInput.height.toFloat() + activity.getStatusBarHeight() + 16.dpToPx(
-                                    activity
-                                )
+                                searchInput.height.toFloat() + activity.getStatusBarHeight()
                             val ratio = bitmap.height / screenHeight
                             bitmap.resize(
                                 0,

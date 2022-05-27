@@ -29,6 +29,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="s">
         <activity
+            android:name=".screens.Settings"
+            android:exported="false" />
+        <activity
             android:name=".screens.IntroActivity"
             android:exported="true">
             <intent-filter>

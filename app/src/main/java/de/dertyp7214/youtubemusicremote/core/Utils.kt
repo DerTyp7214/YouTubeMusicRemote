@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.SpannableString
@@ -172,7 +173,9 @@ fun Context.getStatusBarHeight(): Int {
     var result = 0
     val resourceId: Int = resources.getIdentifier("status_bar_height", "dimen", "android")
     if (resourceId > 0) result = resources.getDimensionPixelSize(resourceId)
-    return result
+    return if (Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2) result * 2 else result + 8.dpToPx(
+        this
+    )
 }
 
 fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit) {
