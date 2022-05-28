@@ -9,3 +9,6 @@ val Context.preferences: SharedPreferences
 
 inline val Context.useRatingInNotification: Boolean
     get() = preferences.getBoolean("useRatingInNotification", false)
+
+inline val Context.customLockscreenOnlyWhilePlaying: Boolean
+    get() = preferences.getBoolean("customLockscreenOnlyWhilePlaying", false)

@@ -459,6 +459,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                         )
                         true
                     }
+                    R.id.menu_start_radio -> {
+                        webSocket.startQueueItemRadio(songInfo.videoId)
+                        true
+                    }
                     R.id.menu_play_next -> {
                         webSocket.playQueueItemNext(songInfo.videoId)
                         true

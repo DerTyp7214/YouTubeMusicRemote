@@ -69,6 +69,10 @@ class CustomWebSocket(
         send(SendAction(Action.VOLUME, VolumeData(volume)))
     }
 
+    fun startQueueItemRadio(videoId: String) {
+        send(SendAction(Action.START_QUEUE_ITEM_RADIO, QueueData(videoId)))
+    }
+
     fun playQueueItemNext(videoId: String) {
         send(SendAction(Action.PLAY_QUEUE_ITEM_NEXT, QueueData(videoId)))
     }

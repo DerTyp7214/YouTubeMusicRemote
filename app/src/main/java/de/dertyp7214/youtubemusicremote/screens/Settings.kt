@@ -1,6 +1,7 @@
 package de.dertyp7214.youtubemusicremote.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
@@ -67,23 +68,6 @@ class Settings : AppCompatActivity() {
                 type = SettingsType.SPACER
             ),
             SettingsElement(
-                "useRatingInNotification",
-                R.string.settings_use_rating_title,
-                R.string.settings_use_rating_subtext,
-                this,
-                SettingsType.SWITCH
-            ) { id, value ->
-                if (value is Boolean) preferences.edit {
-                    putBoolean(id, value)
-                    startForegroundService(
-                        Intent(
-                            applicationContext,
-                            MediaPlayer::class.java
-                        ).setAction(MediaPlayer.ACTION_REFETCH)
-                    )
-                }
-            },
-            SettingsElement(
                 "useCustomLockScreen",
                 R.string.settings_use_custom_lock_screen_title,
                 R.string.settings_use_custom_lock_screen_subtext,
@@ -97,6 +81,35 @@ class Settings : AppCompatActivity() {
                             applicationContext,
                             MediaPlayer::class.java
                         ).setAction(MediaPlayer.ACTION_LOCK_SCREEN)
+                    )
+                }
+            },
+            SettingsElement(
+                "customLockscreenOnlyWhilePlaying",
+                R.string.settings_custom_lock_screen_only_while_playing_title,
+                R.string.settings_custom_lock_screen_only_while_playing_subtext,
+                this,
+                SettingsType.SWITCH,
+                { preferences.getBoolean("useCustomLockScreen", false) }
+            ) { id, value ->
+                if (value is Boolean) preferences.edit {
+                    putBoolean(id, value)
+                }
+            },
+            SettingsElement(
+                "useRatingInNotification",
+                R.string.settings_use_rating_title,
+                R.string.settings_use_rating_subtext,
+                this,
+                SettingsType.SWITCH
+            ) { id, value ->
+                if (value is Boolean) preferences.edit {
+                    putBoolean(id, value)
+                    startForegroundService(
+                        Intent(
+                            applicationContext,
+                            MediaPlayer::class.java
+                        ).setAction(MediaPlayer.ACTION_REFETCH)
                     )
                 }
             }
@@ -193,10 +206,22 @@ class Settings : AppCompatActivity() {
     }
 
     class SettingsAdapter(
-        private val settings: List<SettingsElement>,
+        settings: List<SettingsElement>,
         private val activity: FragmentActivity
     ) : RecyclerView.Adapter<SettingsAdapter.ViewHolder>() {
         private val mutableColor = MutableLiveData<Int>()
+
+        private val settings: List<SettingsElement>
+            get() = field.filter { it.visible(it.id) }
+
+        init {
+            setHasStableIds(true)
+            this.settings = settings
+        }
+
+        override fun getItemId(position: Int): Long {
+            return settings[position].hashCode().toLong()
+        }
 
         open class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
             val root: ViewGroup = v.findViewById(R.id.root)
@@ -230,6 +255,7 @@ class Settings : AppCompatActivity() {
             else -> 0
         }
 
+        @SuppressLint("NotifyDataSetChanged")
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val settingsElement = settings[position]
 
@@ -241,6 +267,7 @@ class Settings : AppCompatActivity() {
                     holder.switch.isChecked = settingsElement.getValue(activity)
                     holder.switch.setOnCheckedChangeListener { _, b ->
                         settingsElement.onClick(settingsElement.id, b)
+                        delayed(250) { this@SettingsAdapter.notifyDataSetChanged() }
                     }
                     holder.root.setOnClickListener {
                         holder.switch.isChecked = !holder.switch.isChecked
@@ -270,6 +297,7 @@ data class SettingsElement(
     val title: String = "",
     val subText: String = "",
     val type: SettingsType = SettingsType.DEFAULT,
+    val visible: (String) -> Boolean = { true },
     val onClick: (String, Any?) -> Unit = { _, _ -> }
 ) {
     constructor(
@@ -278,8 +306,9 @@ data class SettingsElement(
         @StringRes subText: Int,
         context: Context,
         type: SettingsType = SettingsType.DEFAULT,
+        visible: (String) -> Boolean = { true },
         onClick: (String, Any?) -> Unit = { _, _ -> }
-    ) : this(id, context.getString(title), context.getString(subText), type, onClick)
+    ) : this(id, context.getString(title), context.getString(subText), type, visible, onClick)
 
     @Suppress("UNCHECKED_CAST")
     fun <T> getValue(context: Context): T = when (type) {

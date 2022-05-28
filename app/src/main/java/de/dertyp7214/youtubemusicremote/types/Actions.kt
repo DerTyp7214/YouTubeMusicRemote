@@ -57,6 +57,9 @@ enum class Action {
     @SerializedName("requestLyrics")
     REQUEST_LYRICS,
 
+    @SerializedName("startQueueItemRadio")
+    START_QUEUE_ITEM_RADIO,
+
     @SerializedName("playQueueItemNext")
     PLAY_QUEUE_ITEM_NEXT,
 

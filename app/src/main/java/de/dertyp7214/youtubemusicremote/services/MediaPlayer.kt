@@ -201,11 +201,12 @@ class MediaPlayer : Service() {
 
     private val lockScreenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            startActivity(
-                Intent(this@MediaPlayer, LockScreenPlayer::class.java).addFlags(
-                    FLAG_ACTIVITY_NEW_TASK
+            if ((customLockscreenOnlyWhilePlaying && currentSongInfo.isPaused == false) || !customLockscreenOnlyWhilePlaying)
+                startActivity(
+                    Intent(this@MediaPlayer, LockScreenPlayer::class.java).addFlags(
+                        FLAG_ACTIVITY_NEW_TASK
+                    )
                 )
-            )
         }
     }
 
