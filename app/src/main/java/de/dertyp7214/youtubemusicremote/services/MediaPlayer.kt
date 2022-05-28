@@ -7,6 +7,8 @@ import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.media.MediaMetadata
 import android.os.Build
@@ -28,6 +30,7 @@ import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.core.*
+import de.dertyp7214.youtubemusicremote.screens.LockScreenPlayer
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
@@ -48,6 +51,7 @@ class MediaPlayer : Service() {
         const val ACTION_SHUFFLE = "action_shuffle"
         const val ACTION_STOP = "action_stop"
         const val ACTION_REFETCH = "action_refetch"
+        const val ACTION_LOCK_SCREEN = "action_lock_screen"
 
         const val CHANNEL_ID = "MediaNotification"
 
@@ -190,7 +194,19 @@ class MediaPlayer : Service() {
 
         delayed { webSocket?.setUp() }
 
+        handleLockScreenReceiver()
+
         initialized = true
+    }
+
+    private val lockScreenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            startActivity(
+                Intent(this@MediaPlayer, LockScreenPlayer::class.java).addFlags(
+                    FLAG_ACTIVITY_NEW_TASK
+                )
+            )
+        }
     }
 
     private fun handleCustomAction(action: String?) {
@@ -224,6 +240,18 @@ class MediaPlayer : Service() {
                     songInfo.coverData?.cover?.toBitmap()
                 ).apply { if (metadata.value != this) metadata.value = this }
             }
+            ACTION_LOCK_SCREEN -> {
+                handleLockScreenReceiver()
+            }
+        }
+    }
+
+    private fun handleLockScreenReceiver() {
+        if (preferences.getBoolean("useCustomLockScreen", false)) {
+            registerReceiver(lockScreenReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
+        } else try {
+            unregisterReceiver(lockScreenReceiver)
+        } catch (_: Exception) {
         }
     }
 

@@ -82,6 +82,23 @@ class Settings : AppCompatActivity() {
                         ).setAction(MediaPlayer.ACTION_REFETCH)
                     )
                 }
+            },
+            SettingsElement(
+                "useCustomLockScreen",
+                R.string.settings_use_custom_lock_screen_title,
+                R.string.settings_use_custom_lock_screen_subtext,
+                this,
+                SettingsType.SWITCH
+            ) { id, value ->
+                if (value is Boolean) preferences.edit {
+                    putBoolean(id, value)
+                    startForegroundService(
+                        Intent(
+                            applicationContext,
+                            MediaPlayer::class.java
+                        ).setAction(MediaPlayer.ACTION_LOCK_SCREEN)
+                    )
+                }
             }
         )
     }
@@ -229,7 +246,12 @@ class Settings : AppCompatActivity() {
                         holder.switch.isChecked = !holder.switch.isChecked
                     }
                 }
-                else -> holder.root.setOnClickListener { settingsElement.onClick(settingsElement.id, null) }
+                else -> holder.root.setOnClickListener {
+                    settingsElement.onClick(
+                        settingsElement.id,
+                        null
+                    )
+                }
             }
 
             mutableColor.observe(activity) {

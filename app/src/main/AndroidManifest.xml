@@ -29,6 +29,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="s">
         <activity
+            android:name=".screens.LockScreenPlayer"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showOnLockScreen="true"
+            android:theme="@style/Theme.YouTubeMusicRemote.FullScreen" />
+        <activity
             android:name=".screens.Settings"
             android:exported="false" />
         <activity
