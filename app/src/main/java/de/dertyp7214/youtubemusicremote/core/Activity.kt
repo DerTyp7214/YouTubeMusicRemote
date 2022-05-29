@@ -14,3 +14,6 @@ fun Activity.verifyInstallerId(): Boolean {
 }
 
 fun Activity.openUrl(url: String) = startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+
+inline val Activity.screenBounds
+    get() = windowManager.currentWindowMetrics.bounds

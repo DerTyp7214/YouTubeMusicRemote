@@ -97,6 +97,18 @@ class Settings : AppCompatActivity() {
                 }
             },
             SettingsElement(
+                "visualizeAudio",
+                R.string.settings_custom_lock_screen_visualize_audio_title,
+                R.string.settings_custom_lock_screen_visualize_audio_subtext,
+                this,
+                SettingsType.SWITCH,
+                { preferences.getBoolean("useCustomLockScreen", false) }
+            ) { id, value ->
+                if (value is Boolean) preferences.edit {
+                    putBoolean(id, value)
+                }
+            },
+            SettingsElement(
                 "useRatingInNotification",
                 R.string.settings_use_rating_title,
                 R.string.settings_use_rating_subtext,

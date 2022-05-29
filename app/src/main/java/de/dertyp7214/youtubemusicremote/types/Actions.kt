@@ -70,7 +70,10 @@ enum class Action {
     REMOVE_QUEUE_ITEM_FROM_QUEUE,
 
     @SerializedName("search")
-    SEARCH
+    SEARCH,
+
+    @SerializedName("audioData")
+    AUDIO_DATA
 }
 
 @Suppress("unused")
@@ -125,4 +128,8 @@ class RemoveQueueData(
 
 data class SearchData(
     val query: String
+)
+
+data class AudioDataData(
+    val data: List<Short>
 )

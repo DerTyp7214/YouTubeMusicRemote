@@ -36,4 +36,6 @@
     <string name="start_radio">Start radio</string>
     <string name="settings_custom_lock_screen_only_while_playing_title">Only while Playing</string>
     <string name="settings_custom_lock_screen_only_while_playing_subtext">Open custom Lockscreen only while music is Playing</string>
+    <string name="settings_custom_lock_screen_visualize_audio_title">Visualize Audio</string>
+    <string name="settings_custom_lock_screen_visualize_audio_subtext">Visualize audio on the bottom of the screen</string>
 </resources>
