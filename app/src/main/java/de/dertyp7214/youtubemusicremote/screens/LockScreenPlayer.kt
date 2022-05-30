@@ -5,12 +5,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.os.BatteryManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View.GONE
 import android.view.WindowInsets
@@ -24,6 +22,7 @@ import com.google.gson.Gson
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.core.dpToPx
+import de.dertyp7214.youtubemusicremote.core.easeInQuad
 import de.dertyp7214.youtubemusicremote.core.preferences
 import de.dertyp7214.youtubemusicremote.core.screenBounds
 import de.dertyp7214.youtubemusicremote.types.*
@@ -33,12 +32,57 @@ import kotlin.math.roundToInt
 
 class LockScreenPlayer : AppCompatActivity() {
 
+    private class MRoundedCorner(windowInsets: WindowInsets, position: Int) {
+        val position: Int
+        val radius: Int
+        val center: Point
+
+        init {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val cornerRadius = windowInsets.getRoundedCorner(position)
+                this.position = cornerRadius?.position ?: 0
+                this.radius = cornerRadius?.radius ?: 0
+                this.center = cornerRadius?.center ?: Point(0, 0)
+            } else {
+                this.position = 0
+                this.radius = 0
+                this.center = Point(0, 0)
+            }
+        }
+
+        override fun toString(): String {
+            return "[position:$position,radius:$radius,center:$center]"
+        }
+
+        companion object {
+            const val POSITION_BOTTOM_LEFT = 3
+            const val POSITION_BOTTOM_RIGHT = 2
+            const val POSITION_TOP_LEFT = 0
+            const val POSITION_TOP_RIGHT = 1
+        }
+    }
+
     private val coverData = MutableLiveData<CoverData>()
     private val songInfo = MutableLiveData<SongInfo>()
     private val timeData = MutableLiveData<String>()
     private val audioData = MutableLiveData<List<Short>>()
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
+
+    private lateinit var windowInsets: WindowInsets
+
+    private val bottomLeftCorner by lazy {
+        MRoundedCorner(
+            windowInsets,
+            MRoundedCorner.POSITION_BOTTOM_LEFT
+        )
+    }
+    private val bottomRightCorner by lazy {
+        MRoundedCorner(
+            windowInsets,
+            MRoundedCorner.POSITION_BOTTOM_RIGHT
+        )
+    }
 
     private val getSongInfo
         get() = songInfo.value ?: SongInfo()
@@ -162,20 +206,26 @@ class LockScreenPlayer : AppCompatActivity() {
         }
 
         val screenWidth = screenBounds.width()
-        val bitmap = Bitmap.createBitmap(screenWidth, 50.dpToPx(this), Bitmap.Config.ARGB_8888)
+        val bitmap =
+            Bitmap.createBitmap(screenWidth, 150.dpToPx(this), Bitmap.Config.ARGB_8888)
 
         visualization.setImageBitmap(bitmap)
 
         audioData.observe(this) {
-            drawOnBitmap(it.reversed() + it, bitmap)
+            drawOnBitmap(it, bitmap)
             visualization.setImageDrawable(BitmapDrawable(resources, bitmap))
         }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        windowInsets = window.decorView.rootWindowInsets
     }
 
     private fun drawOnBitmap(audioData: List<Short>, bitmap: Bitmap) {
         val width = bitmap.width.toFloat()
         val height = bitmap.height.toFloat()
-        val barWidth = (width / audioData.size).roundToInt() - 2
+        val barWidth = (width / audioData.size).roundToInt() - 1
 
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.BLACK)
@@ -186,16 +236,29 @@ class LockScreenPlayer : AppCompatActivity() {
         paint.alpha = 128
         var i = 0
         while (i < audioData.size) {
-            val barHeight = height / 256f * audioData[i]
+            val barHeight = height / 256f * (audioData[i] * .2f)
 
-            if (width - i.toFloat() * (barWidth + 2) > barWidth)
-                canvas.drawRect(
-                    i.toFloat() * (barWidth + 2),
-                    height - barHeight,
-                    width - (width - ((barWidth + 2) * i)) + barWidth,
-                    height,
-                    paint
-                )
+            val x = i.toFloat() * (barWidth + 2)
+
+            val cornerBottomSpace = if (::windowInsets.isInitialized && barHeight != 0f) {
+                val leftRadius = bottomLeftCorner.radius * 1.1f
+                val rightRadius = bottomRightCorner.radius * 1.1f
+                if (x + barWidth < bottomLeftCorner.center.x + bottomLeftCorner.radius * .1f) {
+                    val point = leftRadius - x
+                    point.easeInQuad(1f / leftRadius * point)
+                } else if (x - barWidth > (bottomRightCorner.center.x - bottomRightCorner.radius * .1f)) {
+                    val point = x - bottomRightCorner.center.x + bottomRightCorner.radius * .1f
+                    point.easeInQuad(1f / rightRadius * point)
+                } else 0f
+            } else 0f
+
+            canvas.drawRect(
+                x,
+                height - barHeight - cornerBottomSpace,
+                width - (width - ((barWidth + 2) * i)) + barWidth,
+                height,
+                paint
+            )
 
             i++
         }
