@@ -5,6 +5,7 @@ on:
     branches: [ master, rCompatible, rCompatible-Dev ]
     paths:
       - 'app/**'
+      - 'audiovisualization/**'
       - 'gradle/**'
       - 'build.gradle.kts'
       - 'gradle.properties'
