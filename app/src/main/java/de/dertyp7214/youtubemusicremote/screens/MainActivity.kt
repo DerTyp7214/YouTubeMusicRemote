@@ -119,6 +119,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        overridePendingTransition(R.anim.slide_in_bottom, R.anim.slide_out_top)
         setContentView(R.layout.activity_main)
 
         window.setFlags(
@@ -172,6 +173,9 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 pageLayout.setMargins(0, 0, 0, marginTop - pageHeight)
             }
         }
+
+        val audioLiveData = MutableLiveData<List<Short>>()
+        coverFragment.setAudioData(audioLiveData)
 
         youtubeViewModel.observerSearchOpen(this) { open ->
             setMargins(open)
@@ -278,6 +282,12 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                             )
                         )
                     }
+                    Action.AUDIO_DATA -> {
+                        val audioDataData = gson.fromJson(
+                            text, AudioDataData::class.java
+                        )
+                        audioLiveData.postValue(audioDataData.data)
+                    }
                     else -> {}
                 }
             } catch (e: Exception) {
@@ -378,6 +388,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 isEnabled = true
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        overridePendingTransition(R.anim.slide_in_bottom, R.anim.slide_out_top)
     }
 
     @SuppressLint("ClickableViewAccessibility")

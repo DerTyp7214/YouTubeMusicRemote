@@ -5,8 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.Point
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
@@ -19,15 +18,15 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
+import de.dertyp7214.audiovisualization.components.AudioVisualizerView
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
-import de.dertyp7214.youtubemusicremote.core.dpToPx
-import de.dertyp7214.youtubemusicremote.core.easeInQuad
-import de.dertyp7214.youtubemusicremote.core.preferences
-import de.dertyp7214.youtubemusicremote.core.screenBounds
+import de.dertyp7214.youtubemusicremote.core.customLockscreenVisualizeAudio
+import de.dertyp7214.youtubemusicremote.core.customLockscreenVisualizeAudioSize
 import de.dertyp7214.youtubemusicremote.types.*
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class LockScreenPlayer : AppCompatActivity() {
@@ -50,6 +49,9 @@ class LockScreenPlayer : AppCompatActivity() {
             }
         }
 
+        val corner: AudioVisualizerView.Corner
+            get() = AudioVisualizerView.Corner(radius)
+
         override fun toString(): String {
             return "[position:$position,radius:$radius,center:$center]"
         }
@@ -65,7 +67,6 @@ class LockScreenPlayer : AppCompatActivity() {
     private val coverData = MutableLiveData<CoverData>()
     private val songInfo = MutableLiveData<SongInfo>()
     private val timeData = MutableLiveData<String>()
-    private val audioData = MutableLiveData<List<Short>>()
 
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
@@ -83,6 +84,8 @@ class LockScreenPlayer : AppCompatActivity() {
             MRoundedCorner.POSITION_BOTTOM_RIGHT
         )
     }
+
+    private val visualization by lazy { findViewById<AudioVisualizerView>(R.id.visualization) }
 
     private val getSongInfo
         get() = songInfo.value ?: SongInfo()
@@ -118,8 +121,6 @@ class LockScreenPlayer : AppCompatActivity() {
         val prevButton: ImageButton = findViewById(R.id.prevButton)
         val playPauseButton: ImageButton = findViewById(R.id.playPauseButton)
         val nextButton: ImageButton = findViewById(R.id.nextButton)
-
-        val visualization: ImageView = findViewById(R.id.visualization)
 
         prevButton.setOnClickListener {
             CustomWebSocket.webSocketInstance?.previous()
@@ -158,7 +159,7 @@ class LockScreenPlayer : AppCompatActivity() {
 
         timeCheck()
 
-        if (preferences.getBoolean("visualizeAudio", false))
+        if (customLockscreenVisualizeAudio)
             CustomWebSocket.webSocketInstance?.webSocketListener?.apply {
                 onMessage { _, text ->
                     try {
@@ -169,7 +170,8 @@ class LockScreenPlayer : AppCompatActivity() {
                                 val audioDataData = gson.fromJson(
                                     text, AudioDataData::class.java
                                 )
-                                audioData.postValue(audioDataData.data)
+                                val audioArray = audioDataData.data
+                                visualization.setAudioData(audioArray, true)
                             }
                             else -> {}
                         }
@@ -204,63 +206,14 @@ class LockScreenPlayer : AppCompatActivity() {
         timeData.observe(this) {
             time.text = it
         }
-
-        val screenWidth = screenBounds.width()
-        val bitmap =
-            Bitmap.createBitmap(screenWidth, 150.dpToPx(this), Bitmap.Config.ARGB_8888)
-
-        visualization.setImageBitmap(bitmap)
-
-        audioData.observe(this) {
-            drawOnBitmap(it, bitmap)
-            visualization.setImageDrawable(BitmapDrawable(resources, bitmap))
-        }
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         windowInsets = window.decorView.rootWindowInsets
-    }
 
-    private fun drawOnBitmap(audioData: List<Short>, bitmap: Bitmap) {
-        val width = bitmap.width.toFloat()
-        val height = bitmap.height.toFloat()
-        val barWidth = (width / audioData.size).roundToInt() - 1
-
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(Color.BLACK)
-        canvas.drawRect(0f, 0f, 0f, 0f, Paint())
-
-        val paint = Paint()
-        paint.color = Color.WHITE
-        paint.alpha = 128
-        var i = 0
-        while (i < audioData.size) {
-            val barHeight = height / 256f * (audioData[i] * .2f)
-
-            val x = i.toFloat() * (barWidth + 2)
-
-            val cornerBottomSpace = if (::windowInsets.isInitialized && barHeight != 0f) {
-                val leftRadius = bottomLeftCorner.radius * 1.1f
-                val rightRadius = bottomRightCorner.radius * 1.1f
-                if (x + barWidth < bottomLeftCorner.center.x + bottomLeftCorner.radius * .1f) {
-                    val point = leftRadius - x
-                    point.easeInQuad(1f / leftRadius * point)
-                } else if (x - barWidth > (bottomRightCorner.center.x - bottomRightCorner.radius * .1f)) {
-                    val point = x - bottomRightCorner.center.x + bottomRightCorner.radius * .1f
-                    point.easeInQuad(1f / rightRadius * point)
-                } else 0f
-            } else 0f
-
-            canvas.drawRect(
-                x,
-                height - barHeight - cornerBottomSpace,
-                width - (width - ((barWidth + 2) * i)) + barWidth,
-                height,
-                paint
-            )
-
-            i++
-        }
+        visualization.size = 2f.pow(customLockscreenVisualizeAudioSize).roundToInt()
+        visualization.setBottomLeftCorner(bottomLeftCorner.corner)
+        visualization.setBottomRightCorner(bottomRightCorner.corner)
     }
 }

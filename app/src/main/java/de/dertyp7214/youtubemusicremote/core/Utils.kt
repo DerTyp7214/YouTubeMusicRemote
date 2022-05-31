@@ -48,8 +48,8 @@ fun isDark(color: Int): Boolean {
 }
 
 fun getFallBackColor(vararg colors: Int): Int {
-    colors.forEach { if (it != -1) return it }
-    return -1
+    colors.forEach { if (it != Color.TRANSPARENT) return it }
+    return Color.TRANSPARENT
 }
 
 fun animateInts(

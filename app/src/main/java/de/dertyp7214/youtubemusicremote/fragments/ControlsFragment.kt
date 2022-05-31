@@ -234,6 +234,8 @@ class ControlsFragment : Fragment() {
             } ?: coverData.dominant
         ).toFloat()
 
+        CoverFragment.instance?.visualizeColor(getFallBackColor(vibrant, coverData.muted))
+
         val playPauseColor = getFallBackColor(vibrant, coverData.muted)
         playPause.animateImageTintList(
             if (isDark(playPauseColor)) Color.WHITE else Color.BLACK,

@@ -248,7 +248,7 @@ class MediaPlayer : Service() {
     }
 
     private fun handleLockScreenReceiver() {
-        if (preferences.getBoolean("useCustomLockScreen", false)) {
+        if (useCustomLockScreen) {
             registerReceiver(lockScreenReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
         } else try {
             unregisterReceiver(lockScreenReceiver)
