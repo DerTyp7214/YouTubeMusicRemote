@@ -89,6 +89,30 @@ class CustomWebSocket(
         send(SendAction(Action.SEARCH, SearchData(query)))
     }
 
+    fun showShelf(index: Int) {
+        send(SendAction(Action.SHOW_SHELF, ShowShelfData(index)))
+    }
+
+    fun playSearchSong(index: Int, shelf: Int? = null) {
+        send(SendAction(Action.PLAY_SEARCH_SONG, PlaySearchSongData(index, shelf)))
+    }
+
+    fun requestPlaylists() {
+        send(SendAction(Action.REQUEST_PLAYLISTS))
+    }
+
+    fun requestPlaylist(index: Int) {
+        send(SendAction(Action.REQUEST_PLAYLIST, RequestPlaylistData(index)))
+    }
+
+    fun playPlaylist(shuffle: Boolean, index: Int) {
+        send(SendAction(Action.PLAY_PLAYLIST, PlayPlaylistData(shuffle, index)))
+    }
+
+    fun openPlayer() {
+        send(SendAction(Action.OPEN_PLAYER))
+    }
+
     fun close() {
         okHttpClient?.dispatcher?.executorService?.shutdown()
         okHttpClient?.connectionPool?.evictAll()

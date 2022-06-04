@@ -35,7 +35,8 @@
             <de.dertyp7214.audiovisualization.components.AudioVisualizerView
                 android:id="@+id/visualizer"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                tools:testInput="true" />
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

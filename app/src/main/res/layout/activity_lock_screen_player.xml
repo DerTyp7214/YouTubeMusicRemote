@@ -102,9 +102,10 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@null"
+            android:contentDescription="Previous"
             app:srcCompat="@drawable/ic_previous"
             app:tint="@android:color/white"
-            tools:ignore="ContentDescription" />
+            tools:ignore="HardcodedText" />
 
         <Space
             android:layout_width="wrap_content"
@@ -116,9 +117,10 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@null"
+            android:contentDescription="Play Pause"
             app:srcCompat="@drawable/ic_pause"
             app:tint="@android:color/white"
-            tools:ignore="ContentDescription" />
+            tools:ignore="HardcodedText" />
 
         <Space
             android:layout_width="wrap_content"
@@ -130,9 +132,10 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@null"
+            android:contentDescription="Next"
             app:srcCompat="@drawable/ic_next"
             app:tint="@android:color/white"
-            tools:ignore="ContentDescription" />
+            tools:ignore="HardcodedText" />
 
         <Space
             android:layout_width="wrap_content"
@@ -147,7 +150,9 @@
         android:alpha=".2"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:size="128"
+        tools:testInput="true" />
 
     <TextView
         android:id="@+id/battery"

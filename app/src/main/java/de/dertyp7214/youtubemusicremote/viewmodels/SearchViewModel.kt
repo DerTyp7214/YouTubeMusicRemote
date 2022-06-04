@@ -5,9 +5,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 
-class YouTubeViewModel : ViewModel() {
+class SearchViewModel : ViewModel() {
     private val searchOpen = MutableLiveData(false)
     private val channelId = MutableLiveData<String?>(null)
+    private val query = MutableLiveData<String?>(null)
 
     fun setSearchOpen(open: Boolean) {
         searchOpen.value = open
@@ -31,5 +32,17 @@ class YouTubeViewModel : ViewModel() {
 
     fun observeChannelId(owner: LifecycleOwner, observer: Observer<String?>) {
         channelId.observe(owner, observer)
+    }
+
+    fun setQuery(query: String?) {
+        this.query.value = query
+    }
+
+    fun getQuery(): String? {
+        return query.value
+    }
+
+    fun observeQuery(owner: LifecycleOwner, observer: Observer<String?>) {
+        query.observe(owner, observer)
     }
 }

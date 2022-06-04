@@ -28,7 +28,7 @@ import de.dertyp7214.youtubemusicremote.types.Action
 import de.dertyp7214.youtubemusicremote.types.SendAction
 import de.dertyp7214.youtubemusicremote.types.SongInfo
 import de.dertyp7214.youtubemusicremote.types.VideoIdData
-import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
+import de.dertyp7214.youtubemusicremote.viewmodels.SearchViewModel
 import kotlin.math.roundToInt
 
 @SuppressLint("NotifyDataSetChanged")
@@ -41,7 +41,7 @@ class YouTubeApiFragment : Fragment() {
 
     private val items: ArrayList<YouTubeSearchItem> = arrayListOf()
 
-    private val youtubeViewModel by lazy { ViewModelProvider(requireActivity())[YouTubeViewModel::class.java] }
+    private val youtubeViewModel by lazy { ViewModelProvider(requireActivity())[SearchViewModel::class.java] }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

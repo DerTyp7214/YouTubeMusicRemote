@@ -10,7 +10,7 @@
     tools:context=".screens.MainActivity">
 
     <FrameLayout
-        android:id="@+id/youtubeSearch"
+        android:id="@+id/searchLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="0dp">
@@ -21,7 +21,7 @@
         android:id="@+id/pageLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/youtubeSearch">
+        android:layout_below="@+id/searchLayout">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/mainContent"
@@ -78,7 +78,9 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/group"
-                tools:ignore="UselessLeaf" />
+                tools:ignore="UselessLeaf"
+                tools:layout="@layout/fragment_cover"
+                tools:name="de.dertyp7214.youtubemusicremote.fragments.CoverFragment" />
 
             <FrameLayout
                 android:id="@+id/controlFrame"
@@ -87,7 +89,9 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                tools:ignore="UselessLeaf" />
+                tools:ignore="UselessLeaf"
+                tools:layout="@layout/fragment_controls"
+                tools:name="de.dertyp7214.youtubemusicremote.fragments.ControlsFragment" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

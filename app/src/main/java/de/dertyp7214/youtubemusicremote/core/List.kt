@@ -2,12 +2,6 @@ package de.dertyp7214.youtubemusicremote.core
 
 import kotlin.math.roundToInt
 
-fun <T> filledList(entry: T, amount: Int): List<T> {
-    val tmp = ArrayList<T>()
-    for (i in 0 until amount) tmp.add(entry)
-    return tmp
-}
-
 fun List<Short>.changeSize(newSize: Int): List<Short> {
     val tmp = ArrayList<Short>()
     val factor = newSize.toFloat() / size

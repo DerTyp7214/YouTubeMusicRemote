@@ -21,6 +21,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginTop
+import androidx.fragment.app.Fragment
 import com.google.gson.Gson
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
@@ -177,6 +178,8 @@ fun Context.getStatusBarHeight(): Int {
         this
     )
 }
+
+fun Fragment.getStatusBarHeight() = requireContext().getStatusBarHeight()
 
 fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit) {
     val customWebSocketListener = CustomWebSocketListener()

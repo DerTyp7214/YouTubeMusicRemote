@@ -42,4 +42,6 @@
     <string name="settings_visualize_audio_subtext">Visualize Audio on top of Cover</string>
     <string name="settings_visualize_audio_size_title">Size of Visualizer</string>
     <string name="settings_visualize_audio_size_subtext">Band count 2^{{value}}</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="show_all">Show all</string>
 </resources>

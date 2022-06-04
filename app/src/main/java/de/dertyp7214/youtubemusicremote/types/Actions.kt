@@ -69,11 +69,41 @@ enum class Action {
     @SerializedName("removeQueueItemFromQueue")
     REMOVE_QUEUE_ITEM_FROM_QUEUE,
 
+    @SerializedName("audioData")
+    AUDIO_DATA,
+
+    @SerializedName("requestPlaylists")
+    REQUEST_PLAYLISTS,
+
+    @SerializedName("requestPlaylist")
+    REQUEST_PLAYLIST,
+
+    @SerializedName("playlists")
+    PLAYLISTS,
+
+    @SerializedName("playlist")
+    PLAYLIST,
+
+    @SerializedName("playPlaylist")
+    PLAY_PLAYLIST,
+
     @SerializedName("search")
     SEARCH,
 
-    @SerializedName("audioData")
-    AUDIO_DATA
+    @SerializedName("searchMainResults")
+    SEARCH_MAIN_RESULT,
+
+    @SerializedName("showShelf")
+    SHOW_SHELF,
+
+    @SerializedName("showShelfResults")
+    SHOW_SHELF_RESULTS,
+
+    @SerializedName("playSearchSong")
+    PLAY_SEARCH_SONG,
+
+    @SerializedName("openPlayer")
+    OPEN_PLAYER
 }
 
 @Suppress("unused")
@@ -126,10 +156,56 @@ class RemoveQueueData(
     val position: Int
 )
 
+data class AudioDataData(
+    val data: List<Short>
+)
+
+data class RequestPlaylistData(
+    val index: Int
+)
+
+data class PlayPlaylistData(
+    val shuffle: Boolean,
+    val index: Int
+)
+
 data class SearchData(
     val query: String
 )
 
-data class AudioDataData(
-    val data: List<Short>
+data class SearchMainResultData(
+    val index: Int,
+    val title: String,
+    val type: String,
+    val entries: List<EntryData>,
+    val showAll: Boolean
+)
+
+data class EntryData(
+    val index: Int,
+    val title: String,
+    val subTitle: List<String>,
+    val thumbnails: List<Thumbnail>
+)
+
+data class ShowShelfData(
+    val index: Int
+)
+
+data class ShowShelfResultData(
+    val index: Int,
+    val title: String,
+    val subTitle: List<String>,
+    val thumbnails: List<Thumbnail>
+)
+
+data class PlaySearchSongData(
+    val index: Int,
+    val shelf: Int?
+)
+
+data class Thumbnail(
+    val url: String,
+    val width: Int,
+    val height: Int
 )

@@ -1,6 +1,5 @@
 package de.dertyp7214.audiovisualization.components
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -8,13 +7,18 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import androidx.appcompat.widget.AppCompatImageView
+import android.view.View
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
+import de.dertyp7214.audiovisualization.R
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
-class AudioVisualizerView(context: Context, attrs: AttributeSet? = null) :
-    AppCompatImageView(context, attrs) {
+class AudioVisualizerView(context: Context, attrs: AttributeSet?, defStyle: Int) :
+    View(context, attrs) {
+
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+
     private val mutableAudioData = MutableLiveData<List<Short>>()
     private val mutableBottomLeftCorner = MutableLiveData(Corner(0))
     private val mutableBottomRightCorner = MutableLiveData(Corner(0))
@@ -32,6 +36,19 @@ class AudioVisualizerView(context: Context, attrs: AttributeSet? = null) :
     var size: Int = 64
     var visualize: Boolean = true
 
+    init {
+        val typedArray =
+            context.obtainStyledAttributes(attrs, R.styleable.AudioVisualizerView, defStyle, 0)
+
+        size = typedArray.getInt(R.styleable.AudioVisualizerView_size, size)
+        if (typedArray.getBoolean(R.styleable.AudioVisualizerView_testInput, false))
+            mutableAudioData.value = ArrayList<Short>().apply {
+                for (i in 0 until size) add(Random.nextInt(255).toShort())
+            }
+
+        typedArray.recycle()
+    }
+
     fun setColor(color: Int) = this.mutableColor.postValue(color)
     fun setAudioData(audioData: List<Short>, mirrored: Boolean = false) =
         this.mutableAudioData.postValue(audioData.let {
@@ -44,7 +61,6 @@ class AudioVisualizerView(context: Context, attrs: AttributeSet? = null) :
     fun setBottomLeftCorner(corner: Corner) = this.mutableBottomLeftCorner.postValue(corner)
     fun setBottomRightCorner(corner: Corner) = this.mutableBottomRightCorner.postValue(corner)
 
-    @SuppressLint("DrawAllocation")
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
@@ -134,6 +150,12 @@ class AudioVisualizerView(context: Context, attrs: AttributeSet? = null) :
         else if (this !is ContextWrapper) null
         else if (this is Activity) this
         else baseContext.getActivity()
+    }
+
+    private fun <T> filledList(entry: T, amount: Int): List<T> {
+        val tmp = ArrayList<T>()
+        for (i in 0 until amount) tmp.add(entry)
+        return tmp
     }
 
     class AudioStream(initialData: List<Short> = listOf()) {

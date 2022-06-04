@@ -30,10 +30,10 @@ import de.dertyp7214.youtubemusicremote.components.QueueBottomSheet
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
 import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
-import de.dertyp7214.youtubemusicremote.fragments.YouTubeApiFragment
+import de.dertyp7214.youtubemusicremote.fragments.SearchFragment
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.*
-import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
+import de.dertyp7214.youtubemusicremote.viewmodels.SearchViewModel
 import dev.chrisbanes.insetter.applyInsetter
 import java.lang.Float.max
 import kotlin.math.roundToInt
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private lateinit var volumeWrapper: ConstraintLayout
     private lateinit var mainContent: ConstraintLayout
 
-    private lateinit var youtubeSearchFrame: FrameLayout
+    private lateinit var searchFrame: FrameLayout
     private lateinit var controlFrame: FrameLayout
     private lateinit var mainFrame: FrameLayout
     private lateinit var pageLayout: FrameLayout
@@ -96,8 +96,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private val dp8 by lazy { 8.dpToPx(this) }
     private val dpN74 by lazy { (-74).dpToPx(this) }
 
-    private val youTubeApiFragment by lazy {
-        YouTubeApiFragment().resizeFragment(
+    private val searchFragment by lazy {
+        SearchFragment().resizeFragment(
             LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
     }
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         )
     }
 
-    private val youtubeViewModel by lazy { ViewModelProvider(this)[YouTubeViewModel::class.java] }
+    private val searchViewModel by lazy { ViewModelProvider(this)[SearchViewModel::class.java] }
 
     private var volumeOpen = false
 
@@ -140,13 +140,13 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         volumeWrapper = findViewById(R.id.volumeWrapper)
         mainContent = findViewById(R.id.mainContent)
 
-        youtubeSearchFrame = findViewById(R.id.youtubeSearch)
+        searchFrame = findViewById(R.id.searchLayout)
         controlFrame = findViewById(R.id.controlFrame)
         mainFrame = findViewById(R.id.mainFrame)
         pageLayout = findViewById(R.id.pageLayout)
 
         val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction.replace(youtubeSearchFrame.id, youTubeApiFragment)
+        fragmentTransaction.replace(searchFrame.id, searchFragment)
             .replace(controlFrame.id, controlsFragment).replace(mainFrame.id, coverFragment)
             .commit()
 
@@ -156,19 +156,17 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        val pageHeight = resources.displayMetrics.heightPixels
-        val youtubeTopMargin = getStatusBarHeight()
-        youtubeSearchFrame.setHeight(pageHeight)
-        youtubeSearchFrame.setMargins(0, (pageHeight - youtubeTopMargin).inv(), 0, 0)
+        val pageHeight = resources.displayMetrics.heightPixels + getStatusBarHeight()
+        searchFrame.setHeight(pageHeight)
+        searchFrame.setMargins(0, pageHeight.inv(), 0, 0)
 
         @Suppress("NAME_SHADOWING")
         fun setMargins(open: Boolean) {
-            val pageHeight = resources.displayMetrics.heightPixels
-            val youtubeTopMargin = getStatusBarHeight()
-            youtubeSearchFrame.setHeight(pageHeight)
+            val pageHeight = resources.displayMetrics.heightPixels + getStatusBarHeight()
+            searchFrame.setHeight(pageHeight)
             animateInts(if (open) pageHeight else 0, if (open) 0 else pageHeight) { marginTop ->
-                youtubeSearchFrame.setMargins(
-                    0, marginTop.inv().let { if (open) it + youtubeTopMargin else it }, 0, 0
+                searchFrame.setMargins(
+                    0, marginTop.inv(), 0, 0
                 )
                 pageLayout.setMargins(0, 0, 0, marginTop - pageHeight)
             }
@@ -177,7 +175,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         val audioLiveData = MutableLiveData<List<Short>>()
         coverFragment.setAudioData(audioLiveData)
 
-        youtubeViewModel.observerSearchOpen(this) { open ->
+        searchViewModel.observerSearchOpen(this) { open ->
             setMargins(open)
         }
 
@@ -298,16 +296,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         customWebSocketListener.onFailure { _, throwable, _ ->
             throwable.printStackTrace()
             webSocket.reconnect()
-            /*Snackbar.make(pageLayout, R.string.connection_lost, Snackbar.LENGTH_INDEFINITE)
-                .apply {
-                    setAction(R.string.reconnect) {
-                        dismiss()
-                        webSocket.reconnect()
-                    }
-                    setBackgroundTint(0xFFFF5151.toInt())
-                    setTextColor(Color.WHITE)
-                    setActionTextColor(0xFF5151FF.toInt())
-                }.show()*/
         }
 
         queueItems.observe(this) {
@@ -334,7 +322,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
                     queueBottomSheet.coverData = it.coverData ?: CoverData()
 
-                    youTubeApiFragment.setSongInfo(it)
+                    searchFragment.setSongInfo(it)
                     controlsFragment.setSongInfo(it)
                     coverFragment.setSongInfo(it)
 
@@ -344,7 +332,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         }
 
         search.setOnClickListener {
-            youtubeViewModel.setSearchOpen(true)
+            searchViewModel.setSearchOpen(true)
         }
 
         controlsFragment.passCallbacks(
@@ -379,10 +367,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         )
 
         onBackPressedDispatcher.addCallback(this, true) {
-            if (youtubeViewModel.getSearchOpen() == true) {
-                youtubeViewModel.setSearchOpen(false)
-                youtubeViewModel.setChannelId(null)
-            } else {
+            if (!searchFragment.handleBack()) {
                 isEnabled = false
                 onBackPressedDispatcher.onBackPressed()
                 isEnabled = true

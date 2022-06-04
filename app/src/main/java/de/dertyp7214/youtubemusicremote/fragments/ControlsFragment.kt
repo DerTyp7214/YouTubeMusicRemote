@@ -22,7 +22,7 @@ import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
 import de.dertyp7214.youtubemusicremote.types.SongInfo
-import de.dertyp7214.youtubemusicremote.viewmodels.YouTubeViewModel
+import de.dertyp7214.youtubemusicremote.viewmodels.SearchViewModel
 import kotlin.math.roundToInt
 
 fun interface Callback {
@@ -92,7 +92,7 @@ class ControlsFragment : Fragment() {
     private var luminance = 0f
     private var vibrant = 0
 
-    private val youtubeViewModel by lazy { ViewModelProvider(requireActivity())[YouTubeViewModel::class.java] }
+    private val searchViewModel by lazy { ViewModelProvider(requireActivity())[SearchViewModel::class.java] }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -260,9 +260,9 @@ class ControlsFragment : Fragment() {
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 
         title.changeText(songInfo.title)
-        artist.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) { field ->
-            youtubeViewModel.setSearchOpen(true)
-            youtubeViewModel.setChannelId(field.link.split("/").last())
+        artist.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) {
+            searchViewModel.setSearchOpen(true)
+            searchViewModel.setQuery(songInfo.artist)
         }
 
         title.animateTextColor(controlsColor) {
