@@ -163,6 +163,11 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
     fun clearText() = ::text.set("")
 
+    fun close() {
+        clearText()
+        closeListener()
+    }
+
     fun setOnSearchListener(listener: (text: String) -> Unit) {
         searchListener = listener
     }
@@ -180,6 +185,7 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
     }
 
     override fun clearFocus() {
+        super.clearFocus()
         clearFocus(searchEdit)
     }
 

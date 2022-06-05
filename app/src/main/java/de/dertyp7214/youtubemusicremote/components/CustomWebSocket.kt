@@ -121,6 +121,10 @@ class CustomWebSocket(
         send(SendAction(Action.PLAYLIST_CONTEXT_MENU, PlaylistContextMenuData(action, index, song)))
     }
 
+    fun selectSearchTab(index: Int) {
+        send(SendAction(Action.SELECT_SEARCH_TAB, SelectSearchTabData(index)))
+    }
+
     fun close() {
         okHttpClient?.dispatcher?.executorService?.shutdown()
         okHttpClient?.connectionPool?.evictAll()

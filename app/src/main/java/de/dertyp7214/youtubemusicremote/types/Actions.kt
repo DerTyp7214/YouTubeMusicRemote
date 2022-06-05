@@ -109,7 +109,10 @@ enum class Action {
     SEARCH_CONTEXT_MENU,
 
     @SerializedName("playlistContextMenu")
-    PLAYLIST_CONTEXT_MENU
+    PLAYLIST_CONTEXT_MENU,
+
+    @SerializedName("selectSearchTab")
+    SELECT_SEARCH_TAB
 }
 
 enum class ContextAction {
@@ -201,6 +204,7 @@ data class SearchMainResultData(
 data class EntryData(
     val index: Int,
     val title: String,
+    val type: String,
     val subTitle: List<String>,
     val thumbnails: List<Thumbnail>
 )
@@ -237,4 +241,8 @@ data class PlaylistContextMenuData(
     val action: ContextAction,
     val index: Int,
     val song: Boolean
+)
+
+data class SelectSearchTabData(
+    val index: Int
 )

@@ -12,7 +12,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.*
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
@@ -74,6 +76,8 @@ class SearchFragment : Fragment() {
         }
     }
 
+    private var showAll = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -100,7 +104,7 @@ class SearchFragment : Fragment() {
         }
 
         searchViewModel.observerSearchOpen(this) { open ->
-            if (!open) searchBar.clearText()
+            if (!open) searchBar.clearText().also { showAll = false }
             else fetchPlaylists()
         }
 
@@ -258,7 +262,8 @@ class SearchFragment : Fragment() {
 
     fun handleBack(): Boolean {
         return if (searchViewModel.getSearchOpen() == true) {
-            if (searchBar.focus) searchBar.clearText()
+            if (showAll) searchBar.search().also { showAll = false }
+            else if (searchBar.focus) searchBar.close()
             else if (items.firstOrNull()?.type == Type.SONGS) fetchPlaylists()
             else goBack()
             true
@@ -413,6 +418,11 @@ class SearchFragment : Fragment() {
             val recyclerView: RecyclerView = v.findViewById(R.id.searchRecyclerView)
         }
 
+        class TabsViewHolder(v: View) : ViewHolder(v) {
+            val root: View = v.findViewById(R.id.root)
+            val tabsList: LinearLayout = v.findViewById(R.id.tabsLayout)
+        }
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = when (viewType) {
             0 -> SongViewHolder(
                 LayoutInflater.from(context).inflate(R.layout.song_item, parent, false)
@@ -422,6 +432,9 @@ class SearchFragment : Fragment() {
             )
             2 -> SearchViewHolder(
                 LayoutInflater.from(context).inflate(R.layout.search_item, parent, false)
+            )
+            3 -> TabsViewHolder(
+                LayoutInflater.from(context).inflate(R.layout.tabs_item, parent, false)
             )
             else -> ViewHolder(View(context))
         }
@@ -479,6 +492,7 @@ class SearchFragment : Fragment() {
 
                         holder.showAllButton.setOnClickListener {
                             onClick(SearchItem(Type.FUNCTION) {
+                                showAll = true
                                 progressBar.visibility = VISIBLE
                                 webSocket?.showShelf(item.index)
                                 updateData(listOf())
@@ -549,13 +563,52 @@ class SearchFragment : Fragment() {
                         }
                     }
                 }
+                is TabsViewHolder -> {
+                    list[position].searchMainResultData?.let { item ->
+                        holder.root.setOnClickListener { }
+                        holder.tabsList.apply {
+                            val themeWrapper = ContextThemeWrapper(
+                                context,
+                                com.google.android.material.R.style.Widget_MaterialComponents_Button_OutlinedButton
+                            )
+                            removeAllViews()
+                            item.entries.forEach { tab ->
+                                addView(
+                                    MaterialButton(themeWrapper).apply {
+                                        text = tab.title
+                                        isEnabled = tab.type == "unselected"
+                                        layoutParams = LinearLayout.LayoutParams(
+                                            WRAP_CONTENT, WRAP_CONTENT, 1f
+                                        )
+                                        setMargin(8.dpToPx(context))
+                                        setOnClickListener {
+                                            onClick(SearchItem(Type.FUNCTION) {
+                                                progressBar.visibility = VISIBLE
+                                                updateData(listOf())
+                                                webSocket?.selectSearchTab(tab.index)
+                                            })
+                                        }
+
+                                        context.getActivity()?.let {
+                                            if (it is FragmentActivity) mutableStateList.observe(it) { stateList ->
+                                                backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+                                                strokeColor = stateList
+                                                rippleColor = stateList
+                                                setTextColor(stateList)
+                                            }
+                                        }
+                                    })
+                            }
+                        }
+                    }
+                }
             }
         }
 
         override fun getItemViewType(position: Int) = when (list[position].type) {
             Type.SONGS, Type.SHELF_SONGS -> 0
             Type.PLAYLISTS -> 1
-            Type.SEARCH -> 2
+            Type.SEARCH -> if (list[position].searchMainResultData?.type == "tabs") 3 else 2
             else -> -1
         }
 
