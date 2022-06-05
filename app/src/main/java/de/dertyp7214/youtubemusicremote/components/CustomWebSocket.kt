@@ -113,6 +113,14 @@ class CustomWebSocket(
         send(SendAction(Action.OPEN_PLAYER))
     }
 
+    fun searchContextMenu(action: ContextAction, index: Int, shelf: Int?) {
+        send(SendAction(Action.SEARCH_CONTEXT_MENU, SearchContextMenuData(action, index, shelf)))
+    }
+
+    fun playlistContextMenu(action: ContextAction, index: Int, song: Boolean) {
+        send(SendAction(Action.PLAYLIST_CONTEXT_MENU, PlaylistContextMenuData(action, index, song)))
+    }
+
     fun close() {
         okHttpClient?.dispatcher?.executorService?.shutdown()
         okHttpClient?.connectionPool?.evictAll()

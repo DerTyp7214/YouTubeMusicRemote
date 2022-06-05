@@ -103,7 +103,24 @@ enum class Action {
     PLAY_SEARCH_SONG,
 
     @SerializedName("openPlayer")
-    OPEN_PLAYER
+    OPEN_PLAYER,
+
+    @SerializedName("searchContextMenu")
+    SEARCH_CONTEXT_MENU,
+
+    @SerializedName("playlistContextMenu")
+    PLAYLIST_CONTEXT_MENU
+}
+
+enum class ContextAction {
+    @SerializedName("radio")
+    RADIO,
+
+    @SerializedName("next")
+    NEXT,
+
+    @SerializedName("queue")
+    QUEUE
 }
 
 @Suppress("unused")
@@ -208,4 +225,16 @@ data class Thumbnail(
     val url: String,
     val width: Int,
     val height: Int
+)
+
+data class SearchContextMenuData(
+    val action: ContextAction,
+    val index: Int,
+    val shelf: Int?
+)
+
+data class PlaylistContextMenuData(
+    val action: ContextAction,
+    val index: Int,
+    val song: Boolean
 )

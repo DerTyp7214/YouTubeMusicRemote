@@ -4,15 +4,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
@@ -29,6 +29,7 @@ import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.SearchBar
 import de.dertyp7214.youtubemusicremote.core.*
+import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.*
 import de.dertyp7214.youtubemusicremote.viewmodels.SearchViewModel
 
@@ -40,7 +41,7 @@ class SearchFragment : Fragment() {
 
     private val items = ArrayList<SearchItem>()
 
-    private val mutableSongInfo = MutableLiveData<SongInfo>()
+    private val mutableMusicData = MutableLiveData<MusicData>()
     private val mutableSpanCount = MutableLiveData<Int>()
 
     private val webSocket by lazy { CustomWebSocket.webSocketInstance }
@@ -49,8 +50,15 @@ class SearchFragment : Fragment() {
     private val recyclerView by lazy { layoutView.findViewById<RecyclerView>(R.id.recyclerView) }
     private val progressBar by lazy { layoutView.findViewById<ProgressBar>(R.id.progressBar) }
     private val shuffleButton by lazy { layoutView.findViewById<MaterialButton>(R.id.shuffle) }
+    private val currentCover by lazy { layoutView.findViewById<ImageView>(R.id.currentCover) }
+    private val currentTitle by lazy { layoutView.findViewById<TextView>(R.id.currentTitle) }
+    private val currentArtist by lazy { layoutView.findViewById<TextView>(R.id.currentArtist) }
+    private val currentPlayPause by lazy { layoutView.findViewById<ImageButton>(R.id.currentPlayPause) }
+    private val currentProgress by lazy { layoutView.findViewById<ProgressBar>(R.id.currentProgress) }
     private val adapter by lazy {
-        SearchAdapter(requireContext(), items) {
+        SearchAdapter(requireContext(), items, contextMenu = { view, shelfPlayData ->
+            showMenu(view, shelfPlayData, R.menu.queue_menu)
+        }) {
             if (it.type == Type.PLAYLISTS && it.playlists != null) fetchPlaylistContent(it.playlists.index)
             else if (it.type == Type.SONGS && it.playlistContent != null) webSocket?.playPlaylist(
                 false,
@@ -104,33 +112,41 @@ class SearchFragment : Fragment() {
             }
         }
 
-        mutableSongInfo.observe(requireActivity()) {
-            it.coverData?.let { coverData ->
-                val color = getFallBackColor(
-                    coverData.lightVibrant,
-                    coverData.lightMuted,
-                    coverData.vibrant,
-                    coverData.dominant
+        currentPlayPause.setOnClickListener {
+            webSocket?.playPause()
+        }
+
+        mutableMusicData.observe(requireActivity()) { musicData ->
+            val stateList = ColorStateList(
+                arrayOf(
+                    intArrayOf(-android.R.attr.state_enabled),
+                    intArrayOf()
+                ),
+                intArrayOf(
+                    Color.GRAY,
+                    musicData.color
                 )
+            )
 
-                val stateList = ColorStateList(
-                    arrayOf(
-                        intArrayOf(-android.R.attr.state_enabled),
-                        intArrayOf()
-                    ),
-                    intArrayOf(
-                        Color.GRAY,
-                        color
-                    )
-                )
+            adapter.mutableStateList.postValue(stateList)
 
-                adapter.mutableStateList.postValue(stateList)
+            progressBar.indeterminateTintList = stateList
+            shuffleButton.strokeColor = stateList
+            shuffleButton.rippleColor = stateList
+            shuffleButton.setTextColor(stateList)
 
-                progressBar.indeterminateTintList = stateList
-                shuffleButton.strokeColor = stateList
-                shuffleButton.rippleColor = stateList
-                shuffleButton.setTextColor(stateList)
-            }
+            currentCover.setImageDrawable(musicData.cover)
+            currentTitle.text = musicData.title
+            currentArtist.text = musicData.artist
+
+            currentProgress.progressTintList = stateList
+
+            currentPlayPause.setImageResource(if (musicData.playing) R.drawable.ic_pause else R.drawable.ic_play)
+        }
+
+        MainActivity.currentSongInfo.observe(requireActivity()) {
+            currentProgress.max = it.songDuration.toInt()
+            currentProgress.progress = it.elapsedSeconds
         }
 
         shuffleButton.setOnClickListener {
@@ -214,7 +230,31 @@ class SearchFragment : Fragment() {
         return layoutView
     }
 
-    fun setSongInfo(songInfo: SongInfo) = mutableSongInfo.postValue(songInfo)
+    fun setSongInfo(songInfo: SongInfo) {
+        songInfo.coverData?.let { coverData ->
+            val color = getFallBackColor(
+                coverData.lightVibrant,
+                coverData.lightMuted,
+                coverData.vibrant,
+                coverData.dominant
+            )
+            if (mutableMusicData.value?.let {
+                    it.title != songInfo.title ||
+                            it.artist != songInfo.artist ||
+                            it.color != color ||
+                            it.cover != coverData.cover ||
+                            it.playing != songInfo.playPaused
+                } != false) mutableMusicData.postValue(
+                MusicData(
+                    color,
+                    coverData.cover,
+                    songInfo.title,
+                    songInfo.artist,
+                    songInfo.isPaused == false
+                )
+            )
+        }
+    }
 
     fun handleBack(): Boolean {
         return if (searchViewModel.getSearchOpen() == true) {
@@ -223,6 +263,80 @@ class SearchFragment : Fragment() {
             else goBack()
             true
         } else false
+    }
+
+    private fun showMenu(
+        v: View,
+        shelfPlayData: ShelfPlayData,
+        menuLayout: Int = R.menu.main_menu
+    ) {
+        val activity = requireActivity()
+        val playlistMenu =
+            shelfPlayData.type == "playlists" || shelfPlayData.type == "playlist songs"
+        PopupMenu(activity, v, Gravity.CENTER, 0, R.style.Theme_YouTubeMusicRemote).apply {
+            setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.menu_share -> {
+                        MainActivity.currentSongInfo.value?.let { songInfo ->
+                            activity.share(ShareInfo.fromSongInfo(songInfo))
+                        }
+                        true
+                    }
+                    R.id.menu_start_radio -> {
+                        if (playlistMenu) webSocket?.playlistContextMenu(
+                            ContextAction.RADIO,
+                            shelfPlayData.index,
+                            shelfPlayData.type == "playlist songs"
+                        )
+                        else webSocket?.searchContextMenu(
+                            ContextAction.RADIO,
+                            shelfPlayData.index,
+                            shelfPlayData.shelf
+                        )
+                        true
+                    }
+                    R.id.menu_play_next -> {
+                        if (playlistMenu) webSocket?.playlistContextMenu(
+                            ContextAction.NEXT,
+                            shelfPlayData.index,
+                            shelfPlayData.type == "playlist songs"
+                        )
+                        else webSocket?.searchContextMenu(
+                            ContextAction.NEXT,
+                            shelfPlayData.index,
+                            shelfPlayData.shelf
+                        )
+                        true
+                    }
+                    R.id.menu_add_to_queue -> {
+                        if (playlistMenu) webSocket?.playlistContextMenu(
+                            ContextAction.QUEUE,
+                            shelfPlayData.index,
+                            shelfPlayData.type == "playlist songs"
+                        )
+                        else webSocket?.searchContextMenu(
+                            ContextAction.QUEUE,
+                            shelfPlayData.index,
+                            shelfPlayData.shelf
+                        )
+                        true
+                    }
+                    else -> false
+                }
+            }
+            inflate(menuLayout)
+            menu.findItem(R.id.menu_share)?.isVisible = false
+            menu.findItem(R.id.menu_remove_from_queue)?.isVisible = false
+            menu.findItem(R.id.menu_play_next)?.isVisible = false
+            menu.findItem(R.id.menu_add_to_queue)?.isVisible = false
+
+            when (shelfPlayData.type) {
+                "songs", "videos", "albums", "community playlists", "playlists", "playlist songs" -> {
+                    menu.findItem(R.id.menu_play_next)?.isVisible = true
+                    menu.findItem(R.id.menu_add_to_queue)?.isVisible = true
+                }
+            }
+        }.show()
     }
 
     private fun goBack() {
@@ -263,6 +377,7 @@ class SearchFragment : Fragment() {
     private class SearchAdapter(
         private val context: Context,
         private val list: List<SearchItem>,
+        private val contextMenu: (View, ShelfPlayData) -> Unit,
         private val onClick: (SearchItem) -> Unit
     ) :
         RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
@@ -319,6 +434,11 @@ class SearchFragment : Fragment() {
                             onClick(list[position])
                         }
 
+                        holder.root.setOnLongClickListener {
+                            contextMenu(it, ShelfPlayData(item.index, type = "playlist songs"))
+                            true
+                        }
+
                         holder.title.text = item.title
                         holder.artist.text = item.artist
 
@@ -334,6 +454,11 @@ class SearchFragment : Fragment() {
                             onClick(list[position])
                         }
 
+                        holder.root.setOnLongClickListener {
+                            contextMenu(it, ShelfPlayData(item.index, type = "playlists"))
+                            true
+                        }
+
                         holder.title.text = item.title
                         holder.subTitle.text = item.subtitle
 
@@ -346,6 +471,11 @@ class SearchFragment : Fragment() {
                 is SearchViewHolder -> {
                     list[position].searchMainResultData?.let { item ->
                         holder.root.setOnClickListener { }
+
+                        holder.root.setOnLongClickListener {
+                            contextMenu(it, ShelfPlayData(item.index, type = item.type))
+                            true
+                        }
 
                         holder.showAllButton.setOnClickListener {
                             onClick(SearchItem(Type.FUNCTION) {
@@ -386,6 +516,14 @@ class SearchFragment : Fragment() {
                                                 )
                                             )
                                         }
+                                    }
+
+                                    holder.root.setOnLongClickListener {
+                                        contextMenu(
+                                            it,
+                                            ShelfPlayData(entry.index, item.index, item.type)
+                                        )
+                                        true
                                     }
 
                                     holder.title.text = entry.title
@@ -436,7 +574,16 @@ class SearchFragment : Fragment() {
 
     private data class ShelfPlayData(
         val index: Int,
-        val shelf: Int?
+        val shelf: Int? = null,
+        val type: String? = null
+    )
+
+    private data class MusicData(
+        val color: Int,
+        val cover: Drawable?,
+        val title: String,
+        val artist: String,
+        val playing: Boolean
     )
 
     private enum class Type {

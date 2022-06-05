@@ -399,20 +399,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         } ?: super.onKeyDown(keyCode, event)
     }
 
-    private fun share(songInfo: SongInfo) {
-        startActivity(Intent.createChooser(Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(
-                Intent.EXTRA_TEXT, """
-                Listen to "${songInfo.title}" by "${songInfo.artist}"
-                
-                ${songInfo.url}
-            """.trimIndent()
-            )
-            type = "text/plain"
-        }, null))
-    }
-
     private fun showMenu(
         v: View,
         songInfo: SongInfo,
@@ -430,7 +416,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                         true
                     }
                     R.id.menu_share -> {
-                        share(songInfo)
+                        share(ShareInfo.fromSongInfo(songInfo))
                         true
                     }
                     R.id.add_new_url -> {
