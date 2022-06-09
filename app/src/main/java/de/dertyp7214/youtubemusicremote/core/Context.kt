@@ -30,6 +30,9 @@ inline val Context.customLockscreenVisualizeAudioSize: Int
 inline val Context.customLockscreenVisualizeAudio: Boolean
     get() = visualizeAudio && preferences.getBoolean("customLockscreenVisualizeAudio", false)
 
+inline val Context.playlistColumns: Int
+    get() = preferences.getInt("playlistColumns", 3)
+
 tailrec fun Context?.getActivity(): Activity? {
     return if (this == null) null
     else if (this !is ContextWrapper) null

@@ -56,6 +56,16 @@ class Settings : AppCompatActivity() {
         ), SettingsElement(
             "spacer1", type = SettingsType.SPACER
         ), SettingsElement(
+            "playlistColumns",
+            R.string.settings_playlist_columns_title,
+            R.string.settings_playlist_columns_subtext,
+            this,
+            SettingsType.RANGE(1, 20, playlistColumns)
+        ) { id, value ->
+            if (value is Int) preferences.edit {
+                putInt(id, value)
+            }
+        }, SettingsElement(
             "visualizeAudio",
             R.string.settings_visualize_audio_title,
             R.string.settings_visualize_audio_subtext,
@@ -300,8 +310,8 @@ class Settings : AppCompatActivity() {
                     }
                 }
                 is ViewHolderRange -> {
-                    holder.seekBar.min = settingsElement.type.from
-                    holder.seekBar.max = settingsElement.type.to
+                    holder.seekBar.min = settingsElement.typeData.from
+                    holder.seekBar.max = settingsElement.typeData.to
                     holder.seekBar.progress = settingsElement.getValue(activity)
                     holder.seekBar.setOnSeekBarChangeListener(object :
                         SeekBar.OnSeekBarChangeListener {
@@ -353,32 +363,53 @@ data class SettingsElement(
         onClick: (String, Any?) -> Unit = { _, _ -> }
     ) : this(id, context.getString(title), context.getString(subText), type, visible, onClick)
 
+    constructor(
+        id: String,
+        @StringRes title: Int,
+        @StringRes subText: Int,
+        context: Context,
+        data: SettingsType.Data,
+        visible: (String) -> Boolean = { true },
+        onClick: (String, Any?) -> Unit = { _, _ -> }
+    ) : this(id, context.getString(title), context.getString(subText), data(id), visible, onClick)
+
     @Suppress("UNCHECKED_CAST")
     fun <T> getValue(context: Context): T = when (type) {
         SettingsType.SWITCH -> context.preferences.getBoolean(id, false) as T
-        SettingsType.RANGE -> context.preferences.getInt(id, type.default) as T
+        SettingsType.RANGE -> context.preferences.getInt(
+            id,
+            type(id).default
+        ) as T
         else -> context.preferences.getString(id, "") as T
     }
+
+    val typeData = type(id)
 }
 
 enum class SettingsType {
     DEFAULT, SPACER, SWITCH, RANGE;
 
-    var from: Int = 0
-        private set
-    var to: Int = 0
-        private set
-    var default: Int = 0
-        private set
+    private val map = HashMap<String, Data>()
 
     operator fun invoke(
-        from: Int = this.from,
-        to: Int = this.to,
-        default: Int = this.default
-    ): SettingsType {
-        this.from = from
-        this.to = to
-        this.default = default
-        return this
+        from: Int = 0,
+        to: Int = 0,
+        default: Int = 0
+    ): Data {
+        return Data(from, to, default, this)
+    }
+
+    operator fun invoke(key: String) = map[key] ?: Data(0, 0, 0, RANGE)
+
+    data class Data(
+        val from: Int = 0,
+        val to: Int = 0,
+        val default: Int = 0,
+        private val type: SettingsType
+    ) {
+        operator fun invoke(key: String): SettingsType {
+            type.map[key] = this
+            return type
+        }
     }
 }

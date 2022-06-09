@@ -44,4 +44,9 @@
     <string name="settings_visualize_audio_size_subtext">Band count 2^{{value}}</string>
     <string name="shuffle">Shuffle</string>
     <string name="show_all">Show all</string>
+    <string name="settings_playlist_columns_title">Playlist Columns</string>
+    <string name="settings_playlist_columns_subtext">Playlist Columns on search page ({{value}})</string>
+    <string name="recent_activity">Recent activity</string>
+    <string name="playlists">Playlists</string>
+    <string name="cant_play_this">Can\'t play this item.</string>
 </resources>

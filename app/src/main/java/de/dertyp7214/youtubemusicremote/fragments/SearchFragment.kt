@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.HORIZONTAL
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
 import com.google.android.material.button.MaterialButton
@@ -34,6 +35,7 @@ import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.*
 import de.dertyp7214.youtubemusicremote.viewmodels.SearchViewModel
+import kotlin.math.roundToInt
 
 class SearchFragment : Fragment() {
 
@@ -61,8 +63,10 @@ class SearchFragment : Fragment() {
         SearchAdapter(requireContext(), items, contextMenu = { view, shelfPlayData ->
             showMenu(view, shelfPlayData, R.menu.queue_menu)
         }) {
-            if (it.type == Type.PLAYLISTS && it.playlists != null) fetchPlaylistContent(it.playlists.index)
-            else if (it.type == Type.SONGS && it.playlistContent != null) webSocket?.playPlaylist(
+            if (it.type == Type.LIBRARY_ITEM && it.libraryItem != null) {
+                if (it.libraryItem.isPlaylist) fetchPlaylistContent(it.libraryItem.index)
+                else webSocket?.playRecentItem(it.libraryItem.index)?.run { goBack() }
+            } else if (it.type == Type.SONGS && it.playlistContent != null) webSocket?.playPlaylist(
                 false,
                 it.playlistContent.index
             )?.run {
@@ -111,9 +115,7 @@ class SearchFragment : Fragment() {
         searchViewModel.observeQuery(this) { searchBar.text = it ?: "" }
 
         mutableSpanCount.observe(requireActivity()) {
-            recyclerView.layoutManager.apply {
-                if (this is GridLayoutManager) spanCount = it
-            }
+            adapter.mutableSpanCount.postValue(it)
         }
 
         currentPlayPause.setOnClickListener {
@@ -148,6 +150,10 @@ class SearchFragment : Fragment() {
             currentPlayPause.setImageResource(if (musicData.playing) R.drawable.ic_pause else R.drawable.ic_play)
         }
 
+        currentCover.setOnClickListener {
+            goBack()
+        }
+
         MainActivity.currentSongInfo.observe(requireActivity()) {
             currentProgress.max = it.songDuration.toInt()
             currentProgress.progress = it.elapsedSeconds
@@ -167,13 +173,32 @@ class SearchFragment : Fragment() {
                 when (socketResponse.action) {
                     Action.PLAYLISTS -> {
                         progressBar.visibility = INVISIBLE
-                        val playlists: List<Playlists> = gson.fromJson(
+                        val playlists: Playlists = gson.fromJson(
                             socketResponse.data,
-                            object : TypeToken<List<Playlists>>() {}.type
+                            Playlists::class.java
                         )
 
-                        updateData(playlists.map { SearchItem(Type.PLAYLISTS, playlists = it) })
-                        mutableSpanCount.postValue(3)
+                        updateData(
+                            listOf(
+                                SearchItem(
+                                    Type.PLAYLISTS,
+                                    libraryWrapper = LibraryWrapper(
+                                        getString(R.string.recent_activity),
+                                        playlists.recentActivity.map { it.isPlaylist = false; it },
+                                        false
+                                    )
+                                ),
+                                SearchItem(
+                                    Type.PLAYLISTS,
+                                    libraryWrapper = LibraryWrapper(
+                                        getString(R.string.playlists),
+                                        playlists.playlists.map { it.isPlaylist = true; it },
+                                        true
+                                    )
+                                )
+                            )
+                        )
+                        mutableSpanCount.postValue(requireContext().playlistColumns)
                     }
                     Action.PLAYLIST -> {
                         progressBar.visibility = INVISIBLE
@@ -229,7 +254,7 @@ class SearchFragment : Fragment() {
             }
         }
 
-        mutableSpanCount.postValue(3)
+        mutableSpanCount.postValue(requireContext().playlistColumns)
 
         return layoutView
     }
@@ -278,6 +303,7 @@ class SearchFragment : Fragment() {
         val activity = requireActivity()
         val playlistMenu =
             shelfPlayData.type == "playlists" || shelfPlayData.type == "playlist songs"
+        val recentMenu = shelfPlayData.type == "recent"
         PopupMenu(activity, v, Gravity.CENTER, 0, R.style.Theme_YouTubeMusicRemote).apply {
             setOnMenuItemClickListener {
                 when (it.itemId) {
@@ -293,6 +319,10 @@ class SearchFragment : Fragment() {
                             shelfPlayData.index,
                             shelfPlayData.type == "playlist songs"
                         )
+                        else if (recentMenu) webSocket?.recentContextMenu(
+                            ContextAction.RADIO,
+                            shelfPlayData.index
+                        )
                         else webSocket?.searchContextMenu(
                             ContextAction.RADIO,
                             shelfPlayData.index,
@@ -306,6 +336,10 @@ class SearchFragment : Fragment() {
                             shelfPlayData.index,
                             shelfPlayData.type == "playlist songs"
                         )
+                        else if (recentMenu) webSocket?.recentContextMenu(
+                            ContextAction.NEXT,
+                            shelfPlayData.index
+                        )
                         else webSocket?.searchContextMenu(
                             ContextAction.NEXT,
                             shelfPlayData.index,
@@ -318,6 +352,10 @@ class SearchFragment : Fragment() {
                             ContextAction.QUEUE,
                             shelfPlayData.index,
                             shelfPlayData.type == "playlist songs"
+                        )
+                        else if (recentMenu) webSocket?.recentContextMenu(
+                            ContextAction.QUEUE,
+                            shelfPlayData.index
                         )
                         else webSocket?.searchContextMenu(
                             ContextAction.QUEUE,
@@ -336,7 +374,7 @@ class SearchFragment : Fragment() {
             menu.findItem(R.id.menu_add_to_queue)?.isVisible = false
 
             when (shelfPlayData.type) {
-                "songs", "videos", "albums", "community playlists", "playlists", "playlist songs" -> {
+                "songs", "videos", "albums", "community playlists", "playlists", "playlist songs", "recent" -> {
                     menu.findItem(R.id.menu_play_next)?.isVisible = true
                     menu.findItem(R.id.menu_add_to_queue)?.isVisible = true
                 }
@@ -390,6 +428,7 @@ class SearchFragment : Fragment() {
         private val glide = Glide.with(context)
 
         val mutableStateList = MutableLiveData<ColorStateList>()
+        val mutableSpanCount = MutableLiveData<Int>()
 
         init {
             setHasStableIds(true)
@@ -405,6 +444,12 @@ class SearchFragment : Fragment() {
         }
 
         class PlayListViewHolder(v: View) : ViewHolder(v) {
+            val root: View = v.findViewById(R.id.root)
+            val title: TextView = v.findViewById(R.id.title)
+            val recyclerView: RecyclerView = v.findViewById(R.id.libraryRecyclerView)
+        }
+
+        class LibraryItemViewHolder(v: View) : ViewHolder(v) {
             val root: View = v.findViewById(R.id.root)
             val thumbnail: ImageView = v.findViewById(R.id.thumbnail)
             val title: TextView = v.findViewById(R.id.title)
@@ -428,7 +473,7 @@ class SearchFragment : Fragment() {
                 LayoutInflater.from(context).inflate(R.layout.song_item, parent, false)
             )
             1 -> PlayListViewHolder(
-                LayoutInflater.from(context).inflate(R.layout.playlist_item, parent, false)
+                LayoutInflater.from(context).inflate(R.layout.library_wrapper_item, parent, false)
             )
             2 -> SearchViewHolder(
                 LayoutInflater.from(context).inflate(R.layout.search_item, parent, false)
@@ -462,23 +507,81 @@ class SearchFragment : Fragment() {
                     }
                 }
                 is PlayListViewHolder -> {
-                    list[position].playlists?.let { item ->
-                        holder.root.setOnClickListener {
-                            onClick(list[position])
-                        }
+                    list[position].libraryWrapper?.let { wrapper ->
+                        holder.title.text = wrapper.title
 
-                        holder.root.setOnLongClickListener {
-                            contextMenu(it, ShelfPlayData(item.index, type = "playlists"))
-                            true
-                        }
+                        holder.recyclerView.setHasFixedSize(true)
+                        if (wrapper.isPlaylists) {
+                            holder.recyclerView.layoutManager =
+                                GridLayoutManager(context, mutableSpanCount.value ?: 1)
+                            context.getActivity().let {
+                                if (it is FragmentActivity) mutableSpanCount.observe(it) { value ->
+                                    holder.recyclerView.layoutManager.apply {
+                                        if (this is GridLayoutManager) spanCount = value
+                                    }
+                                }
+                            }
+                        } else holder.recyclerView.layoutManager =
+                            LinearLayoutManager(context, HORIZONTAL, false)
 
-                        holder.title.text = item.title
-                        holder.subTitle.text = item.subtitle
+                        holder.recyclerView.adapter =
+                            object : RecyclerView.Adapter<LibraryItemViewHolder>() {
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ) = LibraryItemViewHolder(
+                                    LayoutInflater.from(context)
+                                        .inflate(R.layout.library_item, parent, false)
+                                )
 
-                        glide.asDrawable()
-                            .load(item.thumbnails.reduce { t1, t2 -> if (t1.width > t2.width) t1 else t2 }.url)
-                            .override(SIZE_ORIGINAL)
-                            .into(holder.thumbnail)
+                                override fun onBindViewHolder(
+                                    holder: LibraryItemViewHolder,
+                                    position: Int
+                                ) {
+                                    val item = wrapper.items[position]
+
+                                    if (!item.isPlaylist) context.getActivity()?.let { activity ->
+                                        val width =
+                                            activity.screenBounds.width().toFloat() - 16.dpToPx(
+                                                context
+                                            )
+                                        holder.root.layoutParams = holder.root.layoutParams.apply {
+                                            this.width =
+                                                (width / (mutableSpanCount.value ?: 1)).roundToInt()
+                                        }
+                                        if (activity is FragmentActivity)
+                                            mutableSpanCount.observe(activity) {
+                                                holder.root.layoutParams =
+                                                    holder.root.layoutParams.apply {
+                                                        this.width = (width / it).roundToInt()
+                                                    }
+                                            }
+                                    }
+
+                                    holder.root.setOnClickListener {
+                                        if(item.playable) onClick(SearchItem(Type.LIBRARY_ITEM, libraryItem = item))
+                                        else Toast.makeText(context, R.string.cant_play_this, Toast.LENGTH_LONG).show()
+                                    }
+
+                                    holder.root.setOnLongClickListener {
+                                        contextMenu(
+                                            it,
+                                            ShelfPlayData(item.index, type = "recent")
+                                        )
+                                        true
+                                    }
+
+                                    holder.title.text = item.title
+                                    holder.subTitle.text = item.subtitle
+
+                                    glide.asDrawable()
+                                        .load(item.thumbnails.reduce { t1, t2 -> if (t1.width > t2.width) t1 else t2 }.url)
+                                        .override(SIZE_ORIGINAL)
+                                        .into(holder.thumbnail)
+                                }
+
+                                override fun getItemCount() = wrapper.items.size
+                            }
                     }
                 }
                 is SearchViewHolder -> {
@@ -591,7 +694,8 @@ class SearchFragment : Fragment() {
 
                                         context.getActivity()?.let {
                                             if (it is FragmentActivity) mutableStateList.observe(it) { stateList ->
-                                                backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+                                                backgroundTintList =
+                                                    ColorStateList.valueOf(Color.TRANSPARENT)
                                                 strokeColor = stateList
                                                 rippleColor = stateList
                                                 setTextColor(stateList)
@@ -619,10 +723,17 @@ class SearchFragment : Fragment() {
     private data class SearchItem(
         val type: Type,
         val playlistContent: PlaylistContent? = null,
-        val playlists: Playlists? = null,
+        val libraryWrapper: LibraryWrapper? = null,
         val searchMainResultData: SearchMainResultData? = null,
         val shelfPlayData: ShelfPlayData? = null,
+        val libraryItem: LibraryItem? = null,
         val run: SearchFragment.() -> Unit = {}
+    )
+
+    private data class LibraryWrapper(
+        val title: String,
+        val items: List<LibraryItem>,
+        val isPlaylists: Boolean
     )
 
     private data class ShelfPlayData(
@@ -644,6 +755,7 @@ class SearchFragment : Fragment() {
         SHELF_SONGS,
         PLAYLISTS,
         SEARCH,
+        LIBRARY_ITEM,
         SHELF_PLAY_DATA,
         FUNCTION
     }

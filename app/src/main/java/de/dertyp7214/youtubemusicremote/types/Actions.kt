@@ -102,6 +102,9 @@ enum class Action {
     @SerializedName("playSearchSong")
     PLAY_SEARCH_SONG,
 
+    @SerializedName("playRecentItem")
+    PLAY_RECENT_ITEM,
+
     @SerializedName("openPlayer")
     OPEN_PLAYER,
 
@@ -110,6 +113,9 @@ enum class Action {
 
     @SerializedName("playlistContextMenu")
     PLAYLIST_CONTEXT_MENU,
+
+    @SerializedName("recentContextMenu")
+    RECENT_CONTEXT_MENU,
 
     @SerializedName("selectSearchTab")
     SELECT_SEARCH_TAB
@@ -225,6 +231,10 @@ data class PlaySearchSongData(
     val shelf: Int?
 )
 
+data class PlayRecentItemData(
+    val index: Int
+)
+
 data class Thumbnail(
     val url: String,
     val width: Int,
@@ -241,6 +251,11 @@ data class PlaylistContextMenuData(
     val action: ContextAction,
     val index: Int,
     val song: Boolean
+)
+
+data class RecentContextMenuData(
+    val action: ContextAction,
+    val index: Int
 )
 
 data class SelectSearchTabData(

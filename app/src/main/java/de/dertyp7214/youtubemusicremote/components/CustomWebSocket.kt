@@ -97,6 +97,10 @@ class CustomWebSocket(
         send(SendAction(Action.PLAY_SEARCH_SONG, PlaySearchSongData(index, shelf)))
     }
 
+    fun playRecentItem(index: Int) {
+        send(SendAction(Action.PLAY_RECENT_ITEM, PlayRecentItemData(index)))
+    }
+
     fun requestPlaylists() {
         send(SendAction(Action.REQUEST_PLAYLISTS))
     }
@@ -119,6 +123,10 @@ class CustomWebSocket(
 
     fun playlistContextMenu(action: ContextAction, index: Int, song: Boolean) {
         send(SendAction(Action.PLAYLIST_CONTEXT_MENU, PlaylistContextMenuData(action, index, song)))
+    }
+
+    fun recentContextMenu(action: ContextAction, index: Int) {
+        send(SendAction(Action.RECENT_CONTEXT_MENU, RecentContextMenuData(action, index)))
     }
 
     fun selectSearchTab(index: Int) {
