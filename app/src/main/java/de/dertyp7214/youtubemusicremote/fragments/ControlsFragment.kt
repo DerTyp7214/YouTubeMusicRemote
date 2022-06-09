@@ -17,6 +17,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.shape.ShapeAppearanceModel
 import de.dertyp7214.youtubemusicremote.BuildConfig
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
@@ -91,6 +92,9 @@ class ControlsFragment : Fragment() {
 
     private var luminance = 0f
     private var vibrant = 0
+
+    private val buttonRadius by lazy { resources.getDimension(R.dimen.innerRoundCorners) }
+    private val buttonRadiusMax by lazy { 56.dpToPx(requireContext()).toFloat() }
 
     private val searchViewModel by lazy { ViewModelProvider(requireActivity())[SearchViewModel::class.java] }
 
@@ -167,6 +171,11 @@ class ControlsFragment : Fragment() {
                 if (songInfo.isPaused == false) R.drawable.ic_play_pause else R.drawable.ic_pause_play
             ) as AnimatedVectorDrawable
             playPause.setImageDrawable(drawable)
+            val start = if (songInfo.isPaused == false) buttonRadiusMax else buttonRadius
+            val end = if (songInfo.isPaused == false) buttonRadius else buttonRadiusMax
+            animateFloats(start, end) {
+                playPause.shapeAppearanceModel = ShapeAppearanceModel().withCornerSize(it)
+            }
             drawable.start()
         }
 
@@ -262,7 +271,7 @@ class ControlsFragment : Fragment() {
         title.changeText(songInfo.title)
         artist.changeTextWithLinks(songInfo.artist, songInfo.fields, controlsColor) {
             searchViewModel.setSearchOpen(true)
-            searchViewModel.setQuery(songInfo.artist)
+            searchViewModel.setQuery(it.text)
         }
 
         title.animateTextColor(controlsColor) {

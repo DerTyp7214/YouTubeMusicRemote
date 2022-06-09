@@ -64,6 +64,17 @@ fun animateInts(
     }
 }
 
+fun animateFloats(
+    floatA: Float, floatB: Float, duration: Long = 250, callback: (Float) -> Unit
+) {
+    if (!((floatA-1)..(floatA+1)).contains(floatB)) {
+        val animator = ValueAnimator.ofFloat(floatA, floatB)
+        animator.duration = duration
+        animator.addUpdateListener { callback(it.animatedValue as Float) }
+        animator.start()
+    }
+}
+
 fun View.animateRightMargin(from: Int, to: Int, duration: Long = 250) =
     animateInts(from, to, duration) {
         setMargins(
@@ -242,3 +253,5 @@ fun invertColor(color: Int): Int {
     val b = Color.blue(color)
     return Color.argb(a, a - r, a - g, a - b)
 }
+
+fun runOnMainThread(block: () -> Unit) = Handler(Looper.getMainLooper()).post(block)

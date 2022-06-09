@@ -81,6 +81,7 @@ class SearchFragment : Fragment() {
     }
 
     private var showAll = false
+    private var currentTabIndex: Int? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -112,7 +113,10 @@ class SearchFragment : Fragment() {
             else fetchPlaylists()
         }
 
-        searchViewModel.observeQuery(this) { searchBar.text = it ?: "" }
+        searchViewModel.observeQuery(this) {
+            searchBar.text = it ?: ""
+            searchBar.search()
+        }
 
         mutableSpanCount.observe(requireActivity()) {
             adapter.mutableSpanCount.postValue(it)
@@ -224,7 +228,17 @@ class SearchFragment : Fragment() {
                             object : TypeToken<List<SearchMainResultData>>() {}.type
                         )
 
-                        updateData(searchResults.map {
+                        updateData(searchResults.sortedWith { item1, item2 ->
+                            if (item1.type == "tabs") -1
+                            else if (item2.type == "tabs") 1
+                            else if (item1.type == "top result") -1
+                            else if (item2.type == "top result") 1
+                            else if (item1.type == "songs") -1
+                            else if (item2.type == "songs") 1
+                            else if (item1.type == "albums") -1
+                            else if (item2.type == "albums") 1
+                            else item1.type.compareTo(item2.type)
+                        }.map {
                             SearchItem(
                                 Type.SEARCH,
                                 searchMainResultData = it
@@ -559,8 +573,17 @@ class SearchFragment : Fragment() {
                                     }
 
                                     holder.root.setOnClickListener {
-                                        if(item.playable) onClick(SearchItem(Type.LIBRARY_ITEM, libraryItem = item))
-                                        else Toast.makeText(context, R.string.cant_play_this, Toast.LENGTH_LONG).show()
+                                        if (item.playable) onClick(
+                                            SearchItem(
+                                                Type.LIBRARY_ITEM,
+                                                libraryItem = item
+                                            )
+                                        )
+                                        else Toast.makeText(
+                                            context,
+                                            R.string.cant_play_this,
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                     }
 
                                     holder.root.setOnLongClickListener {
@@ -676,32 +699,38 @@ class SearchFragment : Fragment() {
                             )
                             removeAllViews()
                             item.entries.forEach { tab ->
-                                addView(
-                                    MaterialButton(themeWrapper).apply {
-                                        text = tab.title
-                                        isEnabled = tab.type == "unselected"
-                                        layoutParams = LinearLayout.LayoutParams(
-                                            WRAP_CONTENT, WRAP_CONTENT, 1f
-                                        )
-                                        setMargin(8.dpToPx(context))
-                                        setOnClickListener {
-                                            onClick(SearchItem(Type.FUNCTION) {
-                                                progressBar.visibility = VISIBLE
-                                                updateData(listOf())
-                                                webSocket?.selectSearchTab(tab.index)
-                                            })
-                                        }
+                                val unselected = tab.type == "unselected"
+                                val button =
+                                    if (unselected) MaterialButton(themeWrapper)
+                                    else MaterialButton(context)
+                                addView(button.apply {
+                                    text = tab.title
+                                    isEnabled = unselected
+                                    layoutParams = LinearLayout.LayoutParams(
+                                        WRAP_CONTENT, WRAP_CONTENT, 1f
+                                    )
+                                    setCornerRadiusResource(R.dimen.roundCorners)
+                                    setMargin(8.dpToPx(context))
+                                    setOnClickListener {
+                                        onClick(SearchItem(Type.FUNCTION) {
+                                            progressBar.visibility = VISIBLE
+                                            currentTabIndex = tab.index
+                                            updateData(listOf())
+                                            webSocket?.selectSearchTab(tab.index)
+                                        })
+                                    }
 
-                                        context.getActivity()?.let {
-                                            if (it is FragmentActivity) mutableStateList.observe(it) { stateList ->
-                                                backgroundTintList =
-                                                    ColorStateList.valueOf(Color.TRANSPARENT)
-                                                strokeColor = stateList
-                                                rippleColor = stateList
-                                                setTextColor(stateList)
-                                            }
+                                    context.getActivity()?.let {
+                                        if (it is FragmentActivity) mutableStateList.observe(it) { stateList ->
+                                            backgroundTintList =
+                                                if (!unselected) stateList.withAlpha(60)
+                                                else ColorStateList.valueOf(Color.TRANSPARENT)
+                                            strokeColor = stateList
+                                            rippleColor = stateList
+                                            setTextColor(stateList)
                                         }
-                                    })
+                                    }
+                                })
                             }
                         }
                     }
