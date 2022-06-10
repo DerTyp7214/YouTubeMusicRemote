@@ -20,6 +20,7 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
     private var checkedGetter: () -> Boolean = { true }
     private var colorSetter: (Int) -> Unit = {}
     private var initialValue = true
+    private var initialColor = RED
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -27,7 +28,7 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
         addView(ComposeView(context).apply {
             setContent {
                 var checked by remember { mutableStateOf(initialValue) }
-                val checkedTrackColor = remember { mutableStateOf(RED) }
+                val checkedTrackColor = remember { mutableStateOf(initialColor) }
                 val lightColor = CColor(LTGRAY)
                 val darkColor = CColor(ColorUtils.blendARGB(DKGRAY, GRAY, .5f))
                 checkedSetter = { checked = it }
@@ -56,7 +57,10 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
         checkedChanged = listener
     }
 
-    fun setColor(color: Int) = colorSetter(color)
+    fun setColor(color: Int) {
+        initialColor = color
+        colorSetter(color)
+    }
     fun setChecked(value: Boolean, callListener: Boolean = true) {
         initialValue = value
         checkedSetter(value)
