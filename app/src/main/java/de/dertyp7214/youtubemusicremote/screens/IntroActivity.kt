@@ -24,6 +24,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.palette.graphics.Palette
 import androidx.preference.PreferenceManager
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
@@ -35,6 +36,7 @@ import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.core.blur
 import de.dertyp7214.youtubemusicremote.core.fitToScreen
 import de.dertyp7214.youtubemusicremote.core.getFallBackColor
+import de.dertyp7214.youtubemusicremote.core.setColor
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.*
 import dev.chrisbanes.insetter.applyInsetter
@@ -48,7 +50,7 @@ class IntroActivity : AppCompatActivity() {
     private lateinit var inputLayout: TextInputLayout
     private lateinit var nextButton: MaterialButton
     private lateinit var scanQrCode: MaterialButton
-    private lateinit var progressBar: ProgressBar
+    private lateinit var progressBar: LinearProgressIndicator
 
     private val coverLiveData = MutableLiveData<CoverData>()
 
@@ -132,7 +134,7 @@ class IntroActivity : AppCompatActivity() {
                 nextButton.strokeColor = ColorStateList.valueOf(coverColor)
                 nextButton.setTextColor(coverColor)
 
-                progressBar.indeterminateTintList = ColorStateList.valueOf(coverColor)
+                progressBar.setColor(coverColor)
             }
         } else {
             inputLayout.boxStrokeColor = color

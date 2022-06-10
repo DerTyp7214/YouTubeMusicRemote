@@ -15,6 +15,7 @@ import androidx.annotation.MenuRes
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.widget.doOnTextChanged
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.textfield.TextInputEditText
 import de.dertyp7214.youtubemusicremote.R
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -36,7 +37,7 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
     private val backButton: ImageButton
     private val moreButton: ImageButton
     private val searchText: TextView
-    private val searchEdit: EditText
+    private val searchEdit: TextInputEditText
 
     var instantSearch: Boolean = false
 

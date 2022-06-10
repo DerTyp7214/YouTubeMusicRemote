@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -18,6 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.shape.ShapeAppearanceModel
+import com.google.android.material.slider.Slider
 import de.dertyp7214.youtubemusicremote.BuildConfig
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
@@ -67,7 +67,7 @@ class ControlsFragment : Fragment() {
     private lateinit var progress: TextView
     private lateinit var duration: TextView
 
-    private lateinit var seekBar: SeekBar
+    private lateinit var seekBar: Slider
 
     private lateinit var layout: View
 
@@ -180,9 +180,12 @@ class ControlsFragment : Fragment() {
         }
 
         seekBar.let { seekBar ->
-            val duration = songInfo.songDuration.toInt()
-            if (seekBar.max != duration) seekBar.max = duration
-            seekBar.setProgress(songInfo.elapsedSeconds, true)
+            val duration = songInfo.songDuration.toFloat()
+            val current = songInfo.elapsedSeconds.toFloat()
+            if (seekBar.value > duration) seekBar.value = 0f
+            if (seekBar.valueTo != duration) seekBar.valueTo = duration
+            if (seekBar.valueTo > current && current > 0f)
+                seekBar.value = current
         }
 
         title.isSelected = true
@@ -261,9 +264,8 @@ class ControlsFragment : Fragment() {
             .6f * luminance
         )
 
-        animateColors(seekBar.progressTintList?.defaultColor ?: Color.WHITE, seekColor) {
-            seekBar.progressTintList = ColorStateList.valueOf(it)
-            seekBar.thumbTintList = ColorStateList.valueOf(it)
+        animateColors(seekBar.thumbStrokeColor?.defaultColor ?: Color.WHITE, seekColor) {
+            seekBar.setColor(it)
         }
 
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK

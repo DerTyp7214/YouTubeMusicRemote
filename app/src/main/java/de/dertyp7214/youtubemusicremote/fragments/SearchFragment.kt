@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView.HORIZONTAL
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import de.dertyp7214.youtubemusicremote.R
@@ -52,13 +53,13 @@ class SearchFragment : Fragment() {
     private val searchViewModel by lazy { ViewModelProvider(requireActivity())[SearchViewModel::class.java] }
     private val searchBar by lazy { layoutView.findViewById<SearchBar>(R.id.searchBar) }
     private val recyclerView by lazy { layoutView.findViewById<RecyclerView>(R.id.recyclerView) }
-    private val progressBar by lazy { layoutView.findViewById<ProgressBar>(R.id.progressBar) }
+    private val progressBar by lazy { layoutView.findViewById<LinearProgressIndicator>(R.id.progressBar) }
     private val shuffleButton by lazy { layoutView.findViewById<MaterialButton>(R.id.shuffle) }
     private val currentCover by lazy { layoutView.findViewById<ImageView>(R.id.currentCover) }
     private val currentTitle by lazy { layoutView.findViewById<TextView>(R.id.currentTitle) }
     private val currentArtist by lazy { layoutView.findViewById<TextView>(R.id.currentArtist) }
     private val currentPlayPause by lazy { layoutView.findViewById<ImageButton>(R.id.currentPlayPause) }
-    private val currentProgress by lazy { layoutView.findViewById<ProgressBar>(R.id.currentProgress) }
+    private val currentProgress by lazy { layoutView.findViewById<LinearProgressIndicator>(R.id.currentProgress) }
     private val adapter by lazy {
         SearchAdapter(requireContext(), items, contextMenu = { view, shelfPlayData ->
             showMenu(view, shelfPlayData, R.menu.queue_menu)
@@ -140,7 +141,7 @@ class SearchFragment : Fragment() {
 
             adapter.mutableStateList.postValue(stateList)
 
-            progressBar.indeterminateTintList = stateList
+            progressBar.setColor(musicData.color)
             shuffleButton.strokeColor = stateList
             shuffleButton.rippleColor = stateList
             shuffleButton.setTextColor(stateList)
@@ -149,7 +150,7 @@ class SearchFragment : Fragment() {
             currentTitle.text = musicData.title
             currentArtist.text = musicData.artist
 
-            currentProgress.progressTintList = stateList
+            currentProgress.setColor(musicData.color)
 
             currentPlayPause.setImageResource(if (musicData.playing) R.drawable.ic_pause else R.drawable.ic_play)
         }
@@ -176,7 +177,7 @@ class SearchFragment : Fragment() {
 
                 when (socketResponse.action) {
                     Action.PLAYLISTS -> {
-                        progressBar.visibility = INVISIBLE
+                        runOnMainThread { progressBar.visibility = INVISIBLE }
                         val playlists: Playlists = gson.fromJson(
                             socketResponse.data,
                             Playlists::class.java
@@ -205,7 +206,7 @@ class SearchFragment : Fragment() {
                         mutableSpanCount.postValue(requireContext().playlistColumns)
                     }
                     Action.PLAYLIST -> {
-                        progressBar.visibility = INVISIBLE
+                        runOnMainThread { progressBar.visibility = INVISIBLE }
                         val playlistContent: List<PlaylistContent> = gson.fromJson(
                             socketResponse.data,
                             object : TypeToken<List<PlaylistContent>>() {}.type
@@ -222,7 +223,7 @@ class SearchFragment : Fragment() {
                         mutableSpanCount.postValue(1)
                     }
                     Action.SEARCH_MAIN_RESULT -> {
-                        progressBar.visibility = INVISIBLE
+                        runOnMainThread { progressBar.visibility = INVISIBLE }
                         val searchResults: List<SearchMainResultData> = gson.fromJson(
                             socketResponse.data,
                             object : TypeToken<List<SearchMainResultData>>() {}.type
@@ -247,7 +248,7 @@ class SearchFragment : Fragment() {
                         mutableSpanCount.postValue(1)
                     }
                     Action.SHOW_SHELF_RESULTS -> {
-                        progressBar.visibility = INVISIBLE
+                        runOnMainThread { progressBar.visibility = INVISIBLE }
                         val shelfResults: List<ShowShelfResultData> = gson.fromJson(
                             socketResponse.data,
                             object : TypeToken<List<ShowShelfResultData>>() {}.type

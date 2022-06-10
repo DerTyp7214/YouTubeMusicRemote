@@ -3,14 +3,12 @@ package de.dertyp7214.youtubemusicremote.screens
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.graphics.LightingColorFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.SeekBar
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
@@ -20,7 +18,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.android.material.slider.Slider
+import de.dertyp7214.composecomponents.ComposeSwitch
 import de.dertyp7214.youtubemusicremote.BuildConfig.VERSION_CODE
 import de.dertyp7214.youtubemusicremote.BuildConfig.VERSION_NAME
 import de.dertyp7214.youtubemusicremote.Config.PLAY_URL
@@ -249,11 +248,11 @@ class Settings : AppCompatActivity() {
         }
 
         class ViewHolderSwitch(v: View) : ViewHolder(v) {
-            val switch: SwitchMaterial = v.findViewById(R.id.switchThumb)
+            val composeSwitch: ComposeSwitch = v.findViewById(R.id.composeSwitch)
         }
 
         class ViewHolderRange(v: View) : ViewHolder(v) {
-            val seekBar: SeekBar = v.findViewById(R.id.seekBar)
+            val seekBar: Slider = v.findViewById(R.id.seekBar)
         }
 
         fun setColor(color: Int) = mutableColor.postValue(color)
@@ -300,42 +299,37 @@ class Settings : AppCompatActivity() {
 
             when (holder) {
                 is ViewHolderSwitch -> {
-                    holder.switch.isChecked = settingsElement.getValue(activity)
-                    holder.switch.setOnCheckedChangeListener { _, b ->
-                        settingsElement.onClick(settingsElement.id, b)
+                    holder.composeSwitch.setChecked(settingsElement.getValue(activity), false)
+                    holder.composeSwitch.setCheckedChangedListener {
+                        settingsElement.onClick(settingsElement.id, it)
                         delayed(250) { this@SettingsAdapter.notifyDataSetChanged() }
                     }
                     holder.root.setOnClickListener {
-                        holder.switch.isChecked = !holder.switch.isChecked
+                        holder.composeSwitch.setChecked(!holder.composeSwitch.getChecked())
                     }
                 }
                 is ViewHolderRange -> {
-                    holder.seekBar.min = settingsElement.typeData.from
-                    holder.seekBar.max = settingsElement.typeData.to
-                    holder.seekBar.progress = settingsElement.getValue(activity)
-                    holder.seekBar.setOnSeekBarChangeListener(object :
-                        SeekBar.OnSeekBarChangeListener {
-                        override fun onStartTrackingTouch(p0: SeekBar?) {}
-                        override fun onStopTrackingTouch(p0: SeekBar?) {}
-                        override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                            if (p2) {
-                                settingsElement.onClick(settingsElement.id, p1)
-                                holder.subText.text = settingsElement.subText.replace(
-                                    "{{value}}",
-                                    settingsElement.getValue<Any>(activity).toString()
-                                )
-                            }
+                    holder.seekBar.valueFrom = settingsElement.typeData.from.toFloat()
+                    holder.seekBar.valueTo = settingsElement.typeData.to.toFloat()
+                    holder.seekBar.value = settingsElement.getValue<Int>(activity).toFloat()
+                    holder.seekBar.onProgressChanged { progress, userInput ->
+                        if (userInput) {
+                            @Suppress("RemoveRedundantCallsOfConversionMethods")
+                            settingsElement.onClick(settingsElement.id, progress.toInt())
+                            holder.subText.text = settingsElement.subText.replace(
+                                "{{value}}",
+                                settingsElement.getValue<Int>(activity).toString()
+                            )
                         }
-                    })
+                    }
                 }
             }
 
             mutableColor.observe(activity) {
                 when (holder) {
-                    is ViewHolderSwitch -> holder.switch.setColor(it)
+                    is ViewHolderSwitch -> holder.composeSwitch.setColor(it)
                     is ViewHolderRange -> {
-                        holder.seekBar.progressTintList = ColorStateList.valueOf(it)
-                        holder.seekBar.thumbTintList = ColorStateList.valueOf(it)
+                        holder.seekBar.setColor(it)
                     }
                 }
             }

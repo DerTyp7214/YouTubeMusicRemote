@@ -167,10 +167,12 @@ fun TextView.changeTextWithLinks(
         }
     }
     if (("${this.text}" != "$spannableString" && (fields.isEmpty() || fields.any { text.contains(it.text) })) || textColor != textColors.defaultColor || this.text != text) {
+        setOnClickListener(null)
         this.text = spannableString
         movementMethod = LinkMovementMethod.getInstance()
         animateTextColor(textColor)
     }
+    if (fields.isEmpty()) setOnClickListener { callback(Field(this.text.toString(), "")) }
 }
 
 fun Int.darkenColor(amount: Float): Int {
