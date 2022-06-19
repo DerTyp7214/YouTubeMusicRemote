@@ -8,28 +8,10 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.toBitmap
-import kotlin.math.roundToInt
 
 
 fun Drawable.fitToScreen(activity: Activity): Drawable {
-    val bitmap = toBitmap()
-    val rootLayout = activity.window.decorView
-    val aspectRatio1 = rootLayout.width.toFloat() / rootLayout.height.toFloat()
-    val aspectRatio2 = rootLayout.height.toFloat() / rootLayout.width.toFloat()
-
-    return if (aspectRatio1 <= 1) resize(
-        activity,
-        ((bitmap.width * (1 - aspectRatio1)) / 2).roundToInt(),
-        0,
-        (bitmap.width * aspectRatio1).roundToInt(),
-        bitmap.height
-    ) else resize(
-        activity,
-        0,
-        ((bitmap.height * (1 - aspectRatio2)) / 2).roundToInt(),
-        bitmap.width,
-        (bitmap.height * aspectRatio2).roundToInt()
-    )
+    return toBitmap().fitToScreen(activity).toDrawable(activity)
 }
 
 fun Drawable.resize(context: Context, x: Int, y: Int, width: Int, height: Int) =
@@ -57,10 +39,7 @@ fun Drawable.resize(
 
 val Drawable.dominantColor: Int
     get() {
-        val newBitmap = Bitmap.createScaledBitmap(toBitmap(), 1, 1, true)
-        val color = newBitmap.getPixel(0, 0)
-        newBitmap.recycle()
-        return color
+        return toBitmap().dominantColor
     }
 
 fun Drawable.blur(

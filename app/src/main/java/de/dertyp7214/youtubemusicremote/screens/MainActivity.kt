@@ -15,7 +15,6 @@ import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.card.MaterialCardView
@@ -206,14 +205,12 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             val controlsColor = if (isDark(
                     coverData.background?.let {
                         if (group != null) {
-                            val activity = this
-                            val bitmap = it.toBitmap()
-                            val screenHeight = activity.window.decorView.height.toFloat()
+                            val screenHeight = window.decorView.height.toFloat()
                             val groupHeight = group.height.toFloat() + group.getMargins().top
-                            val ratio = bitmap.height / screenHeight
-                            bitmap.resize(
-                                0, 0, bitmap.width, (groupHeight * ratio).roundToInt()
-                            ).toDrawable(activity)
+                            val ratio = it.intrinsicHeight / screenHeight
+                            it.resize(
+                                this, 0, 0, it.intrinsicWidth, (groupHeight * ratio).roundToInt()
+                            )
                         } else it
                     }?.dominantColor ?: coverData.parsedDominant
                 )

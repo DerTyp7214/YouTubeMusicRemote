@@ -209,14 +209,14 @@ class ControlsFragment : Fragment() {
                     val ratio = bitmap.height / screenHeight
                     val convertedSelfHeight = selfHeight * ratio
                     val yB = (bitmap.height - convertedSelfHeight).roundToInt()
-                    val drawable = bitmap.resize(
+                    val resized = bitmap.resize(
                         0,
                         yB,
                         bitmap.width,
                         convertedSelfHeight.roundToInt()
-                    ).toDrawable(activity)
+                    )
 
-                    val bitmap2 = it.fitToScreen(activity).toBitmap()
+                    val bitmap2 = bitmap.fitToScreen(activity)
                     val ratio2 = bitmap2.height / screenHeight
                     val location = intArrayOf(0, 0)
                     seekBar.getLocationOnScreen(location)
@@ -226,7 +226,7 @@ class ControlsFragment : Fragment() {
                     val seekbarBackground = bitmap2.resize(
                         x, y, bitmap2.width - (x * 2),
                         (seekBar.height * ratio2).roundToInt()
-                    ).toDrawable(activity)
+                    )
                     val debug: (Number) -> Unit = { number ->
                         if (BuildConfig.DEBUG) Integer.toHexString(number.toInt()).let { s ->
                             val color = s.length >= 6
@@ -239,7 +239,7 @@ class ControlsFragment : Fragment() {
                             coverData.vibrant.also(debug)
                         ).also(debug) < 18
                     ) vibrant = invertColor(coverData.vibrant)
-                    drawable.dominantColor
+                    resized.dominantColor
                 } catch (_: Exception) {
                     it.dominantColor
                 }

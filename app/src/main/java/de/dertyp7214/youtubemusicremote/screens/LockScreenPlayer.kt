@@ -30,7 +30,6 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class LockScreenPlayer : AppCompatActivity() {
-
     private class MRoundedCorner(windowInsets: WindowInsets, position: Int) {
         val position: Int
         val radius: Int

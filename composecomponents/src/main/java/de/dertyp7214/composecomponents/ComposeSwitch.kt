@@ -18,9 +18,16 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
     private var checkedChanged: (Boolean) -> Unit = {}
     private var checkedSetter: (Boolean) -> Unit = {}
     private var checkedGetter: () -> Boolean = { true }
+    private var borderSetter: (Boolean) -> Unit = {}
     private var colorSetter: (Int) -> Unit = {}
     private var initialValue = true
     private var initialColor = RED
+
+    var hasBorder = true
+        set(value) {
+            field = value
+            borderSetter(value)
+        }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -31,11 +38,11 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
                 val checkedTrackColor = remember { mutableStateOf(initialColor) }
                 val lightColor = CColor(LTGRAY)
                 val darkColor = CColor(ColorUtils.blendARGB(DKGRAY, GRAY, .5f))
+                var hasBorder by remember { mutableStateOf(hasBorder) }
                 checkedSetter = { checked = it }
                 checkedGetter = { checked }
-                colorSetter = {
-                    checkedTrackColor.value = it
-                }
+                colorSetter = { checkedTrackColor.value = it }
+                borderSetter = { hasBorder = it }
                 Switch(
                     checked = checked,
                     onCheckedChange = {
@@ -43,10 +50,10 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
                         checkedChanged(it)
                     },
                     colors = SwitchDefaults.colors(
-                        uncheckedTrackColor = lightColor,
+                        uncheckedTrackColor = if (hasBorder) lightColor else darkColor,
                         checkedTrackColor = CColor(checkedTrackColor.value),
                         uncheckedBorderColor = darkColor,
-                        uncheckedThumbColor = darkColor
+                        uncheckedThumbColor = if (hasBorder) darkColor else lightColor
                     )
                 )
             }
@@ -61,6 +68,7 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
         initialColor = color
         colorSetter(color)
     }
+
     fun setChecked(value: Boolean, callListener: Boolean = true) {
         initialValue = value
         checkedSetter(value)
