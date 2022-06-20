@@ -7,6 +7,7 @@ android {
     namespace 'de.dertyp7214.youtubemusicremote'
     compileSdk = 33
     buildToolsVersion = "33.0.0"
+    ndkVersion '25.0.8528842'
 
     defaultConfig {
         applicationId "de.dertyp7214.youtubemusicremote"

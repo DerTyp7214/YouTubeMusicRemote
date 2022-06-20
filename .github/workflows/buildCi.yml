@@ -27,6 +27,15 @@ jobs:
         with:
           submodules: recursive
 
+    - uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r25
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: '3.22.1'
+
       - name: Get Commit Message
         id: commitMessage
         run: IN="${{ github.event.head_commit.message }}" && echo "::set-output name=message::${IN%%$'\n'*}"
