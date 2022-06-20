@@ -15,7 +15,7 @@ jobs:
 
       - uses: nttld/setup-ndk@v1
         with:
-          ndk-version: r25
+          ndk-version: r25r
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
