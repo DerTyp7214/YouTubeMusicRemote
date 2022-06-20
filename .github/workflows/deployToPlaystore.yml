@@ -13,10 +13,6 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r24
-
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
