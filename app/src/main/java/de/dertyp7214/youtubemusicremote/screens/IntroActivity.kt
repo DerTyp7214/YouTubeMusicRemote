@@ -17,7 +17,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
-import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.MutableLiveData
@@ -30,6 +29,7 @@ import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
@@ -127,7 +127,7 @@ class IntroActivity : AppCompatActivity() {
                 )
 
                 scanQrCode.rippleColor =
-                    ColorStateList.valueOf(ColorUtils.blendARGB(coverColor, Color.BLACK, .3f))
+                    ColorStateList.valueOf(ColorUtilsC.blendARGB(coverColor, Color.BLACK, .3f))
                 scanQrCode.backgroundTintList = ColorStateList.valueOf(coverColor)
 
                 nextButton.rippleColor = ColorStateList.valueOf(coverColor)

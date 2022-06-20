@@ -2,11 +2,11 @@ package de.dertyp7214.youtubemusicremote.core
 
 import android.content.Context
 import android.graphics.Color
-import androidx.core.graphics.ColorUtils
 import androidx.palette.graphics.Palette
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.request.RequestOptions
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import de.dertyp7214.youtubemusicremote.types.CoverData
 import de.dertyp7214.youtubemusicremote.types.SongInfo
 import de.dertyp7214.youtubemusicremote.types.SongInfoAction
@@ -35,7 +35,7 @@ fun SongInfo.parseImageColors(context: Context, currentSongInfo: SongInfo): Song
         }
     }
 
-    val luminance = ColorUtils.calculateLuminance(
+    val luminance = ColorUtilsC.calculateLuminance(
         coverData?.dominant ?: Color.WHITE
     ).toFloat()
 

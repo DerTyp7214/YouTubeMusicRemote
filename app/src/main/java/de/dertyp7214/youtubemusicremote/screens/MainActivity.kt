@@ -21,6 +21,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.h6ah4i.android.widget.verticalseekbar.VerticalSeekBar
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
@@ -226,8 +227,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 Color.BLACK
             }
 
-            val luminance = ColorUtils.calculateLuminance(coverData.dominant).toFloat()
-            val sliderColor = ColorUtils.blendARGB(
+            val luminance = ColorUtilsC.calculateLuminance(coverData.dominant).toFloat()
+            val sliderColor = ColorUtilsC.blendARGB(
                 getFallBackColor(coverData.muted, coverData.vibrant),
                 if (luminance < .5) Color.BLACK else Color.WHITE,
                 .6f * luminance
@@ -471,11 +472,11 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         if (!::mainContent.isInitialized || !::volumeWrapper.isInitialized) return
 
         val color = (currentSongInfo.value?.coverData?.dominant ?: Color.BLACK).let {
-            it.darkenColor(.7f * ColorUtils.calculateLuminance(it).toFloat())
+            it.darkenColor(.7f * ColorUtilsC.calculateLuminance(it).toFloat())
         }
         val foregroundColor = ColorUtils.setAlphaComponent(
             color,
-            (128f * max(ColorUtils.calculateLuminance(color).toFloat(), .5f)).roundToInt()
+            (128f * max(ColorUtilsC.calculateLuminance(color).toFloat(), .5f)).roundToInt()
         )
 
         volumeHandler.removeCallbacksAndMessages(null)

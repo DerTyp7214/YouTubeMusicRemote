@@ -1,4 +1,3 @@
-
 # For more information about using CMake with Android Studio, read the
 # documentation: https://d.android.com/studio/projects/add-native-code.html
 
@@ -8,14 +7,7 @@ cmake_minimum_required(VERSION 3.18.1)
 
 # Declares and names the project.
 
-project("youtubemusicremote")
-
-enable_language(ASM)
-set(ADD_C_FLAGS ${ADD_COMMON_FLAGS}
-        -std=c11
-        -D_LARGEFILE_SOURCE=1
-        )
-set(ADD_CXX_FLAGS ${ADD_COMMON_FLAGS})
+project("colorutilsc")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -23,14 +15,14 @@ set(ADD_CXX_FLAGS ${ADD_COMMON_FLAGS})
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-        youtubemusicremote
+        colorutilsc
 
         # Sets the library as a shared library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        image.c
-        )
+        colorUtils.c
+        colorUtils.h)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -50,12 +42,8 @@ find_library( # Sets the name of the path variable.
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-        youtubemusicremote
-        -ljnigraphics
+        colorutilsc
 
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})
-
-include(AndroidNdkModules)
-android_ndk_import_module_cpufeatures()

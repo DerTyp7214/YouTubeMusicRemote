@@ -11,7 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.graphics.ColorUtils
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import androidx.compose.ui.graphics.Color as CColor
 
 class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(context, attrs) {
@@ -37,7 +37,7 @@ class ComposeSwitch(context: Context, attrs: AttributeSet?) : RelativeLayout(con
                 var checked by remember { mutableStateOf(initialValue) }
                 val checkedTrackColor = remember { mutableStateOf(initialColor) }
                 val lightColor = CColor(LTGRAY)
-                val darkColor = CColor(ColorUtils.blendARGB(DKGRAY, GRAY, .5f))
+                val darkColor = CColor(ColorUtilsC.blendARGB(DKGRAY, GRAY, .5f))
                 var hasBorder by remember { mutableStateOf(hasBorder) }
                 checkedSetter = { checked = it }
                 checkedGetter = { checked }

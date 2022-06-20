@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.SpannableString
@@ -17,12 +16,12 @@ import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.graphics.ColorUtils
 import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import com.google.gson.Gson
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.types.*
@@ -30,8 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 fun <T> doAsync(doInBackground: () -> T, getResult: (result: T) -> Unit) {
     CoroutineScope(Dispatchers.Main).launch {
@@ -45,7 +42,7 @@ fun <T> doAsync(doInBackground: () -> T, getResult: (result: T) -> Unit) {
 }
 
 fun isDark(color: Int): Boolean {
-    return ColorUtils.calculateLuminance(color) < .5
+    return ColorUtilsC.calculateLuminance(color) < .5
 }
 
 fun getFallBackColor(vararg colors: Int): Int {
@@ -187,9 +184,7 @@ fun Context.getStatusBarHeight(): Int {
     var result = 0
     val resourceId: Int = resources.getIdentifier("status_bar_height", "dimen", "android")
     if (resourceId > 0) result = resources.getDimensionPixelSize(resourceId)
-    return if (Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2) result * 2 else result + 8.dpToPx(
-        this
-    )
+    return result + 8.dpToPx(this)
 }
 
 fun Fragment.getStatusBarHeight() = requireContext().getStatusBarHeight()
@@ -237,23 +232,5 @@ fun checkWebSocket(url: String, gson: Gson, callback: (Boolean, String?) -> Unit
 
 fun delayed(timeout: Long = 200, callback: () -> Unit) =
     Handler(Looper.getMainLooper()).postDelayed(callback, timeout)
-
-fun getColorDifference(a: Int, b: Int): Double {
-    val lab1 = doubleArrayOf(.0, .0, .0)
-    val lab2 = doubleArrayOf(.0, .0, .0)
-    ColorUtils.colorToLAB(a, lab1)
-    ColorUtils.colorToLAB(b, lab2)
-    return sqrt(
-        (lab2[0] - lab1[0]).pow(2.0) + (lab2[1] - lab1[1]).pow(2.0) + (lab2[2] - lab1[2]).pow(2.0)
-    )
-}
-
-fun invertColor(color: Int): Int {
-    val a = Color.alpha(color)
-    val r = Color.red(color)
-    val g = Color.green(color)
-    val b = Color.blue(color)
-    return Color.argb(a, a - r, a - g, a - b)
-}
 
 fun runOnMainThread(block: () -> Unit) = Handler(Looper.getMainLooper()).post(block)

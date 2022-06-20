@@ -18,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.shape.ShapeAppearanceModel
 import com.google.android.material.slider.Slider
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import de.dertyp7214.youtubemusicremote.BuildConfig
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
@@ -199,7 +200,7 @@ class ControlsFragment : Fragment() {
         }
 
         vibrant = coverData.vibrant
-        luminance = ColorUtils.calculateLuminance(
+        luminance = ColorUtilsC.calculateLuminance(
             coverData.background?.let {
                 try {
                     val activity = requireActivity()
@@ -234,11 +235,11 @@ class ControlsFragment : Fragment() {
                             else Log.d("DIFF", number.toString())
                         }
                     }
-                    if (getColorDifference(
+                    if (ColorUtilsC.calculateColorDifference(
                             seekbarBackground.dominantColor.also(debug),
                             coverData.vibrant.also(debug)
                         ).also(debug) < 18
-                    ) vibrant = invertColor(coverData.vibrant)
+                    ) vibrant = ColorUtilsC.invertColor(coverData.vibrant)
                     resized.dominantColor
                 } catch (_: Exception) {
                     it.dominantColor
@@ -258,7 +259,7 @@ class ControlsFragment : Fragment() {
             playPause.outlineAmbientShadowColor = it
         }
 
-        val seekColor = ColorUtils.blendARGB(
+        val seekColor = ColorUtilsC.blendARGB(
             getFallBackColor(vibrant, coverData.muted),
             if (luminance < .5) Color.WHITE else Color.BLACK,
             .6f * luminance

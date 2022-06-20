@@ -11,6 +11,7 @@ import android.view.View
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import de.dertyp7214.audiovisualization.R
+import de.dertyp7214.mathc.AudioVisualization
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -101,17 +102,14 @@ class AudioVisualizerView(context: Context, attrs: AttributeSet?, defStyle: Int)
         while (i < audioData.size) {
             val barHeight = height / 256f * (audioData[i] * .2f)
 
-            val cornerBottomSpace = if (barHeight != 0f) {
-                val leftRadius = bottomLeftCorner.radius * 1.1f
-                val rightRadius = bottomRightCorner.radius * 1.1f
-                if (x + barWidth < bottomLeftCorner.radius * 1.1f) {
-                    val point = leftRadius - x
-                    point.easeInQuad(1f / leftRadius * point)
-                } else if (x - barWidth > (width - bottomRightCorner.radius * 1.1f)) {
-                    val point = bottomRightCorner.radius - (width - x)
-                    point.easeInQuad(1f / rightRadius * point)
-                } else 0f
-            } else 0f
+            val cornerBottomSpace = AudioVisualization.calculateBottomSpace(
+                x,
+                width,
+                bottomLeftCorner.radius,
+                bottomRightCorner.radius,
+                barWidth,
+                barHeight
+            )
 
             canvas.drawRect(
                 x,
@@ -125,8 +123,6 @@ class AudioVisualizerView(context: Context, attrs: AttributeSet?, defStyle: Int)
             x += barWidth + space
         }
     }
-
-    private fun Number.easeInQuad(x: Float) = toFloat() * (x * x)
 
     private fun List<Short>.changeSize(newSize: Int): List<Short> {
         val tmp = ArrayList<Short>()
