@@ -6,6 +6,9 @@ on:
     paths:
       - 'app/**'
       - 'audiovisualization/**'
+      - 'colorutilsc/**'
+      - 'mathc/**'
+      - 'composecomponents/**'
       - 'gradle/**'
       - 'build.gradle.kts'
       - 'gradle.properties'
@@ -20,7 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.3
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Get Commit Message
         id: commitMessage
