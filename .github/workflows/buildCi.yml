@@ -5,10 +5,10 @@ on:
     branches: [ master, rCompatible, rCompatible-Dev ]
     paths:
       - 'app/**'
-      - 'audiovisualization/**'
-      - 'colorutilsc/**'
-      - 'mathc/**'
-      - 'composecomponents/**'
+      - 'audiovisualization'
+      - 'composecomponents'
+      - 'colorutilsc'
+      - 'mathc'
       - 'gradle/**'
       - 'build.gradle.kts'
       - 'gradle.properties'
