@@ -7,6 +7,7 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.core.graphics.get
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import jp.wasabeef.glide.transformations.BlurTransformation
@@ -17,7 +18,7 @@ fun Bitmap.toDrawable(context: Context): Drawable = BitmapDrawable(context.resou
 val Bitmap.dominantColor: Int
     get() {
         val newBitmap = Bitmap.createScaledBitmap(this, 1, 1, true)
-        val color = newBitmap.getPixel(0, 0)
+        val color = newBitmap[0, 0]
         newBitmap.recycle()
         return color
     }

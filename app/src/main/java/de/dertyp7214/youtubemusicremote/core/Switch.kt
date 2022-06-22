@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.graphics.PorterDuff
 import com.google.android.material.switchmaterial.SwitchMaterial
 
-
 fun SwitchMaterial.setColor(color: Int) {
     val thumbStates = ColorStateList(
         arrayOf(

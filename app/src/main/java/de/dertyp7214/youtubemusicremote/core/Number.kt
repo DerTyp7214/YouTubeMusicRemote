@@ -3,7 +3,6 @@
 package de.dertyp7214.youtubemusicremote.core
 
 import android.content.Context
-import de.dertyp7214.mathc.MathC
 import java.util.concurrent.TimeUnit
 
 fun String.toHumanReadable(isSeconds: Boolean = false): String {
@@ -39,14 +38,3 @@ fun Int.pxToDp(context: Context): Int {
 fun Number.toMillis() = toString().toMillis()
 
 fun Float.minMax(min: Float, max: Float) = if (this > max) max else if (this < min) min else this
-
-fun Number.easeInQuad(x: Float) = toFloat() * MathC.easeInQuad(x)
-fun Number.easeOutQuad(x: Float) = toFloat() * MathC.easeOutQuad(x)
-fun Number.easeInQuart(x: Float) = toFloat() * MathC.easeInQuart(x)
-fun Number.easeOutQuart(x: Float) = toFloat() * MathC.easeOutQuart(x)
-fun Number.easeInExpo(x: Float) = toFloat() * MathC.easeInExpo(x)
-fun Number.easeOutExpo(x: Float) = toFloat() * MathC.easeOutExpo(x)
-fun Number.easeInCubic(x: Float) = toFloat() * MathC.easeInCubic(x)
-fun Number.easeOutCubic(x: Float) = toFloat() * MathC.easeOutCubic(x)
-fun Number.easeInBounce(x: Float) = toFloat() * MathC.easeInBounce(x)
-fun Number.easOutBounce(x: Float) = toFloat() * MathC.easeOutBounce(x)

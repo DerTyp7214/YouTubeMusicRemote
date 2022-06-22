@@ -173,8 +173,8 @@ fun TextView.changeTextWithLinks(
 }
 
 fun Int.darkenColor(amount: Float): Int {
-    return Color.HSVToColor(FloatArray(3).apply {
-        Color.colorToHSV(this@darkenColor, this)
+    return ColorUtilsC.HSLToColor(FloatArray(3).apply {
+        ColorUtilsC.colorToHSL(this@darkenColor, this)
         this[2] *= amount
     })
 }
