@@ -25,7 +25,7 @@ class CoverFragment : Fragment() {
             private set
     }
 
-    private val mutableAudioData = MutableLiveData<MutableLiveData<List<Short>>>()
+    private val mutableAudioData = MutableLiveData<MutableLiveData<ShortArray>>()
 
     private var currentSongInfo = SongInfo()
 
@@ -81,7 +81,7 @@ class CoverFragment : Fragment() {
         visualizerView.size = 2f.pow(size).roundToInt()
     }
 
-    fun setAudioData(audioData: MutableLiveData<List<Short>>) =
+    fun setAudioData(audioData: MutableLiveData<ShortArray>) =
         mutableAudioData.postValue(audioData)
 
     fun setSongInfo(songInfo: SongInfo) {

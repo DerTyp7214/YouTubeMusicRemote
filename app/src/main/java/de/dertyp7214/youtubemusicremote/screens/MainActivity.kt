@@ -172,7 +172,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             }
         }
 
-        val audioLiveData = MutableLiveData<List<Short>>()
+        val audioLiveData = MutableLiveData<ShortArray>()
         coverFragment.setAudioData(audioLiveData)
 
         searchViewModel.observerSearchOpen(this) { open ->

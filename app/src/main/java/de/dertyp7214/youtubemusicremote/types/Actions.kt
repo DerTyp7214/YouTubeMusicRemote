@@ -183,8 +183,23 @@ class RemoveQueueData(
 )
 
 data class AudioDataData(
-    val data: List<Short>
-)
+    val data: ShortArray
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AudioDataData
+
+        if (!data.contentEquals(other.data)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return data.contentHashCode()
+    }
+}
 
 data class RequestPlaylistData(
     val index: Int
