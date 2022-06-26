@@ -389,7 +389,9 @@ class SearchFragment : Fragment() {
             menu.findItem(R.id.menu_add_to_queue)?.isVisible = false
 
             when (shelfPlayData.type) {
-                "songs", "videos", "albums", "community playlists", "playlists", "playlist songs", "recent" -> {
+                "songs", "videos", "albums",
+                "community playlists", "playlists",
+                "playlist songs", "shelf songs", "recent" -> {
                     menu.findItem(R.id.menu_play_next)?.isVisible = true
                     menu.findItem(R.id.menu_add_to_queue)?.isVisible = true
                 }
@@ -508,7 +510,13 @@ class SearchFragment : Fragment() {
                         }
 
                         holder.root.setOnLongClickListener {
-                            contextMenu(it, ShelfPlayData(item.index, type = "playlist songs"))
+                            contextMenu(
+                                it,
+                                ShelfPlayData(
+                                    item.index,
+                                    type = if (list[position].type == Type.SHELF_SONGS) "shelf songs" else "playlist songs"
+                                )
+                            )
                             true
                         }
 
