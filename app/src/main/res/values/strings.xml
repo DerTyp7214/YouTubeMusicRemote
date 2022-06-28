@@ -50,4 +50,6 @@
     <string name="playlists">Playlists</string>
     <string name="cant_play_this">Can\'t play this item.</string>
     <string name="back">Back</string>
+    <string name="settings_visualize_audio_mirror_bars_title">Mirror Bars</string>
+    <string name="settings_visualize_audio_mirror_bars_subtext">Mirrors audio bars</string>
 </resources>

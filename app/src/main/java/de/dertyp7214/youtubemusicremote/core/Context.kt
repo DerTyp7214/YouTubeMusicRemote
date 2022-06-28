@@ -33,6 +33,24 @@ inline val Context.customLockscreenVisualizeAudio: Boolean
 inline val Context.playlistColumns: Int
     get() = preferences.getInt("playlistColumns", 3)
 
+inline val Context.mirrorBars: Boolean
+    get() = preferences.getBoolean("mirrorBars", true)
+
+inline fun <reified T> Context.defaultValue(id: String, default: T): T {
+    return when (id) {
+        "useRatingInNotification" -> useRatingInNotification.let { if (it is T) it else default }
+        "customLockscreenOnlyWhilePlaying" -> customLockscreenOnlyWhilePlaying.let { if (it is T) it else default }
+        "useCustomLockScreen" -> useCustomLockScreen.let { if (it is T) it else default }
+        "visualizeAudio" -> visualizeAudio.let { if (it is T) it else default }
+        "visualizeSize" -> visualizeSize.let { if (it is T) it else default }
+        "customLockscreenVisualizeAudioSize" -> customLockscreenVisualizeAudioSize.let { if (it is T) it else default }
+        "customLockscreenVisualizeAudio" -> customLockscreenVisualizeAudio.let { if (it is T) it else default }
+        "playlistColumns" -> playlistColumns.let { if (it is T) it else default }
+        "mirrorBars" -> mirrorBars.let { if (it is T) it else default }
+        else -> default
+    }
+}
+
 tailrec fun Context?.getActivity(): Activity? {
     return if (this == null) null
     else if (this !is ContextWrapper) null

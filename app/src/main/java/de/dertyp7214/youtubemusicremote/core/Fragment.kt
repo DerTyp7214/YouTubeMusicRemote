@@ -34,5 +34,8 @@ inline val <T: Fragment> T.customLockscreenVisualizeAudioSize: Int
 inline val <T: Fragment> T.customLockscreenVisualizeAudio: Boolean
     get() = visualizeAudio && preferences.getBoolean("customLockscreenVisualizeAudio", false)
 
+inline val <T: Fragment> T.mirrorBars: Boolean
+    get() = preferences.getBoolean("mirrorBars", true)
+
 inline val <T: Fragment> T.playlistColumns: Int
     get() = preferences.getInt("playlistColumns", 3)

@@ -78,6 +78,17 @@ class SettingsFragment : Fragment() {
                 putBoolean(id, value)
                 CoverFragment.instance?.visualizeAudioPreferenceChanged(value)
             }
+        },SettingsElement(
+            "mirrorBars",
+            R.string.settings_visualize_audio_mirror_bars_title,
+            R.string.settings_visualize_audio_mirror_bars_subtext,
+            requireContext(),
+            SettingsType.SWITCH,
+            { visualizeAudio }
+        ) { id, value ->
+            if (value is Boolean) preferences.edit {
+                putBoolean(id, value)
+            }
         }, SettingsElement(
             "visualizeAudioSize",
             R.string.settings_visualize_audio_size_title,
@@ -356,8 +367,8 @@ data class SettingsElement(
     ) : this(id, context.getString(title), context.getString(subText), data(id), visible, onClick)
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> getValue(context: Context): T = when (type) {
-        SettingsType.SWITCH -> context.preferences.getBoolean(id, false) as T
+    inline fun <reified T> getValue(context: Context): T = when (type) {
+        SettingsType.SWITCH -> context.defaultValue(id, false as T)
         SettingsType.RANGE -> context.preferences.getInt(
             id,
             type(id).default

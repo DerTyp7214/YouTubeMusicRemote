@@ -66,7 +66,7 @@ class CoverFragment : Fragment() {
             visualizeAudioPreferenceChanged(activity.visualizeAudio)
             mutableAudioData.observe(activity) {
                 it.observe(activity) { audioData ->
-                    visualizerView.setAudioData(audioData, true)
+                    visualizerView.setAudioData(audioData, mirrorBars)
                 }
             }
         }
