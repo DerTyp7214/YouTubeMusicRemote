@@ -135,9 +135,24 @@
             android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="PlayPause"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/currentNext"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_play"
+            app:tint="@android:color/white"
+            tools:ignore="HardcodedText"
+            tools:tint="@android:color/black" />
+
+        <ImageButton
+            android:id="@+id/currentNext"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="PlayPause"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_next"
             app:tint="@android:color/white"
             tools:ignore="HardcodedText"
             tools:tint="@android:color/black" />

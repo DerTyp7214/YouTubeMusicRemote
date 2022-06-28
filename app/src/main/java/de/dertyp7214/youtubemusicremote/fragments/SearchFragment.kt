@@ -59,6 +59,7 @@ class SearchFragment : Fragment() {
     private val currentTitle by lazy { layoutView.findViewById<TextView>(R.id.currentTitle) }
     private val currentArtist by lazy { layoutView.findViewById<TextView>(R.id.currentArtist) }
     private val currentPlayPause by lazy { layoutView.findViewById<ImageButton>(R.id.currentPlayPause) }
+    private val currentNext by lazy { layoutView.findViewById<ImageButton>(R.id.currentNext) }
     private val currentProgress by lazy { layoutView.findViewById<LinearProgressIndicator>(R.id.currentProgress) }
     private val adapter by lazy {
         SearchAdapter(requireContext(), items, contextMenu = { view, shelfPlayData ->
@@ -125,6 +126,10 @@ class SearchFragment : Fragment() {
 
         currentPlayPause.setOnClickListener {
             webSocket?.playPause()
+        }
+
+        currentNext.setOnClickListener {
+            webSocket?.next()
         }
 
         mutableMusicData.observe(requireActivity()) { musicData ->
