@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.HORIZONTAL
+import androidx.transition.TransitionInflater
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
 import com.google.android.material.button.MaterialButton
@@ -85,11 +86,17 @@ class SearchFragment : Fragment() {
     private var showAll = false
     private var currentTabIndex: Int? = null
 
+    val coverImage: ImageView? = if (::layoutView.isInitialized) layoutView.findViewById(R.id.currentCover) else null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        TransitionInflater.from(requireContext()).apply {
+            sharedElementReturnTransition = inflateTransition(R.transition.shared_image)
+            sharedElementEnterTransition = inflateTransition(R.transition.shared_image)
+        }
         layoutView = inflater.inflate(R.layout.fragment_search, container, false)
 
         recyclerView.adapter = adapter
@@ -306,6 +313,7 @@ class SearchFragment : Fragment() {
     }
 
     fun handleBack(): Boolean {
+        if (!isAdded) return false
         return if (searchViewModel.getSearchOpen() == true) {
             if (showAll) searchBar.search().also { showAll = false }
             else if (searchBar.focus) searchBar.close()

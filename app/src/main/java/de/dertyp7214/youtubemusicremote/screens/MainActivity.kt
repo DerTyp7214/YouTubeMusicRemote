@@ -8,13 +8,14 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.*
 import android.view.View.OnTouchListener
-import android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-import android.widget.*
+import android.widget.FrameLayout
 import android.widget.FrameLayout.LayoutParams
+import android.widget.PopupMenu
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
+import androidx.fragment.app.commit
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.card.MaterialCardView
@@ -28,13 +29,12 @@ import de.dertyp7214.youtubemusicremote.components.CustomWebSocketListener
 import de.dertyp7214.youtubemusicremote.components.LyricsBottomSheet
 import de.dertyp7214.youtubemusicremote.components.QueueBottomSheet
 import de.dertyp7214.youtubemusicremote.core.*
-import de.dertyp7214.youtubemusicremote.fragments.ControlsFragment
-import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
 import de.dertyp7214.youtubemusicremote.fragments.SearchFragment
+import de.dertyp7214.youtubemusicremote.fragments.SettingsFragment
+import de.dertyp7214.youtubemusicremote.fragments.SongFragment
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.*
 import de.dertyp7214.youtubemusicremote.viewmodels.SearchViewModel
-import dev.chrisbanes.insetter.applyInsetter
 import java.lang.Float.max
 import kotlin.math.roundToInt
 
@@ -43,6 +43,17 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     companion object {
         var currentSongInfo: MutableLiveData<SongInfo> = MutableLiveData()
         var currentLyrics: MutableLiveData<Lyrics> = MutableLiveData()
+
+        @SuppressLint("StaticFieldLeak")
+        private var instance: MainActivity? = null
+
+        fun run(block: MainActivity.() -> Unit) {
+            instance?.let { block(it) }
+        }
+    }
+
+    init {
+        instance = this
     }
 
     private val getSongInfo: SongInfo
@@ -82,12 +93,10 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private lateinit var volumePopup: MaterialCardView
     private lateinit var volumeSlider: VerticalSeekBar
     private lateinit var volumeWrapper: ConstraintLayout
-    private lateinit var mainContent: ConstraintLayout
-
     private lateinit var searchFrame: FrameLayout
-    private lateinit var controlFrame: FrameLayout
-    private lateinit var mainFrame: FrameLayout
+
     private lateinit var pageLayout: FrameLayout
+    private lateinit var songLayout: FrameLayout
 
     private var oldSongInfo: SongInfo = SongInfo()
 
@@ -101,19 +110,20 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
     }
-    private val controlsFragment by lazy {
-        ControlsFragment().resizeFragment(
-            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
+    private val songFragment by lazy {
+        SongFragment().resizeFragment(
+            LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
     }
-    private val coverFragment by lazy {
-        CoverFragment().resizeFragment(
+    private val settingsFragment by lazy {
+        SettingsFragment().resizeFragment(
             LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
     }
 
     private val searchViewModel by lazy { ViewModelProvider(this)[SearchViewModel::class.java] }
 
+    private var settingsOpen = false
     private var volumeOpen = false
 
     @SuppressLint("SetTextI18n")
@@ -130,53 +140,21 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         if (CustomWebSocket.webSocketInstance == null)
             startForegroundService(Intent(this, MediaPlayer::class.java))
 
-        val group = findViewById<LinearLayout>(R.id.group)
-        val volume = findViewById<TextView>(R.id.volume)
-        val search = findViewById<ImageButton>(R.id.search)
-        val menuButton = findViewById<ImageButton>(R.id.menuButton)
-
         volumePopup = findViewById(R.id.volumePopup)
         volumeSlider = findViewById(R.id.volumeSlider)
         volumeWrapper = findViewById(R.id.volumeWrapper)
-        mainContent = findViewById(R.id.mainContent)
+        songLayout = findViewById(R.id.songLayout)
 
         searchFrame = findViewById(R.id.searchLayout)
-        controlFrame = findViewById(R.id.controlFrame)
-        mainFrame = findViewById(R.id.mainFrame)
         pageLayout = findViewById(R.id.pageLayout)
 
-        val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction.replace(searchFrame.id, searchFragment)
-            .replace(controlFrame.id, controlsFragment).replace(mainFrame.id, coverFragment)
-            .commit()
-
-        group.applyInsetter {
-            type(statusBars = true) {
-                margin()
-            }
-        }
-
-        val pageHeight = resources.displayMetrics.heightPixels + getStatusBarHeight()
-        searchFrame.setHeight(pageHeight)
-        searchFrame.setMargins(0, pageHeight.inv(), 0, 0)
-
-        @Suppress("NAME_SHADOWING")
-        fun setMargins(open: Boolean) {
-            val pageHeight = resources.displayMetrics.heightPixels + getStatusBarHeight()
-            searchFrame.setHeight(pageHeight)
-            animateInts(if (open) pageHeight else 0, if (open) 0 else pageHeight) { marginTop ->
-                searchFrame.setMargins(
-                    0, marginTop.inv(), 0, 0
-                )
-                pageLayout.setMargins(0, 0, 0, marginTop - pageHeight)
-            }
-        }
-
-        val audioLiveData = MutableLiveData<ShortArray>()
-        coverFragment.setAudioData(audioLiveData)
-
-        searchViewModel.observerSearchOpen(this) { open ->
-            setMargins(open)
+        supportFragmentManager.commit {
+            add(pageLayout.id, songFragment)
+            add(pageLayout.id, searchFragment)
+            add(pageLayout.id, settingsFragment)
+            hide(searchFragment)
+            hide(settingsFragment)
+            addToBackStack("main")
         }
 
         webSocket = if (CustomWebSocket.webSocketInstance == null)
@@ -193,39 +171,9 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         fun setSongInfo(songInfo: SongInfo) {
             volumeSlider.setProgress(songInfo.volume, true)
 
-            volume.changeText("${songInfo.volume}%")
-
-            menuButton.setOnClickListener {
-                showMenu(menuButton, songInfo)
-            }
-
             val coverData = songInfo.coverData ?: return
 
             if (!songInfo.srcChanged(oldSongInfo) && !songInfo.playPaused) return
-
-            val controlsColor = if (isDark(
-                    coverData.background?.let {
-                        if (group != null) {
-                            val screenHeight = window.decorView.height.toFloat()
-                            val groupHeight = group.height.toFloat() + group.getMargins().top
-                            val ratio = it.intrinsicHeight / screenHeight
-                            it.resize(
-                                this, 0, 0, it.intrinsicWidth, (groupHeight * ratio).roundToInt()
-                            )
-                        } else it
-                    }?.dominantColor ?: coverData.parsedDominant
-                )
-            ) {
-                window.decorView.windowInsetsController?.setSystemBarsAppearance(
-                    0, APPEARANCE_LIGHT_STATUS_BARS
-                )
-                Color.WHITE
-            } else {
-                window.decorView.windowInsetsController?.setSystemBarsAppearance(
-                    APPEARANCE_LIGHT_STATUS_BARS, APPEARANCE_LIGHT_STATUS_BARS
-                )
-                Color.BLACK
-            }
 
             val luminance = ColorUtilsC.calculateLuminance(coverData.dominant).toFloat()
             val sliderColor = ColorUtilsC.blendARGB(
@@ -233,10 +181,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                 if (luminance < .5) Color.BLACK else Color.WHITE,
                 .6f * luminance
             )
-
-            volume.animateTextColor(controlsColor)
-            menuButton.animateImageTintList(controlsColor)
-            search.animateImageTintList(controlsColor)
 
             animateColors(
                 volumePopup.strokeColorStateList?.defaultColor ?: Color.WHITE,
@@ -282,7 +226,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                         val audioDataData = gson.fromJson(
                             text, AudioDataData::class.java
                         )
-                        audioLiveData.postValue(audioDataData.data)
+                        songFragment.postAudioLiveData(audioDataData.data)
                     }
                     else -> {}
                 }
@@ -293,7 +237,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
 
         customWebSocketListener.onFailure { _, throwable, _ ->
             throwable.printStackTrace()
-            webSocket.reconnect()
+            if (!isFinishing) webSocket.reconnect()
         }
 
         queueItems.observe(this) {
@@ -321,27 +265,50 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     queueBottomSheet.coverData = it.coverData ?: CoverData()
 
                     searchFragment.setSongInfo(it)
-                    controlsFragment.setSongInfo(it)
-                    coverFragment.setSongInfo(it)
+                    songFragment.setSongInfo(it)
 
                     oldSongInfo = it
                 }
             }
         }
 
-        search.setOnClickListener {
+        songFragment.onSearchClick {
             searchViewModel.setSearchOpen(true)
         }
 
-        controlsFragment.passCallbacks(
-            shuffle = { webSocket.shuffle() },
-            previous = { webSocket.previous() },
-            playPause = { webSocket.playPause() },
-            next = { webSocket.next() },
-            repeat = { webSocket.repeat() },
-            like = { webSocket.like() },
-            dislike = { webSocket.dislike() },
-            queue = {
+        searchViewModel.observerSearchOpen(this) {
+            if (!it) supportFragmentManager.apply {
+                commit {
+                    exitAnimations()
+                    show(songFragment)
+                    hide(searchFragment)
+                    hide(settingsFragment)
+                }
+            } else supportFragmentManager.commit {
+                enterAnimations()
+                show(searchFragment)
+                hide(songFragment)
+                hide(settingsFragment)
+            }
+        }
+
+        songFragment.passCallbacks(
+            shuffle =
+            { webSocket.shuffle() },
+            previous =
+            { webSocket.previous() },
+            playPause =
+            { webSocket.playPause() },
+            next =
+            { webSocket.next() },
+            repeat =
+            { webSocket.repeat() },
+            like =
+            { webSocket.like() },
+            dislike =
+            { webSocket.dislike() },
+            queue =
+            {
                 webSocket.send(SendAction(Action.REQUEST_QUEUE))
                 queueBottomSheet.showWithBlur(
                     this@MainActivity,
@@ -349,7 +316,8 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     window.decorView
                 )
             },
-            lyrics = {
+            lyrics =
+            {
                 webSocket.send(SendAction(Action.REQUEST_LYRICS))
                 if (lyricsBottomSheet.lyrics.videoId != getSongInfo.videoId) lyricsBottomSheet.lyrics =
                     Lyrics.Empty
@@ -360,12 +328,20 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
                     window.decorView
                 )
             },
-            seek = { webSocket.seek(it) },
-            volume = { webSocket.volume(it) }
+            seek =
+            { webSocket.seek(it) },
+            volume =
+            { webSocket.volume(it) }
         )
 
         onBackPressedDispatcher.addCallback(this, true) {
-            if (!searchFragment.handleBack()) {
+            if (settingsOpen) supportFragmentManager.commit {
+                settingsOpen = false
+                exitAnimations()
+                hide(searchFragment)
+                hide(settingsFragment)
+                show(songFragment)
+            } else if (!searchFragment.handleBack()) {
                 isEnabled = false
                 onBackPressedDispatcher.onBackPressed()
                 isEnabled = true
@@ -397,7 +373,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         } ?: super.onKeyDown(keyCode, event)
     }
 
-    private fun showMenu(
+    fun showMenu(
         v: View,
         songInfo: SongInfo,
         menuLayout: Int = R.menu.main_menu
@@ -406,7 +382,13 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.menu_settings -> {
-                        startActivity(Intent(this@MainActivity, Settings::class.java))
+                        supportFragmentManager.commit {
+                            settingsOpen = true
+                            enterAnimations()
+                            hide(searchFragment)
+                            hide(songFragment)
+                            show(settingsFragment)
+                        }
                         true
                     }
                     R.id.menu_toggle_mute -> {
@@ -469,7 +451,7 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     }
 
     private fun changeVolume(volume: Int) {
-        if (!::mainContent.isInitialized || !::volumeWrapper.isInitialized) return
+        if (!::songLayout.isInitialized || !::volumeWrapper.isInitialized) return
 
         val color = (currentSongInfo.value?.coverData?.dominant ?: Color.BLACK).let {
             it.darkenColor(.7f * ColorUtilsC.calculateLuminance(it).toFloat())
@@ -482,14 +464,14 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         volumeHandler.removeCallbacksAndMessages(null)
         volumeHandler.postDelayed({
             volumeOpen = false
-            mainContent.animateForegroundTintList(Color.TRANSPARENT, foregroundColor, 120) {
+            songLayout.animateForegroundTintList(Color.TRANSPARENT, foregroundColor, 120) {
                 volumeWrapper.animateRightMargin(dp8, dpN74, 120)
             }
         }, 1200)
 
         if (!volumeOpen) {
             volumeOpen = true
-            mainContent.animateForegroundTintList(foregroundColor, Color.TRANSPARENT, 120) {
+            songLayout.animateForegroundTintList(foregroundColor, Color.TRANSPARENT, 120) {
                 volumeWrapper.animateRightMargin(dpN74, dp8, 120)
             }
         }

@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
+import androidx.transition.TransitionInflater
 import com.google.android.material.card.MaterialCardView
 import de.dertyp7214.audiovisualization.components.AudioVisualizerView
 import de.dertyp7214.youtubemusicremote.R
@@ -35,6 +36,8 @@ class CoverFragment : Fragment() {
 
     private lateinit var root: View
 
+    val coverImage: ImageView? = view?.findViewById(R.id.cover)
+
     private val initialized
         get() = ::cover.isInitialized && ::card.isInitialized && ::root.isInitialized
 
@@ -42,6 +45,10 @@ class CoverFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        TransitionInflater.from(requireContext()).apply {
+            sharedElementReturnTransition = inflateTransition(R.transition.shared_image)
+            sharedElementEnterTransition = inflateTransition(R.transition.shared_image)
+        }
         val v = inflater.inflate(R.layout.fragment_cover, container, false)
 
         cover = v.findViewById(R.id.cover)

@@ -83,6 +83,7 @@
                 android:layout_width="52dp"
                 android:layout_height="52dp"
                 android:contentDescription="Cover"
+                android:transitionName="cover_image"
                 tools:ignore="HardcodedText"
                 tools:srcCompat="@tools:sample/avatars" />
 

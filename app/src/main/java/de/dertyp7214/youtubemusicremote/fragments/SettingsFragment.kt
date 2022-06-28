@@ -1,18 +1,19 @@
-package de.dertyp7214.youtubemusicremote.screens
+package de.dertyp7214.youtubemusicremote.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.LightingColorFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.TextView
+import androidx.annotation.IdRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,18 +26,20 @@ import de.dertyp7214.youtubemusicremote.BuildConfig.VERSION_NAME
 import de.dertyp7214.youtubemusicremote.Config.PLAY_URL
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
-import de.dertyp7214.youtubemusicremote.fragments.CoverFragment
+import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
 import de.dertyp7214.youtubemusicremote.types.CoverData
-import kotlin.math.roundToInt
 
-class Settings : AppCompatActivity() {
-
-    private val code = (Math.random() * 100).roundToInt()
-
+class SettingsFragment : Fragment() {
     private val coverLiveData = MutableLiveData<CoverData>()
 
     private lateinit var adapter: SettingsAdapter
+    private lateinit var layoutView: View
+
+    private val window by lazy { requireActivity().window }
+    private fun <T : View> findViewById(@IdRes id: Int) = layoutView.findViewById<T>(id)
+    private fun verifyInstallerId() = requireActivity().verifyInstallerId()
+    private fun openUrl(url: String) = requireActivity().openUrl(url)
 
     private val settings by lazy {
         listOf(SettingsElement(
@@ -47,9 +50,9 @@ class Settings : AppCompatActivity() {
             "fromPlayStore",
             R.string.settings_from_playstore,
             if (verifyInstallerId()) R.string.yes else R.string.no,
-            this
+            requireContext()
         ) { _, _ ->
-            openUrl(PLAY_URL(packageName))
+            openUrl(PLAY_URL(requireActivity().packageName))
         }, SettingsElement(
             "currentUrl", getString(R.string.settings_current_url), MediaPlayer.URL
         ), SettingsElement(
@@ -58,7 +61,7 @@ class Settings : AppCompatActivity() {
             "playlistColumns",
             R.string.settings_playlist_columns_title,
             R.string.settings_playlist_columns_subtext,
-            this,
+            requireContext(),
             SettingsType.RANGE(1, 20, playlistColumns)
         ) { id, value ->
             if (value is Int) preferences.edit {
@@ -68,7 +71,7 @@ class Settings : AppCompatActivity() {
             "visualizeAudio",
             R.string.settings_visualize_audio_title,
             R.string.settings_visualize_audio_subtext,
-            this,
+            requireContext(),
             SettingsType.SWITCH
         ) { id, value ->
             if (value is Boolean) preferences.edit {
@@ -79,7 +82,7 @@ class Settings : AppCompatActivity() {
             "visualizeAudioSize",
             R.string.settings_visualize_audio_size_title,
             R.string.settings_visualize_audio_size_subtext,
-            this,
+            requireContext(),
             SettingsType.RANGE(1, 8, visualizeSize),
             { visualizeAudio }
         ) { id, value ->
@@ -91,21 +94,21 @@ class Settings : AppCompatActivity() {
             "useCustomLockScreen",
             R.string.settings_use_custom_lock_screen_title,
             R.string.settings_use_custom_lock_screen_subtext,
-            this,
+            requireContext(),
             SettingsType.SWITCH
         ) { id, value ->
             if (value is Boolean) preferences.edit {
                 putBoolean(id, value)
-                startForegroundService(
+                requireActivity().startForegroundService(
                     Intent(
-                        applicationContext, MediaPlayer::class.java
+                        requireContext().applicationContext, MediaPlayer::class.java
                     ).setAction(MediaPlayer.ACTION_LOCK_SCREEN)
                 )
             }
         }, SettingsElement("customLockscreenOnlyWhilePlaying",
             R.string.settings_custom_lock_screen_only_while_playing_title,
             R.string.settings_custom_lock_screen_only_while_playing_subtext,
-            this,
+            requireContext(),
             SettingsType.SWITCH,
             { useCustomLockScreen }) { id, value ->
             if (value is Boolean) preferences.edit {
@@ -114,7 +117,7 @@ class Settings : AppCompatActivity() {
         }, SettingsElement("customLockscreenVisualizeAudio",
             R.string.settings_custom_lock_screen_visualize_audio_title,
             R.string.settings_custom_lock_screen_visualize_audio_subtext,
-            this,
+            requireContext(),
             SettingsType.SWITCH,
             {
                 useCustomLockScreen && visualizeAudio
@@ -126,7 +129,7 @@ class Settings : AppCompatActivity() {
             "customLockscreenVisualizeAudioSize",
             R.string.settings_visualize_audio_size_title,
             R.string.settings_visualize_audio_size_subtext,
-            this,
+            requireContext(),
             SettingsType.RANGE(1, 8, customLockscreenVisualizeAudioSize),
             { useCustomLockScreen && visualizeAudio && customLockscreenVisualizeAudio }
         ) { id, value ->
@@ -137,14 +140,14 @@ class Settings : AppCompatActivity() {
             "useRatingInNotification",
             R.string.settings_use_rating_title,
             R.string.settings_use_rating_subtext,
-            this,
+            requireContext(),
             SettingsType.SWITCH
         ) { id, value ->
             if (value is Boolean) preferences.edit {
                 putBoolean(id, value)
-                startForegroundService(
+                requireActivity().startForegroundService(
                     Intent(
-                        applicationContext, MediaPlayer::class.java
+                        requireContext().applicationContext, MediaPlayer::class.java
                     ).setAction(MediaPlayer.ACTION_REFETCH)
                 )
             }
@@ -157,8 +160,8 @@ class Settings : AppCompatActivity() {
         }
 
         if (color == null) {
-            coverLiveData.observe(this) { coverData ->
-                window.decorView.background = coverData.background?.fitToScreen(this)?.apply {
+            coverLiveData.observe(requireActivity()) { coverData ->
+                coverData.background?.fitToScreen(requireActivity())?.apply {
                     colorFilter = LightingColorFilter(0xFF7B7B7B.toInt(), 0x00000000)
                 }
 
@@ -171,33 +174,32 @@ class Settings : AppCompatActivity() {
         } else applyColors(color)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        overridePendingTransition(R.anim.slide_in_bottom, R.anim.slide_out_top)
-        setContentView(R.layout.activity_settings)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        layoutView = inflater.inflate(R.layout.fragment_settings, container, false)
 
         val view = findViewById<ViewGroup>(R.id.view)
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
 
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        title = getString(R.string.settings)
+        toolbar.title = getString(R.string.settings)
+        toolbar.setNavigationIconTint(Color.WHITE)
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
+        toolbar.setNavigationOnClickListener {
+            MainActivity.run {
+                onBackPressedDispatcher.onBackPressed()
+            }
+        }
 
-        adapter = SettingsAdapter(settings, this)
+        adapter = SettingsAdapter(settings, requireActivity())
 
         recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.setHasFixedSize(true)
 
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-        )
-
-        var initialized = false
-
-        MainActivity.currentSongInfo.observe(this) {
+        MainActivity.currentSongInfo.observe(requireActivity()) {
             if (it.coverData != null && coverLiveData.value != it.coverData) coverLiveData.postValue(
                 it.coverData!!
             )
@@ -205,23 +207,9 @@ class Settings : AppCompatActivity() {
 
         view.setHeight(getStatusBarHeight())
 
-        window.decorView.rootView.viewTreeObserver.addOnGlobalLayoutListener {
-            if (!initialized) {
-                setColors()
-                MainActivity.currentSongInfo.value?.coverData?.let { coverLiveData.postValue(it) }
-                initialized = true
-            }
-        }
-    }
+        setColors()
 
-    override fun onPause() {
-        super.onPause()
-        overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom)
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressedDispatcher.onBackPressed()
-        return true
+        return layoutView
     }
 
     class SettingsAdapter(

@@ -34,9 +34,6 @@
             android:showOnLockScreen="true"
             android:theme="@style/Theme.YouTubeMusicRemote.FullScreen" />
         <activity
-            android:name=".screens.Settings"
-            android:exported="false" />
-        <activity
             android:name=".screens.IntroActivity"
             android:exported="true">
             <intent-filter>
