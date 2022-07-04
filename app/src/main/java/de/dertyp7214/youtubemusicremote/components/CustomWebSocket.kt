@@ -133,8 +133,8 @@ class CustomWebSocket(
         send(SendAction(Action.SELECT_SEARCH_TAB, SelectSearchTabData(index)))
     }
 
-    fun searchOpened() {
-        send(SendAction(Action.SEARCH_OPENED))
+    fun searchOpened(text: String) {
+        send(SendAction(Action.SEARCH_OPENED, SearchOpenedData(text)))
     }
 
     fun close() {

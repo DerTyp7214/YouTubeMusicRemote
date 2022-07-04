@@ -288,3 +288,7 @@ data class SuggestionData(
     val suggestion: String,
     val text: String
 )
+
+data class SearchOpenedData(
+    val text: String
+)

@@ -119,7 +119,7 @@ class SearchFragment : Fragment() {
         }
 
         searchBar.setOnFocusListener {
-            webSocket?.searchOpened()
+            webSocket?.searchOpened(searchBar.text)
         }
 
         searchBar.setOnSuggestionClickListener {
