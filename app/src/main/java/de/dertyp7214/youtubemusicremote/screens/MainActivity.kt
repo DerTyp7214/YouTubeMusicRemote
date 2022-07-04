@@ -93,7 +93,6 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
     private lateinit var volumePopup: MaterialCardView
     private lateinit var volumeSlider: VerticalSeekBar
     private lateinit var volumeWrapper: ConstraintLayout
-    private lateinit var searchFrame: FrameLayout
 
     private lateinit var pageLayout: FrameLayout
     private lateinit var songLayout: FrameLayout
@@ -145,13 +144,12 @@ class MainActivity : AppCompatActivity(), OnTouchListener {
         volumeWrapper = findViewById(R.id.volumeWrapper)
         songLayout = findViewById(R.id.songLayout)
 
-        searchFrame = findViewById(R.id.searchLayout)
         pageLayout = findViewById(R.id.pageLayout)
 
         supportFragmentManager.commit {
-            add(pageLayout.id, songFragment)
-            add(pageLayout.id, searchFragment)
-            add(pageLayout.id, settingsFragment)
+            add(songLayout.id, songFragment)
+            add(songLayout.id, searchFragment)
+            add(songLayout.id, settingsFragment)
             hide(searchFragment)
             hide(settingsFragment)
             addToBackStack("main")

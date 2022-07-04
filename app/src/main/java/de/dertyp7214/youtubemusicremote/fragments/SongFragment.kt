@@ -20,7 +20,6 @@ import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.screens.MainActivity
 import de.dertyp7214.youtubemusicremote.types.SongInfo
-import dev.chrisbanes.insetter.applyInsetter
 import kotlin.math.roundToInt
 
 class SongFragment : Fragment() {
@@ -62,11 +61,7 @@ class SongFragment : Fragment() {
         }
         layout = inflater.inflate(R.layout.fragment_song, container, false)
 
-        group.applyInsetter {
-            type(statusBars = true) {
-                margin()
-            }
-        }
+        group.setMargins(0, getStatusBarHeight(), 0, 0)
 
         requireActivity().supportFragmentManager.commit {
             add(controlFrame.id, controlsFragment)
