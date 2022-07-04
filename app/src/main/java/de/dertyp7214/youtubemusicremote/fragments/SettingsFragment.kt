@@ -367,7 +367,7 @@ data class SettingsElement(
     ) : this(id, context.getString(title), context.getString(subText), data(id), visible, onClick)
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T> getValue(context: Context): T = when (type) {
+    fun <T> getValue(context: Context): T = when (type) {
         SettingsType.SWITCH -> context.defaultValue(id, false as T)
         SettingsType.RANGE -> context.preferences.getInt(
             id,

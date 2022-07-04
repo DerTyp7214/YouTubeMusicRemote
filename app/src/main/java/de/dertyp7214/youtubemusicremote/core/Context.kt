@@ -36,18 +36,27 @@ inline val Context.playlistColumns: Int
 inline val Context.mirrorBars: Boolean
     get() = preferences.getBoolean("mirrorBars", true)
 
-inline fun <reified T> Context.defaultValue(id: String, default: T): T {
+fun <T> Context.defaultValue(id: String, default: T): T {
     return when (id) {
-        "useRatingInNotification" -> useRatingInNotification.let { if (it is T) it else default }
-        "customLockscreenOnlyWhilePlaying" -> customLockscreenOnlyWhilePlaying.let { if (it is T) it else default }
-        "useCustomLockScreen" -> useCustomLockScreen.let { if (it is T) it else default }
-        "visualizeAudio" -> visualizeAudio.let { if (it is T) it else default }
-        "visualizeSize" -> visualizeSize.let { if (it is T) it else default }
-        "customLockscreenVisualizeAudioSize" -> customLockscreenVisualizeAudioSize.let { if (it is T) it else default }
-        "customLockscreenVisualizeAudio" -> customLockscreenVisualizeAudio.let { if (it is T) it else default }
-        "playlistColumns" -> playlistColumns.let { if (it is T) it else default }
-        "mirrorBars" -> mirrorBars.let { if (it is T) it else default }
+        "useRatingInNotification" -> useRatingInNotification.parse(default)
+        "customLockscreenOnlyWhilePlaying" -> customLockscreenOnlyWhilePlaying.parse(default)
+        "useCustomLockScreen" -> useCustomLockScreen.parse(default)
+        "visualizeAudio" -> visualizeAudio.parse(default)
+        "visualizeSize" -> visualizeSize.parse(default)
+        "customLockscreenVisualizeAudioSize" -> customLockscreenVisualizeAudioSize.parse(default)
+        "customLockscreenVisualizeAudio" -> customLockscreenVisualizeAudio.parse(default)
+        "playlistColumns" -> playlistColumns.parse(default)
+        "mirrorBars" -> mirrorBars.parse(default)
         else -> default
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+fun <T> Any.parse(default: T): T {
+    return try {
+        this as T
+    } catch (e: Exception) {
+        default
     }
 }
 
