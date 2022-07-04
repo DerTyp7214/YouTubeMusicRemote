@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -84,6 +83,7 @@ class SearchFragment : Fragment() {
         }
     }
 
+    private var searched = false
     private var showAll = false
     private var currentTabIndex: Int? = null
 
@@ -110,12 +110,17 @@ class SearchFragment : Fragment() {
 
         searchBar.setOnSearchListener {
             progressBar.visibility = VISIBLE
-            webSocket?.search(it)
-            updateData(listOf())
+            if (it.isBlank()) fetchPlaylists()
+            else {
+                webSocket?.search(it)
+                updateData(listOf())
+                searched = true
+            }
         }
 
         searchBar.setOnCloseListener {
-            fetchPlaylists()
+            if (searched) fetchPlaylists()
+            else webSocket?.search("")
         }
 
         searchBar.setOnFocusListener {
@@ -123,6 +128,7 @@ class SearchFragment : Fragment() {
         }
 
         searchBar.setOnSuggestionClickListener {
+            searchBar.text = it
             searchBar.search()
         }
 
@@ -134,6 +140,7 @@ class SearchFragment : Fragment() {
         searchViewModel.observeQuery(this) {
             searchBar.text = it ?: ""
             searchBar.search()
+            if (!it.isNullOrBlank()) searched = true
         }
 
         mutableSpanCount.observe(requireActivity()) {
@@ -225,6 +232,8 @@ class SearchFragment : Fragment() {
                             )
                         )
                         mutableSpanCount.postValue(requireContext().playlistColumns)
+
+                        searched = false
                     }
                     Action.PLAYLIST -> {
                         runOnMainThread { progressBar.visibility = INVISIBLE }
@@ -242,6 +251,8 @@ class SearchFragment : Fragment() {
                             shuffleButton.isEnabled = true
                         }
                         mutableSpanCount.postValue(1)
+
+                        searched = true
                     }
                     Action.SEARCH_MAIN_RESULT -> {
                         runOnMainThread { progressBar.visibility = INVISIBLE }
@@ -289,8 +300,6 @@ class SearchFragment : Fragment() {
                             socketResponse.data,
                             object : TypeToken<List<SuggestionData>>() {}.type
                         )
-
-                        Log.d("REEEE", suggestions.toTypedArray().contentToString())
 
                         runOnMainThread {
                             searchBar.suggestions = suggestions.map { it.text }

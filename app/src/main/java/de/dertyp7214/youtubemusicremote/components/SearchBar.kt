@@ -62,7 +62,7 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
             }
 
             searchEdit.setText(value)
-            clearFocus(searchEdit)
+            clearFocus()
         }
 
     var suggestions: List<String> = listOf()
@@ -101,15 +101,7 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
         backButton.setOnClickListener {
             if (focus) {
-                focus = false
-                searchButton.visibility = VISIBLE
-                backButton.visibility = GONE
-
-                searchText.visibility = VISIBLE
-                searchEdit.visibility = GONE
-
-                searchEdit.setText("")
-                clearFocus(searchEdit)
+                text = ""
                 closeListener()
             }
         }
@@ -124,8 +116,9 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
         searchEdit.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                clearFocus(searchEdit)
-                searchListener(searchEdit.text.toString())
+                clearFocus()
+                text = searchEdit.text.toString()
+                searchListener(text)
                 true
             } else false
         }
@@ -139,6 +132,10 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
         searchEdit.setOnItemClickListener { _, _, position, _ ->
             suggestionClickListener(suggestions[position])
+        }
+
+        searchEdit.setOnFocusChangeListener { _, focused ->
+            if (focused) focusListener()
         }
     }
 
@@ -167,7 +164,7 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
     }
 
     fun search() {
-        clearFocus(searchEdit)
+        clearFocus()
         searchListener(searchEdit.text.toString())
     }
 
