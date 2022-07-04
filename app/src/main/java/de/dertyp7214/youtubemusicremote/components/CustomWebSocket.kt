@@ -133,6 +133,10 @@ class CustomWebSocket(
         send(SendAction(Action.SELECT_SEARCH_TAB, SelectSearchTabData(index)))
     }
 
+    fun searchOpened() {
+        send(SendAction(Action.SEARCH_OPENED))
+    }
+
     fun close() {
         okHttpClient?.dispatcher?.executorService?.shutdown()
         okHttpClient?.connectionPool?.evictAll()

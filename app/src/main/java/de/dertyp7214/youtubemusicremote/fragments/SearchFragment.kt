@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -115,6 +116,14 @@ class SearchFragment : Fragment() {
 
         searchBar.setOnCloseListener {
             fetchPlaylists()
+        }
+
+        searchBar.setOnFocusListener {
+            webSocket?.searchOpened()
+        }
+
+        searchBar.setOnSuggestionClickListener {
+            searchBar.search()
         }
 
         searchViewModel.observerSearchOpen(this) { open ->
@@ -273,6 +282,20 @@ class SearchFragment : Fragment() {
                             )
                         })
                         mutableSpanCount.postValue(1)
+                    }
+                    Action.SEARCH_SUGGESTIONS -> {
+                        runOnMainThread { progressBar.visibility = INVISIBLE }
+                        val suggestions: List<SuggestionData> = gson.fromJson(
+                            socketResponse.data,
+                            object : TypeToken<List<SuggestionData>>() {}.type
+                        )
+
+                        Log.d("REEEE", suggestions.toTypedArray().contentToString())
+
+                        runOnMainThread {
+                            searchBar.suggestions = suggestions.map { it.text }
+                            searchBar.showSuggestions()
+                        }
                     }
                     else -> {}
                 }

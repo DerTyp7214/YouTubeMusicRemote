@@ -15,7 +15,7 @@ import androidx.annotation.MenuRes
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.widget.doOnTextChanged
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import de.dertyp7214.youtubemusicremote.R
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -27,17 +27,18 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
     private var searchListener: (text: String) -> Unit = {}
     private var closeListener: () -> Unit = {}
     private var focusListener: () -> Unit = {}
+    private var suggestionClickListener: (suggestion: String) -> Unit = {}
     private var menuListener: (ImageButton) -> Unit = {}
 
     private var popupMenu: PopupMenu? = null
     private var menuItemClickListener: PopupMenu.OnMenuItemClickListener? = null
 
-    private val searchBar: MaterialCardView
-    private val searchButton: ImageButton
-    private val backButton: ImageButton
-    private val moreButton: ImageButton
-    private val searchText: TextView
-    private val searchEdit: TextInputEditText
+    private val searchBar: MaterialCardView by lazy { findViewById(R.id.search_bar) }
+    private val searchButton: ImageButton by lazy { findViewById(R.id.search_button) }
+    private val backButton: ImageButton by lazy { findViewById(R.id.back_button) }
+    private val moreButton: ImageButton by lazy { findViewById(R.id.more_button) }
+    private val searchText: TextView by lazy { findViewById(R.id.search_text) }
+    private val searchEdit: MaterialAutoCompleteTextView by lazy { findViewById(R.id.search) }
 
     var instantSearch: Boolean = false
 
@@ -64,6 +65,13 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
             clearFocus(searchEdit)
         }
 
+    var suggestions: List<String> = listOf()
+        set(value) {
+            field = value
+
+            searchEdit.setSimpleItems(value.toTypedArray())
+        }
+
     var menuVisible: Boolean = true
         set(value) {
             field = value
@@ -73,15 +81,6 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
     init {
         inflate(context, R.layout.search_bar, this)
-
-        searchBar = findViewById(R.id.search_bar)
-
-        searchButton = findViewById(R.id.search_button)
-        backButton = findViewById(R.id.back_button)
-        moreButton = findViewById(R.id.more_button)
-
-        searchText = findViewById(R.id.search_text)
-        searchEdit = findViewById(R.id.search)
 
         moreButton.visibility = INVISIBLE
 
@@ -135,6 +134,12 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
             if (menuVisible) menuListener(searchButton)
             else searchBar.callOnClick()
         }
+
+        searchEdit.setSimpleItems(suggestions.toTypedArray())
+
+        searchEdit.setOnItemClickListener { _, _, position, _ ->
+            suggestionClickListener(suggestions[position])
+        }
     }
 
     fun setMenu(
@@ -155,6 +160,10 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
     fun focus() {
         searchBar.performClick()
+    }
+
+    fun showSuggestions() {
+        searchEdit.showDropDown()
     }
 
     fun search() {
@@ -179,6 +188,10 @@ class SearchBar(context: Context, attrs: AttributeSet? = null) : LinearLayout(co
 
     fun setOnFocusListener(listener: () -> Unit) {
         focusListener = listener
+    }
+
+    fun setOnSuggestionClickListener(listener: (suggestion: String) -> Unit) {
+        suggestionClickListener = listener
     }
 
     fun setOnMenuListener(listener: (ImageButton) -> Unit) {

@@ -118,7 +118,13 @@ enum class Action {
     RECENT_CONTEXT_MENU,
 
     @SerializedName("selectSearchTab")
-    SELECT_SEARCH_TAB
+    SELECT_SEARCH_TAB,
+
+    @SerializedName("searchOpened")
+    SEARCH_OPENED,
+
+    @SerializedName("searchSuggestions")
+    SEARCH_SUGGESTIONS
 }
 
 enum class ContextAction {
@@ -275,4 +281,10 @@ data class RecentContextMenuData(
 
 data class SelectSearchTabData(
     val index: Int
+)
+
+data class SuggestionData(
+    val index: Int,
+    val suggestion: String,
+    val text: String
 )

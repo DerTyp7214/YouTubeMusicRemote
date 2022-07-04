@@ -36,18 +36,21 @@
             app:srcCompat="@drawable/ic_baseline_arrow_back_24"
             tools:ignore="ContentDescription,TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
-        <com.google.android.material.textfield.TextInputEditText
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
             android:id="@+id/search"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_marginStart="2dp"
             android:layout_weight="1"
             android:background="@null"
+            android:completionThreshold="0"
+            android:dropDownAnchor="@+id/search_bar"
             android:ems="10"
             android:hint="@string/search"
             android:imeOptions="actionSearch"
             android:importantForAutofill="no"
             android:inputType="text"
+            android:popupBackground="@drawable/menu_background"
             android:visibility="gone"
             tools:ignore="LabelFor,TouchTargetSizeCheck,TextContrastCheck" />
 
