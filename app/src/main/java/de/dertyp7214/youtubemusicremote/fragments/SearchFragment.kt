@@ -87,7 +87,8 @@ class SearchFragment : Fragment() {
     private var showAll = false
     private var currentTabIndex: Int? = null
 
-    val coverImage: ImageView? = if (::layoutView.isInitialized) layoutView.findViewById(R.id.currentCover) else null
+    val coverImage: ImageView? =
+        if (::layoutView.isInitialized) layoutView.findViewById(R.id.currentCover) else null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -139,7 +140,7 @@ class SearchFragment : Fragment() {
 
         searchViewModel.observeQuery(this) {
             searchBar.text = it ?: ""
-            searchBar.search()
+            if (it != null) searchBar.search()
             if (!it.isNullOrBlank()) searched = true
         }
 

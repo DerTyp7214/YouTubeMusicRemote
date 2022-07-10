@@ -39,7 +39,7 @@ fun Drawable.resize(
 
 val Drawable.dominantColor: Int
     get() {
-        return toBitmap().dominantColor
+        return toBitmap().let { bmp -> bmp.dominantColor.also { bmp.recycle() } }
     }
 
 fun Drawable.blur(

@@ -50,6 +50,17 @@ fun getFallBackColor(vararg colors: Int): Int {
     return Color.TRANSPARENT
 }
 
+fun calculateFallbackColor(threshold: Int = 28, diffColor: Int, vararg colors: Int): Int {
+    colors.forEach {
+        if (it != Color.TRANSPARENT && ColorUtilsC.calculateColorDifference(
+                diffColor,
+                it
+            ) >= threshold
+        ) return it
+    }
+    return ColorUtilsC.invertColor(diffColor)
+}
+
 fun animateInts(
     intA: Int, intB: Int, duration: Long = 250, callback: (Int) -> Unit
 ) {
@@ -64,7 +75,7 @@ fun animateInts(
 fun animateFloats(
     floatA: Float, floatB: Float, duration: Long = 250, callback: (Float) -> Unit
 ) {
-    if (!((floatA-1)..(floatA+1)).contains(floatB)) {
+    if (!((floatA - 1)..(floatA + 1)).contains(floatB)) {
         val animator = ValueAnimator.ofFloat(floatA, floatB)
         animator.duration = duration
         animator.addUpdateListener { callback(it.animatedValue as Float) }

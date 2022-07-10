@@ -4,7 +4,6 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +18,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.shape.ShapeAppearanceModel
 import com.google.android.material.slider.Slider
 import de.dertyp7214.colorutilsc.ColorUtilsC
-import de.dertyp7214.youtubemusicremote.BuildConfig
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.core.*
 import de.dertyp7214.youtubemusicremote.types.RepeatMode
@@ -200,6 +198,7 @@ class ControlsFragment : Fragment() {
         }
 
         vibrant = coverData.vibrant
+        var visualizerColor = vibrant
         luminance = ColorUtilsC.calculateLuminance(
             coverData.background?.let {
                 try {
@@ -228,26 +227,47 @@ class ControlsFragment : Fragment() {
                         x, y, bitmap2.width - (x * 2),
                         (seekBar.height * ratio2).roundToInt()
                     )
-                    val debug: (Number) -> Unit = { number ->
-                        if (BuildConfig.DEBUG) Integer.toHexString(number.toInt()).let { s ->
-                            val color = s.length >= 6
-                            if (color) Log.d("COLOR", s)
-                            else Log.d("DIFF", number.toString())
-                        }
-                    }
-                    if (ColorUtilsC.calculateColorDifference(
-                            seekbarBackground.dominantColor.also(debug),
-                            coverData.vibrant.also(debug)
-                        ).also(debug) < 18
-                    ) vibrant = ColorUtilsC.invertColor(coverData.vibrant)
-                    resized.dominantColor
+                    vibrant = calculateFallbackColor(
+                        18,
+                        seekbarBackground.dominantColor,
+                        vibrant,
+                        coverData.darkVibrant,
+                        coverData.lightVibrant,
+                        coverData.muted,
+                        coverData.darkMuted,
+                        coverData.lightMuted
+                    )
+                    val visualizerPart = bitmap.resize(
+                        0, (bitmap.height * .88).roundToInt(), bitmap.width,
+                        (bitmap.height * .12).roundToInt()
+                    )
+                    visualizerColor = calculateFallbackColor(
+                        28,
+                        visualizerPart.dominantColor,
+                        visualizerColor,
+                        coverData.darkVibrant,
+                        coverData.lightVibrant,
+                        coverData.muted,
+                        coverData.darkMuted,
+                        coverData.lightMuted
+                    )
+                    bitmap2.recycle()
+                    seekbarBackground.recycle()
+                    visualizerPart.recycle()
+                    resized.dominantColor.also { resized.recycle() }
                 } catch (_: Exception) {
                     it.dominantColor
                 }
             } ?: coverData.dominant
         ).toFloat()
 
-        CoverFragment.instance?.visualizeColor(getFallBackColor(vibrant, coverData.muted))
+        CoverFragment.instance?.visualizeColor(
+            getFallBackColor(
+                visualizerColor,
+                vibrant,
+                coverData.muted
+            )
+        )
 
         val playPauseColor = getFallBackColor(vibrant, coverData.muted)
         playPause.animateImageTintList(
