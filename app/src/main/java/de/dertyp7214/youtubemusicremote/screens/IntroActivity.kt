@@ -199,50 +199,50 @@ class IntroActivity : AppCompatActivity() {
                         }
                     }
                     checkUrls(urls.toList(), 0)
-                } else {
-                    inputLayout.editText?.doAfterTextChanged {
-                        nextButton.isEnabled = true
-                        setInputColor(inputLayout)
-                    }
+                }
 
-                    scanQrCode.setOnClickListener {
-                        barcodeLauncher.launch(ScanOptions())
-                    }
+                inputLayout.editText?.doAfterTextChanged {
+                    nextButton.isEnabled = true
+                    setInputColor(inputLayout)
+                }
 
-                    nextButton.setOnClickListener {
-                        inputLayout.editText?.text?.let { editable ->
-                            val newUrl =
-                                editable.toString()
-                                    .let { if (it.startsWith("ws://") || it == "devUrl") it else "ws://$it" }
-                            scanQrCode.isEnabled = false
-                            nextButton.isEnabled = false
-                            checkWebSocket(newUrl) { connected, reason ->
-                                scanQrCode.isEnabled = true
-                                if (connected) {
-                                    setInputColor(inputLayout, Color.GREEN)
-                                    preferences.edit {
-                                        if (newUrl != "devUrl") putStringSet("url",
-                                            arrayListOf(newUrl).apply {
-                                                if (urls != null) addAll(
-                                                    urls
-                                                )
-                                            }
-                                                .toSet()
-                                        )
-                                        MediaPlayer.URL = newUrl
-                                        startActivity(
-                                            Intent(
-                                                this@IntroActivity,
-                                                MainActivity::class.java
+                scanQrCode.setOnClickListener {
+                    barcodeLauncher.launch(ScanOptions())
+                }
+
+                nextButton.setOnClickListener {
+                    inputLayout.editText?.text?.let { editable ->
+                        val newUrl =
+                            editable.toString()
+                                .let { if (it.startsWith("ws://") || it == "devUrl") it else "ws://$it" }
+                        scanQrCode.isEnabled = false
+                        nextButton.isEnabled = false
+                        checkWebSocket(newUrl) { connected, reason ->
+                            scanQrCode.isEnabled = true
+                            if (connected) {
+                                setInputColor(inputLayout, Color.GREEN)
+                                preferences.edit {
+                                    if (newUrl != "devUrl") putStringSet("url",
+                                        arrayListOf(newUrl).apply {
+                                            if (urls != null) addAll(
+                                                urls
                                             )
+                                        }
+                                            .toSet()
+                                    )
+                                    MediaPlayer.URL = newUrl
+                                    startActivity(
+                                        Intent(
+                                            this@IntroActivity,
+                                            MainActivity::class.java
                                         )
-                                        finish()
-                                    }
-                                } else {
-                                    nextButton.isEnabled = false
-                                    setInputColor(inputLayout, Color.RED)
-                                    reason?.let { inputLayout.editText?.error = it }
+                                    )
+                                    finish()
                                 }
+                            } else {
+                                nextButton.isEnabled = false
+                                setInputColor(inputLayout, Color.RED)
+                                reason?.let { inputLayout.editText?.error = it }
                             }
                         }
                     }

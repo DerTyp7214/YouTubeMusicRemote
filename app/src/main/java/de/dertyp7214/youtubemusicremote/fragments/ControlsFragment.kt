@@ -285,9 +285,11 @@ class ControlsFragment : Fragment() {
             .6f * luminance
         )
 
-        animateColors(seekBar.thumbStrokeColor?.defaultColor ?: Color.WHITE, seekColor) {
-            seekBar.setColor(it)
-        }
+        animateColors(
+            seekBar.thumbStrokeColor?.defaultColor ?: Color.WHITE,
+            seekColor,
+            callback = seekBar::setColor
+        )
 
         val controlsColor = if (luminance < .5) Color.WHITE else Color.BLACK
 
@@ -317,9 +319,7 @@ class ControlsFragment : Fragment() {
 
         val backgroundColor = ColorUtils.setAlphaComponent(coverData.dominant, 0)
         if (oldBackgroundTint != backgroundColor) {
-            animateColors(oldBackgroundTint, backgroundColor) {
-                layout.background.setTint(it)
-            }
+            animateColors(oldBackgroundTint, backgroundColor, callback = layout.background::setTint)
             oldBackgroundTint = backgroundColor
         }
 
