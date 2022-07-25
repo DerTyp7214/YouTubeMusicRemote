@@ -52,4 +52,6 @@
     <string name="back">Back</string>
     <string name="settings_visualize_audio_mirror_bars_title">Mirror Bars</string>
     <string name="settings_visualize_audio_mirror_bars_subtext">Mirrors audio bars</string>
+    <string name="settings_show_previous_songs_in_queue_title">Show Previous Songs in Queue</string>
+    <string name="settings_show_previous_songs_in_queue_subtext">Shows the Previous played Songs in the Queue</string>
 </resources>

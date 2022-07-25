@@ -81,7 +81,12 @@ class QueueBottomSheet(
 
         queueItemsLiveData.observe(this) { queueItemList ->
             items.clear()
-            items.addAll(queueItemList)
+            items.addAll(if (!showPreviousSongsInQueue) queueItemList.let { queueItems ->
+                val index = queueItems.indexOfFirst { it.currentlyPlaying }
+                ArrayList(queueItems.subList(if (index < 0) 0 else index, queueItems.size)).apply {
+                    if (index < 0) this[0] = this[0].clone(currentlyPlaying = true)
+                }
+            } else queueItemList)
             adapter.notifyDataSetChanged()
             setColors(coverData)
         }
@@ -186,13 +191,13 @@ class QueueBottomSheet(
                 }
             }
 
-            holder.root.setOnClickListener { if (position != 0) onClick(item) }
+            holder.root.setOnClickListener { if (!item.currentlyPlaying) onClick(item) }
             holder.root.setOnLongClickListener {
                 onLongPress(it, item)
                 true
             }
 
-            if (position == 0) {
+            if (item.currentlyPlaying) {
                 val context = dialogFragment.requireContext()
                 holder.root.strokeWidth = 2.dpToPx(context)
                 holder.root.setMargin(8.dpToPx(context))

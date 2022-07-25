@@ -6,5 +6,6 @@ data class QueueItem(
     val artist: String,
     val duration: String,
     val videoId: String,
-    val position: String
+    val position: String,
+    val currentlyPlaying: Boolean
 )

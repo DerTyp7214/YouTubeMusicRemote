@@ -21,6 +21,9 @@ inline val Context.useCustomLockScreen: Boolean
 inline val Context.visualizeAudio: Boolean
     get() = preferences.getBoolean("visualizeAudio", false)
 
+inline val Context.showPreviousSongsInQueue: Boolean
+    get() = preferences.getBoolean("showPreviousSongsInQueue", false)
+
 inline val Context.visualizeSize: Int
     get() = preferences.getInt("visualizeSize", 6)
 
@@ -47,6 +50,7 @@ fun <T> Context.defaultValue(id: String, default: T): T {
         "customLockscreenVisualizeAudio" -> customLockscreenVisualizeAudio.parse(default)
         "playlistColumns" -> playlistColumns.parse(default)
         "mirrorBars" -> mirrorBars.parse(default)
+        "showPreviousSongsInQueue" -> showPreviousSongsInQueue.parse(default)
         else -> default
     }
 }

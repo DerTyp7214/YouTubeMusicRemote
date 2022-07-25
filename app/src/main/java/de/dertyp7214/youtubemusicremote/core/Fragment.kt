@@ -25,6 +25,9 @@ inline val <T: Fragment> T.useCustomLockScreen: Boolean
 inline val <T: Fragment> T.visualizeAudio: Boolean
     get() = preferences.getBoolean("visualizeAudio", false)
 
+inline val <T: Fragment> T.showPreviousSongsInQueue: Boolean
+    get() = preferences.getBoolean("showPreviousSongsInQueue", false)
+
 inline val <T: Fragment> T.visualizeSize: Int
     get() = preferences.getInt("visualizeSize", 6)
 

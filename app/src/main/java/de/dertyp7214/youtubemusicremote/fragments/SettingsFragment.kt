@@ -68,6 +68,16 @@ class SettingsFragment : Fragment() {
                 putInt(id, value)
             }
         }, SettingsElement(
+            "showPreviousSongsInQueue",
+            R.string.settings_show_previous_songs_in_queue_title,
+            R.string.settings_show_previous_songs_in_queue_subtext,
+            requireContext(),
+            SettingsType.SWITCH
+        ) { id, value ->
+            if (value is Boolean) preferences.edit {
+                putBoolean(id, value)
+            }
+        }, SettingsElement(
             "visualizeAudio",
             R.string.settings_visualize_audio_title,
             R.string.settings_visualize_audio_subtext,
