@@ -6,7 +6,6 @@ plugins {
 android {
     namespace 'de.dertyp7214.youtubemusicremote'
     compileSdk = 33
-    buildToolsVersion = "33.0.0"
 
     defaultConfig {
         applicationId "de.dertyp7214.youtubemusicremote"
@@ -29,16 +28,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_15
+        targetCompatibility = JavaVersion.VERSION_15
     }
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = JavaVersion.VERSION_15.toString()
     }
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
-            version '3.18.1'
+            version '3.22.1'
         }
     }
 }
