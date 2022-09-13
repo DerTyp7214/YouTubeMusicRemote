@@ -19,6 +19,19 @@ fun SwitchCompat.setColor(color: Int) {
         )
     )
     thumbTintList = thumbStates
+
+    val trackColor = ColorUtilsC.blendARGB(color, Color.WHITE, .5f).let { newColor ->
+        fun checkColor(trackColor: Int, oldColor: Int = color): Int {
+            val diff = ColorUtilsC.calculateColorDifference(newColor, trackColor)
+            return when {
+                diff > 20 -> trackColor
+                trackColor == oldColor -> ColorUtilsC.blendARGB(color, Color.BLACK, .7f)
+                else -> checkColor(ColorUtilsC.blendARGB(trackColor, Color.WHITE, .5f), trackColor)
+            }
+        }
+        checkColor(newColor)
+    }
+
     val trackStates = ColorStateList(
         arrayOf(
             intArrayOf(-android.R.attr.state_enabled),
@@ -27,7 +40,7 @@ fun SwitchCompat.setColor(color: Int) {
         ),
         intArrayOf(
             Color.LTGRAY,
-            ColorUtilsC.setAlphaComponent(ColorUtilsC.blendARGB(color, Color.DKGRAY, .7f), 150),
+            ColorUtilsC.setAlphaComponent(trackColor, 150),
             Color.TRANSPARENT
         )
     )
