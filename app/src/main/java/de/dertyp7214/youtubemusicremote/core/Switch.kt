@@ -2,10 +2,10 @@ package de.dertyp7214.youtubemusicremote.core
 
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.PorterDuff
-import com.google.android.material.switchmaterial.SwitchMaterial
+import androidx.appcompat.widget.SwitchCompat
+import de.dertyp7214.colorutilsc.ColorUtilsC
 
-fun SwitchMaterial.setColor(color: Int) {
+fun SwitchCompat.setColor(color: Int) {
     val thumbStates = ColorStateList(
         arrayOf(
             intArrayOf(-android.R.attr.state_enabled),
@@ -20,11 +20,16 @@ fun SwitchMaterial.setColor(color: Int) {
     )
     thumbTintList = thumbStates
     val trackStates = ColorStateList(
-        arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()), intArrayOf(
-            Color.TRANSPARENT,
+        arrayOf(
+            intArrayOf(-android.R.attr.state_enabled),
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf()
+        ),
+        intArrayOf(
+            Color.LTGRAY,
+            ColorUtilsC.setAlphaComponent(ColorUtilsC.blendARGB(color, Color.DKGRAY, .7f), 150),
             Color.TRANSPARENT
         )
     )
     trackTintList = trackStates
-    trackTintMode = PorterDuff.Mode.OVERLAY
 }

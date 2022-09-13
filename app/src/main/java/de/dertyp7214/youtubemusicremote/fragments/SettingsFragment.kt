@@ -19,8 +19,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
-import de.dertyp7214.composecomponents.ComposeSwitch
 import de.dertyp7214.youtubemusicremote.BuildConfig.VERSION_CODE
 import de.dertyp7214.youtubemusicremote.BuildConfig.VERSION_NAME
 import de.dertyp7214.youtubemusicremote.Config.PLAY_URL
@@ -257,7 +257,7 @@ class SettingsFragment : Fragment() {
         }
 
         class ViewHolderSwitch(v: View) : ViewHolder(v) {
-            val composeSwitch: ComposeSwitch = v.findViewById(R.id.composeSwitch)
+            val materialSwitch: MaterialSwitch = v.findViewById(R.id.materialSwitch)
         }
 
         class ViewHolderRange(v: View) : ViewHolder(v) {
@@ -308,13 +308,13 @@ class SettingsFragment : Fragment() {
 
             when (holder) {
                 is ViewHolderSwitch -> {
-                    holder.composeSwitch.setChecked(settingsElement.getValue(activity), false)
-                    holder.composeSwitch.setCheckedChangedListener {
-                        settingsElement.onClick(settingsElement.id, it)
+                    holder.materialSwitch.isChecked = settingsElement.getValue(activity)
+                    holder.materialSwitch.setOnCheckedChangeListener { _, isChecked ->
+                        settingsElement.onClick(settingsElement.id, isChecked)
                         delayed(250) { this@SettingsAdapter.notifyDataSetChanged() }
                     }
                     holder.root.setOnClickListener {
-                        holder.composeSwitch.setChecked(!holder.composeSwitch.getChecked())
+                        holder.materialSwitch.isChecked = !holder.materialSwitch.isChecked
                     }
                 }
                 is ViewHolderRange -> {
@@ -336,7 +336,7 @@ class SettingsFragment : Fragment() {
 
             mutableColor.observe(activity) {
                 when (holder) {
-                    is ViewHolderSwitch -> holder.composeSwitch.setColor(it)
+                    is ViewHolderSwitch -> holder.materialSwitch.setColor(it)
                     is ViewHolderRange -> {
                         holder.seekBar.setColor(it)
                     }

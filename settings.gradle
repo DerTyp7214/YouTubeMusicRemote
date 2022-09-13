@@ -15,6 +15,5 @@ dependencyResolutionManagement {
 rootProject.name = "YouTube Music Remote"
 include ':app'
 include ':audiovisualization'
-include ':composecomponents'
 include ':mathc'
 include ':colorutilsc'

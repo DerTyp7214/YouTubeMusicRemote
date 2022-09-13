@@ -55,7 +55,7 @@ class QueueBottomSheet(
     ): View? {
         val v = inflater.inflate(R.layout.queue_bottom_sheet, container, false)
 
-        val items = ArrayList(queueItems)
+        val items = ArrayList(parseQueueItems(queueItems))
 
         val root: ViewGroup = v.findViewById(R.id.queueRoot)
         val recyclerView: RecyclerView = v.findViewById(R.id.queueRecyclerView)
@@ -81,13 +81,9 @@ class QueueBottomSheet(
 
         queueItemsLiveData.observe(this) { queueItemList ->
             items.clear()
-            items.addAll(if (!showPreviousSongsInQueue) queueItemList.let { queueItems ->
-                val index = queueItems.indexOfFirst { it.currentlyPlaying }
-                ArrayList(queueItems.subList(if (index < 0) 0 else index, queueItems.size)).apply {
-                    if (index < 0) this[0] = this[0].clone(currentlyPlaying = true)
-                }
-            } else queueItemList)
+            items.addAll(parseQueueItems(queueItemList))
             adapter.notifyDataSetChanged()
+            recyclerView.scrollToPosition(items.indexOfFirst { it.currentlyPlaying })
             setColors(coverData)
         }
 
@@ -117,6 +113,14 @@ class QueueBottomSheet(
 
         return v
     }
+
+    private fun parseQueueItems(list: List<QueueItem>) =
+        if (!showPreviousSongsInQueue) list.let { queueItems ->
+            val index = queueItems.indexOfFirst { it.currentlyPlaying }
+            ArrayList(queueItems.subList(if (index < 0) 0 else index, queueItems.size)).apply {
+                if (index < 0) this[0] = this[0].clone(currentlyPlaying = true)
+            }
+        } else list
 
     class QueueItemAdapter(
         private val dialogFragment: BottomSheetDialogFragment,

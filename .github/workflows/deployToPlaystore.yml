@@ -85,5 +85,6 @@ jobs:
           serviceAccountJson: service_account.json
           packageName: de.dertyp7214.youtubemusicremote
           releaseFiles: app/build/outputs/bundle/release/*.aab
+          mappingFile: app/build/outputs/mapping/release/mapping.txt
           track: production
           whatsNewDirectory: distribution/
