@@ -1,0 +1,65 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="200dp"
+            android:height="200dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:scaleX="0.25"
+                android:scaleY="0.25">
+                <path
+                    android:name="mainPath"
+                    android:fillColor="#00000000"
+                    android:pathData="M182,124L251,124A12,12 0,0 1,263 136L263,296A12,12 0,0 1,251 308L182,308A12,12 0,0 1,170 296L170,136A12,12 0,0 1,182 124z"
+                    android:strokeWidth="12"
+                    android:strokeColor="?attr/colorSecondary" />
+                <path
+                    android:name="leftPill"
+                    android:fillColor="?attr/colorSecondary"
+                    android:pathData="M196,188L196,188A12,12 0,0 1,208 200L208,232A12,12 0,0 1,196 244L196,244A12,12 0,0 1,184 232L184,200A12,12 0,0 1,196 188z" />
+                <path
+                    android:name="rightPill"
+                    android:fillColor="?attr/colorSecondary"
+                    android:pathData="M237,188L237,188A12,12 0,0 1,249 200L249,232A12,12 0,0 1,237 244L237,244A12,12 0,0 1,225 232L225,200A12,12 0,0 1,237 188z" />
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <target android:name="mainPath">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="@integer/iconAnimTime"
+                    android:propertyName="strokeWidth"
+                    android:valueFrom="0"
+                    android:valueTo="12" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="leftPill">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="@integer/iconAnimTime"
+                    android:propertyName="fillColor"
+                    android:valueFrom="@android:color/transparent"
+                    android:valueTo="?attr/colorSecondary" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="rightPill">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="@integer/iconAnimTime"
+                    android:propertyName="fillColor"
+                    android:valueFrom="@android:color/transparent"
+                    android:valueTo="?attr/colorSecondary" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

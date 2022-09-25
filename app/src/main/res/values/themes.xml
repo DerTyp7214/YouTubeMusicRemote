@@ -13,7 +13,7 @@
         <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
 
         <item name="android:windowSplashScreenAnimatedIcon" tools:ignore="NewApi">
-            @drawable/ic_launcher_splash
+            @drawable/ic_launcher_animated
         </item>
         <item name="android:windowSplashScreenBrandingImage" tools:ignore="NewApi">
             @drawable/dertyp_branding

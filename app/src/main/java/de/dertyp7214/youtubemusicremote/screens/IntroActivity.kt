@@ -8,9 +8,11 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.LightingColorFilter
 import android.os.Bundle
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -83,7 +85,7 @@ class IntroActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == code && grantResults.first() == PackageManager.PERMISSION_GRANTED)
+        if (requestCode == code && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
             setInputColor(inputLayout)
     }
 
@@ -154,6 +156,7 @@ class IntroActivity : AppCompatActivity() {
         )
 
         var initialized = false
+        var ready = false
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
@@ -175,6 +178,16 @@ class IntroActivity : AppCompatActivity() {
                 coverLiveData.postValue(it.coverData!!)
         }
 
+        val content: View = findViewById(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                return if (ready) {
+                    content.viewTreeObserver.removeOnPreDrawListener(this)
+                    true
+                } else false
+            }
+        })
+
         window.decorView.rootView.viewTreeObserver.addOnGlobalLayoutListener {
             if (!initialized) {
                 setInputColor(inputLayout)
@@ -188,6 +201,7 @@ class IntroActivity : AppCompatActivity() {
                             if (connected) {
                                 MediaPlayer.URL = urls[index]
                                 startActivity(Intent(this, MainActivity::class.java))
+                                ready = true
                                 finish()
                             } else {
                                 nextButton.isEnabled = false
@@ -195,6 +209,7 @@ class IntroActivity : AppCompatActivity() {
                                 inputLayout.editText?.setText(urls[index].removePrefix("ws://"))
                                 reason?.let { inputLayout.editText?.error = it }
                                 if (index < urls.lastIndex) checkUrls(urls, index + 1)
+                                else ready = true
                             }
                         }
                     }
