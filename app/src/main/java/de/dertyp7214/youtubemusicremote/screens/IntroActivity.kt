@@ -40,7 +40,11 @@ import de.dertyp7214.youtubemusicremote.core.fitToScreen
 import de.dertyp7214.youtubemusicremote.core.getFallBackColor
 import de.dertyp7214.youtubemusicremote.core.setColor
 import de.dertyp7214.youtubemusicremote.services.MediaPlayer
-import de.dertyp7214.youtubemusicremote.types.*
+import de.dertyp7214.youtubemusicremote.types.Action
+import de.dertyp7214.youtubemusicremote.types.CoverData
+import de.dertyp7214.youtubemusicremote.types.SendAction
+import de.dertyp7214.youtubemusicremote.types.SocketResponse
+import de.dertyp7214.youtubemusicremote.types.StatusData
 import dev.chrisbanes.insetter.applyInsetter
 import kotlin.math.roundToInt
 
@@ -214,7 +218,7 @@ class IntroActivity : AppCompatActivity() {
                         }
                     }
                     checkUrls(urls.toList(), 0)
-                }
+                } else ready = true
 
                 inputLayout.editText?.doAfterTextChanged {
                     nextButton.isEnabled = true
@@ -309,6 +313,7 @@ class IntroActivity : AppCompatActivity() {
                             else cb(false, "Invalid name")
                             webSocket.close()
                         }
+
                         else -> {}
                     }
                 } catch (e: Exception) {
