@@ -88,7 +88,7 @@ class SettingsFragment : Fragment() {
                 putBoolean(id, value)
                 CoverFragment.instance?.visualizeAudioPreferenceChanged(value)
             }
-        },SettingsElement(
+        }, SettingsElement(
             "mirrorBars",
             R.string.settings_visualize_audio_mirror_bars_title,
             R.string.settings_visualize_audio_mirror_bars_subtext,
@@ -126,7 +126,30 @@ class SettingsFragment : Fragment() {
                     ).setAction(MediaPlayer.ACTION_LOCK_SCREEN)
                 )
             }
-        }, SettingsElement("customLockscreenOnlyWhilePlaying",
+        }, SettingsElement(
+            "useCustomLockscreenBrightness",
+            R.string.settings_use_custom_lock_screen_brightness_title,
+            R.string.settings_use_custom_lock_screen_brightness_subtext,
+            requireContext(),
+            SettingsType.SWITCH,
+            { useCustomLockScreen }
+        ) { id, value ->
+            if (value is Boolean) preferences.edit {
+                putBoolean(id, value)
+                if (!value) putInt("customLockscreenBrightness", 100)
+            }
+        }, SettingsElement(
+            "customLockscreenBrightness",
+            R.string.settings_custom_lock_screen_brightness_title,
+            R.string.settings_custom_lock_screen_brightness_subtext,
+            requireContext(),
+            SettingsType.RANGE(0, 100, customLockscreenBrightness),
+            { useCustomLockScreen && useCustomLockscreenBrightness }) { id, value ->
+            if (value is Int) preferences.edit {
+                putInt(id, value)
+            }
+        }, SettingsElement(
+            "customLockscreenOnlyWhilePlaying",
             R.string.settings_custom_lock_screen_only_while_playing_title,
             R.string.settings_custom_lock_screen_only_while_playing_subtext,
             requireContext(),
@@ -135,14 +158,13 @@ class SettingsFragment : Fragment() {
             if (value is Boolean) preferences.edit {
                 putBoolean(id, value)
             }
-        }, SettingsElement("customLockscreenVisualizeAudio",
+        }, SettingsElement(
+            "customLockscreenVisualizeAudio",
             R.string.settings_custom_lock_screen_visualize_audio_title,
             R.string.settings_custom_lock_screen_visualize_audio_subtext,
             requireContext(),
             SettingsType.SWITCH,
-            {
-                useCustomLockScreen && visualizeAudio
-            }) { id, value ->
+            { useCustomLockScreen && visualizeAudio }) { id, value ->
             if (value is Boolean) preferences.edit {
                 putBoolean(id, value)
             }
@@ -271,12 +293,15 @@ class SettingsFragment : Fragment() {
                 1 -> ViewHolderSwitch(
                     LayoutInflater.from(activity).inflate(R.layout.settings_switch, parent, false)
                 )
+
                 2 -> ViewHolder(
                     LayoutInflater.from(activity).inflate(R.layout.settings_spacer, parent, false)
                 )
+
                 3 -> ViewHolderRange(
                     LayoutInflater.from(activity).inflate(R.layout.settings_range, parent, false)
                 )
+
                 else -> ViewHolder(
                     LayoutInflater.from(activity).inflate(R.layout.settings_default, parent, false)
                 )
@@ -317,6 +342,7 @@ class SettingsFragment : Fragment() {
                         holder.materialSwitch.isChecked = !holder.materialSwitch.isChecked
                     }
                 }
+
                 is ViewHolderRange -> {
                     holder.seekBar.valueFrom = settingsElement.typeData.from.toFloat()
                     holder.seekBar.valueTo = settingsElement.typeData.to.toFloat()
@@ -383,6 +409,7 @@ data class SettingsElement(
             id,
             type(id).default
         ) as T
+
         else -> context.preferences.getString(id, "") as T
     }
 

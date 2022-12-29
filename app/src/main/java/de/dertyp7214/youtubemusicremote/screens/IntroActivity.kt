@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.LightingColorFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.View.GONE
@@ -16,8 +17,10 @@ import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.widget.doAfterTextChanged
@@ -51,6 +54,13 @@ import kotlin.math.roundToInt
 
 class IntroActivity : AppCompatActivity() {
 
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    private val requestStoragePermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) setInputColor(inputLayout)
+        }
+
     private val code = (Math.random() * 100).roundToInt()
 
     private lateinit var inputLayout: TextInputLayout
@@ -83,16 +93,6 @@ class IntroActivity : AppCompatActivity() {
             }
         }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == code && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
-            setInputColor(inputLayout)
-    }
-
     private fun setInputColor(inputLayout: TextInputLayout, color: Int? = null) {
         if (color == null) {
             fun fetchCoverData() {
@@ -114,11 +114,8 @@ class IntroActivity : AppCompatActivity() {
                     this,
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) != PackageManager.PERMISSION_GRANTED
-            ) ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                code
-            ) else fetchCoverData()
+            ) requestStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            else fetchCoverData()
 
             coverLiveData.observe(this) { coverData ->
                 window.decorView.background = coverData.background?.fitToScreen(this)?.apply {
@@ -191,6 +188,24 @@ class IntroActivity : AppCompatActivity() {
                 } else false
             }
         })
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE),
+            code + 1
+        )
+
+        val notificationPermissionGranted =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                NotificationManagerCompat.from(this).areNotificationsEnabled()
+            else true
+
+        if (!notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 
         window.decorView.rootView.viewTreeObserver.addOnGlobalLayoutListener {
             if (!initialized) {

@@ -9,7 +9,12 @@ import android.graphics.Point
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.service.notification.StatusBarNotification
+import android.view.LayoutInflater
+import android.view.View
 import android.view.View.GONE
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.ImageButton
@@ -17,12 +22,19 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
+import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import de.dertyp7214.audiovisualization.components.AudioVisualizerView
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
+import de.dertyp7214.youtubemusicremote.core.customLockscreenBrightness
 import de.dertyp7214.youtubemusicremote.core.customLockscreenVisualizeAudio
 import de.dertyp7214.youtubemusicremote.core.customLockscreenVisualizeAudioSize
+import de.dertyp7214.youtubemusicremote.core.dpToPx
+import de.dertyp7214.youtubemusicremote.core.equalsIgnoreOrder
+import de.dertyp7214.youtubemusicremote.core.setMargins
+import de.dertyp7214.youtubemusicremote.core.toHumanReadableTime
+import de.dertyp7214.youtubemusicremote.services.NotificationService
 import de.dertyp7214.youtubemusicremote.types.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -67,6 +79,8 @@ class LockScreenPlayer : AppCompatActivity() {
     private val songInfo = MutableLiveData<SongInfo>()
     private val timeData = MutableLiveData<String>()
 
+    private val pixelShift = MutableLiveData<Int>()
+
     private val gson = Gson().newBuilder().enableComplexMapKeySerialization().create()
 
     private lateinit var windowInsets: WindowInsets
@@ -95,6 +109,10 @@ class LockScreenPlayer : AppCompatActivity() {
         }
     }
 
+    private val notificationList = mutableListOf<StatusBarNotification>()
+    private val adapter by lazy { NotificationAdapter(notificationList) }
+
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         setShowWhenLocked(true)
         setTurnScreenOn(true)
@@ -111,6 +129,10 @@ class LockScreenPlayer : AppCompatActivity() {
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        val container = findViewById<View>(R.id.container)
+
+        val recyclerViewNotifications = findViewById<RecyclerView>(R.id.notifications)
+
         val cover: ImageView = findViewById(R.id.cover)
         val title: TextView = findViewById(R.id.title)
         val artist: TextView = findViewById(R.id.artist)
@@ -120,6 +142,12 @@ class LockScreenPlayer : AppCompatActivity() {
         val prevButton: ImageButton = findViewById(R.id.prevButton)
         val playPauseButton: ImageButton = findViewById(R.id.playPauseButton)
         val nextButton: ImageButton = findViewById(R.id.nextButton)
+        val likeButton: ImageButton = findViewById(R.id.like)
+        val dislikeButton: ImageButton = findViewById(R.id.dislike)
+
+        container.alpha = customLockscreenBrightness / 100f
+
+        recyclerViewNotifications.adapter = adapter
 
         prevButton.setOnClickListener {
             CustomWebSocket.webSocketInstance?.previous()
@@ -130,10 +158,31 @@ class LockScreenPlayer : AppCompatActivity() {
         nextButton.setOnClickListener {
             CustomWebSocket.webSocketInstance?.next()
         }
+        likeButton.setOnClickListener {
+            CustomWebSocket.webSocketInstance?.like()
+        }
+        dislikeButton.setOnClickListener {
+            CustomWebSocket.webSocketInstance?.dislike()
+        }
+
+        pixelShift.observe(this) {
+            val dp = 1.dpToPx(this)
+            val top = if (it == 0) dp else 0
+            val right = if (it == 1) dp else 0
+            val bottom = if (it == 2) dp else 0
+            val left = if (it == 3) dp else 0
+
+            container.setMargins(top, right, bottom, left)
+        }
 
         fun timeCheck() {
             val timeString = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            if (timeData.value != timeString) timeData.postValue(timeString)
+            if (timeData.value != timeString) {
+                timeData.postValue(timeString)
+                pixelShift.postValue(pixelShift.value.let {
+                    if (it == null || it > 2) 0 else it + 1
+                })
+            }
         }
 
         val batteryReceiver = object : BroadcastReceiver() {
@@ -142,7 +191,14 @@ class LockScreenPlayer : AppCompatActivity() {
                 val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
                 val percentage = (level * 100 / scale.toFloat()).roundToInt()
-                battery.text = "$percentage%"
+
+                val batteryManager = getSystemService(BatteryManager::class.java)
+                val status = batteryManager?.computeChargeTimeRemaining()
+
+                battery.text = "$percentage%".let {
+                    if (status != null && status > 0) "$it ・ Full in ${status.toHumanReadableTime()}"
+                    else it
+                }
             }
         }
 
@@ -150,6 +206,25 @@ class LockScreenPlayer : AppCompatActivity() {
             override fun onReceive(context: Context, intent: Intent) {
                 timeCheck()
             }
+        }
+
+        if (Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+                .contains(packageName)
+        )
+            NotificationService.notifications.observe(this) {
+                val list = it.filter { notification ->
+                    notification.packageName != packageName &&
+                            notification.packageName != "android" &&
+                            notification.packageName != "com.android.systemui"
+                }
+                if (!notificationList.equalsIgnoreOrder(list)) {
+                    notificationList.clear()
+                    notificationList.addAll(list)
+                    adapter.notifyDataSetChanged()
+                }
+            }
+        else Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+            startActivity(this)
         }
 
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -166,12 +241,15 @@ class LockScreenPlayer : AppCompatActivity() {
 
                         when (socketResponse.action) {
                             Action.AUDIO_DATA -> {
-                                val audioDataData = gson.fromJson(
-                                    text, AudioDataData::class.java
-                                )
-                                val audioArray = audioDataData.data
-                                visualization.setAudioData(audioArray, true)
+                                if (customLockscreenVisualizeAudio) {
+                                    val audioDataData = gson.fromJson(
+                                        text, AudioDataData::class.java
+                                    )
+                                    val audioArray = audioDataData.data
+                                    visualization.setAudioData(audioArray, true)
+                                }
                             }
+
                             else -> {}
                         }
                     } catch (e: Exception) {
@@ -186,7 +264,9 @@ class LockScreenPlayer : AppCompatActivity() {
             if (
                 it.title != getSongInfo.title ||
                 it.artist != getSongInfo.artist ||
-                it.isPaused != getSongInfo.isPaused
+                it.isPaused != getSongInfo.isPaused ||
+                it.liked != getSongInfo.liked ||
+                it.disliked != getSongInfo.disliked
             ) songInfo.postValue(it)
         }
 
@@ -196,6 +276,12 @@ class LockScreenPlayer : AppCompatActivity() {
 
             if (it.isPaused == true) playPauseButton.setImageResource(R.drawable.ic_play)
             else playPauseButton.setImageResource(R.drawable.ic_pause)
+
+            if (it.liked) likeButton.setImageResource(R.drawable.ic_liked)
+            else likeButton.setImageResource(R.drawable.ic_like)
+
+            if (it.disliked) dislikeButton.setImageResource(R.drawable.ic_disliked)
+            else dislikeButton.setImageResource(R.drawable.ic_dislike)
         }
 
         coverData.observe(this) {
@@ -214,5 +300,25 @@ class LockScreenPlayer : AppCompatActivity() {
         visualization.size = 2f.pow(customLockscreenVisualizeAudioSize).roundToInt()
         visualization.setBottomLeftCorner(bottomLeftCorner.corner)
         visualization.setBottomRightCorner(bottomRightCorner.corner)
+    }
+
+    private class NotificationAdapter(
+        private val notifications: List<StatusBarNotification>
+    ) : RecyclerView.Adapter<NotificationAdapter.ViewHolder>() {
+        class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+            val icon: ImageView = v.findViewById(R.id.icon)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.notification_item, parent, false)
+        )
+
+        override fun getItemCount() = notifications.size
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val notification = notifications[position]
+
+            holder.icon.setImageDrawable(notification.notification.smallIcon.loadDrawable(holder.icon.context))
+        }
     }
 }

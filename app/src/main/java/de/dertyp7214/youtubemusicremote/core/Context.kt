@@ -24,6 +24,12 @@ inline val Context.visualizeAudio: Boolean
 inline val Context.showPreviousSongsInQueue: Boolean
     get() = preferences.getBoolean("showPreviousSongsInQueue", false)
 
+inline val Context.useCustomLockscreenBrightness: Boolean
+    get() = preferences.getBoolean("useCustomLockscreenBrightness", false)
+
+inline val Context.customLockscreenBrightness: Int
+    get() = preferences.getInt("customLockscreenBrightness", 100)
+
 inline val Context.visualizeSize: Int
     get() = preferences.getInt("visualizeSize", 6)
 
@@ -51,6 +57,7 @@ fun <T> Context.defaultValue(id: String, default: T): T {
         "playlistColumns" -> playlistColumns.parse(default)
         "mirrorBars" -> mirrorBars.parse(default)
         "showPreviousSongsInQueue" -> showPreviousSongsInQueue.parse(default)
+        "useCustomLockscreenBrightness" -> useCustomLockscreenBrightness.parse(default)
         else -> default
     }
 }

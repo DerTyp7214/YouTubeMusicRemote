@@ -18,3 +18,6 @@ fun List<Short>.changeSize(newSize: Int): List<Short> {
     }
     return tmp
 }
+
+fun <T> List<T>.equalsIgnoreOrder(other: List<T>) =
+    size == other.size && toSet() == other.toSet()

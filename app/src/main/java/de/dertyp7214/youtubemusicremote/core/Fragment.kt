@@ -5,40 +5,47 @@ import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 
-fun <T: Fragment> T.resizeFragment(newWidth: Int, newHeight: Int): T {
+fun <T : Fragment> T.resizeFragment(newWidth: Int, newHeight: Int): T {
     view?.layoutParams = FrameLayout.LayoutParams(newWidth, newHeight)
     view?.requestLayout()
     return this
 }
-val <T: Fragment> T.preferences: SharedPreferences
+
+val <T : Fragment> T.preferences: SharedPreferences
     get() = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-inline val <T: Fragment> T.useRatingInNotification: Boolean
+inline val <T : Fragment> T.useRatingInNotification: Boolean
     get() = preferences.getBoolean("useRatingInNotification", false)
 
-inline val <T: Fragment> T.customLockscreenOnlyWhilePlaying: Boolean
+inline val <T : Fragment> T.customLockscreenOnlyWhilePlaying: Boolean
     get() = preferences.getBoolean("customLockscreenOnlyWhilePlaying", false)
 
-inline val <T: Fragment> T.useCustomLockScreen: Boolean
+inline val <T : Fragment> T.useCustomLockScreen: Boolean
     get() = preferences.getBoolean("useCustomLockScreen", false)
 
-inline val <T: Fragment> T.visualizeAudio: Boolean
+inline val <T : Fragment> T.useCustomLockscreenBrightness: Boolean
+    get() = preferences.getBoolean("useCustomLockscreenBrightness", false)
+
+inline val <T : Fragment> T.visualizeAudio: Boolean
     get() = preferences.getBoolean("visualizeAudio", false)
 
-inline val <T: Fragment> T.showPreviousSongsInQueue: Boolean
+inline val <T : Fragment> T.showPreviousSongsInQueue: Boolean
     get() = preferences.getBoolean("showPreviousSongsInQueue", false)
 
-inline val <T: Fragment> T.visualizeSize: Int
+inline val <T : Fragment> T.visualizeSize: Int
     get() = preferences.getInt("visualizeSize", 6)
 
-inline val <T: Fragment> T.customLockscreenVisualizeAudioSize: Int
+inline val <T : Fragment> T.customLockscreenBrightness: Int
+    get() = preferences.getInt("customLockscreenBrightness", 100)
+
+inline val <T : Fragment> T.customLockscreenVisualizeAudioSize: Int
     get() = preferences.getInt("customLockscreenVisualizeAudioSize", 7)
 
-inline val <T: Fragment> T.customLockscreenVisualizeAudio: Boolean
+inline val <T : Fragment> T.customLockscreenVisualizeAudio: Boolean
     get() = visualizeAudio && preferences.getBoolean("customLockscreenVisualizeAudio", false)
 
-inline val <T: Fragment> T.mirrorBars: Boolean
+inline val <T : Fragment> T.mirrorBars: Boolean
     get() = preferences.getBoolean("mirrorBars", true)
 
-inline val <T: Fragment> T.playlistColumns: Int
+inline val <T : Fragment> T.playlistColumns: Int
     get() = preferences.getInt("playlistColumns", 3)

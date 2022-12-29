@@ -13,6 +13,41 @@ fun String.toHumanReadable(isSeconds: Boolean = false): String {
     }
 }
 
+fun Long.toHumanReadableTime(includeSeconds: Boolean = false): String {
+    val hours = TimeUnit.MILLISECONDS.toHours(this)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(this) - TimeUnit.HOURS.toMinutes(hours)
+    val seconds =
+        TimeUnit.MILLISECONDS.toSeconds(this) - TimeUnit.MINUTES.toSeconds(minutes) - TimeUnit.HOURS.toSeconds(
+            hours
+        )
+
+    return if (includeSeconds) {
+        if (hours > 0) "${hours}hrs ${
+            minutes.let {
+                if (it == 0L) "" else "${it}min"
+            }
+        } ${
+            seconds.let {
+                if (it == 0L) "" else "${it}s"
+            }
+        }"
+        else if (minutes > 0) "${minutes}min ${
+            seconds.let {
+                if (it == 0L) "" else "${it}s"
+            }
+        }"
+        else "${seconds}s"
+    } else {
+        if (hours > 0) "${hours}hrs ${
+            minutes.let {
+                if (it == 0L) "" else "${it}min"
+            }
+        }"
+        else if (minutes > 0) "${minutes}min"
+        else "${seconds}sec"
+    }
+}
+
 fun Int.toHumanReadable(isSeconds: Boolean = false): String = toLong().toHumanReadable(isSeconds)
 fun Long.toHumanReadable(isSeconds: Boolean = false): String {
     val seconds = if (isSeconds) this else TimeUnit.MILLISECONDS.toSeconds(this)
