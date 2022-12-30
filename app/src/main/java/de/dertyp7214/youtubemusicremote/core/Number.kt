@@ -72,4 +72,5 @@ fun Int.pxToDp(context: Context): Int {
 
 fun Number.toMillis() = toString().toMillis()
 
-fun Float.minMax(min: Float, max: Float) = if (this > max) max else if (this < min) min else this
+fun <T: Number> T.clamp(min: T, max: T) =
+    if (this.toFloat() > max.toFloat()) max else if (this.toFloat() < min.toFloat()) min else this

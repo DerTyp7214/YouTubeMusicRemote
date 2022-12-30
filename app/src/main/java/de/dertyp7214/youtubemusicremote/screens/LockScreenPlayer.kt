@@ -5,12 +5,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.graphics.Point
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.service.notification.StatusBarNotification
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
@@ -21,17 +23,23 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.gson.Gson
 import de.dertyp7214.audiovisualization.components.AudioVisualizerView
+import de.dertyp7214.colorutilsc.ColorUtilsC
 import de.dertyp7214.youtubemusicremote.R
 import de.dertyp7214.youtubemusicremote.components.CustomWebSocket
+import de.dertyp7214.youtubemusicremote.core.clamp
 import de.dertyp7214.youtubemusicremote.core.customLockscreenBrightness
 import de.dertyp7214.youtubemusicremote.core.customLockscreenVisualizeAudio
 import de.dertyp7214.youtubemusicremote.core.customLockscreenVisualizeAudioSize
 import de.dertyp7214.youtubemusicremote.core.dpToPx
 import de.dertyp7214.youtubemusicremote.core.equalsIgnoreOrder
+import de.dertyp7214.youtubemusicremote.core.getFallBackColor
 import de.dertyp7214.youtubemusicremote.core.setMargins
 import de.dertyp7214.youtubemusicremote.core.toHumanReadableTime
 import de.dertyp7214.youtubemusicremote.services.NotificationService
@@ -103,6 +111,9 @@ class LockScreenPlayer : AppCompatActivity() {
     private val getSongInfo
         get() = songInfo.value ?: SongInfo()
 
+    private val getCoverData
+        get() = coverData.value ?: CoverData()
+
     private val unlockReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             finish()
@@ -111,6 +122,7 @@ class LockScreenPlayer : AppCompatActivity() {
 
     private val notificationList = mutableListOf<StatusBarNotification>()
     private val adapter by lazy { NotificationAdapter(notificationList) }
+    private val volumeSlider by lazy { findViewById<LinearProgressIndicator>(R.id.volume) }
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -145,10 +157,15 @@ class LockScreenPlayer : AppCompatActivity() {
         val likeButton: ImageButton = findViewById(R.id.like)
         val dislikeButton: ImageButton = findViewById(R.id.dislike)
 
+        val card = cover.parent as? CardView
+
         container.alpha = customLockscreenBrightness / 100f
 
         recyclerViewNotifications.adapter = adapter
 
+        cover.setOnClickListener {
+            finish()
+        }
         prevButton.setOnClickListener {
             CustomWebSocket.webSocketInstance?.previous()
         }
@@ -266,13 +283,25 @@ class LockScreenPlayer : AppCompatActivity() {
                 it.artist != getSongInfo.artist ||
                 it.isPaused != getSongInfo.isPaused ||
                 it.liked != getSongInfo.liked ||
-                it.disliked != getSongInfo.disliked
+                it.disliked != getSongInfo.disliked ||
+                it.volume != getSongInfo.volume
             ) songInfo.postValue(it)
         }
 
         songInfo.observe(this) {
             title.text = it.title
             artist.text = it.artist
+
+            volumeSlider.setIndicatorColor(
+                getFallBackColor(
+                    getCoverData.vibrant,
+                    getCoverData.darkMuted,
+                    getCoverData.darkVibrant,
+                    Color.WHITE
+                )
+            )
+
+            volumeSlider.setProgress(it.volume.clamp(0, 100), true)
 
             if (it.isPaused == true) playPauseButton.setImageResource(R.drawable.ic_play)
             else playPauseButton.setImageResource(R.drawable.ic_pause)
@@ -285,7 +314,14 @@ class LockScreenPlayer : AppCompatActivity() {
         }
 
         coverData.observe(this) {
-            cover.setImageDrawable(it.cover)
+            val coverImage = it.cover
+            if (coverImage != null) {
+                val luminance = ColorUtilsC.calculateBitmapLuminance(coverImage.toBitmap())
+                val alpha = 1f * .4f * (1f - luminance.toFloat()) + .4f
+
+                card?.alpha = alpha
+                cover.setImageDrawable(coverImage)
+            }
         }
 
         timeData.observe(this) {
@@ -302,9 +338,41 @@ class LockScreenPlayer : AppCompatActivity() {
         visualization.setBottomRightCorner(bottomRightCorner.corner)
     }
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        return MainActivity.currentSongInfo.value?.let { songInfo ->
+            when (keyCode) {
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    changeVolume(songInfo.volume - 5)
+                    true
+                }
+
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    changeVolume(songInfo.volume + 5)
+                    true
+                }
+
+                else -> super.onKeyDown(keyCode, event)
+            }
+        } ?: super.onKeyDown(keyCode, event)
+    }
+
+    private fun changeVolume(volume: Int) {
+        CustomWebSocket.webSocketInstance?.send(
+            SendAction(
+                Action.VOLUME,
+                VolumeData(volume)
+            )
+        )
+    }
+
     private class NotificationAdapter(
         private val notifications: List<StatusBarNotification>
     ) : RecyclerView.Adapter<NotificationAdapter.ViewHolder>() {
+
+        init {
+            setHasStableIds(true)
+        }
+
         class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
             val icon: ImageView = v.findViewById(R.id.icon)
         }
@@ -314,6 +382,8 @@ class LockScreenPlayer : AppCompatActivity() {
         )
 
         override fun getItemCount() = notifications.size
+
+        override fun getItemId(position: Int) = notifications[position].id.toLong()
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
             val notification = notifications[position]

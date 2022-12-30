@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.IBinder
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 
 class NotificationService : NotificationListenerService() {
@@ -14,7 +13,6 @@ class NotificationService : NotificationListenerService() {
 
     override fun onBind(intent: Intent?): IBinder? {
         notifications.postValue(activeNotifications.toList())
-        Log.d("NotificationService", "onBind")
 
         return super.onBind(intent)
     }
