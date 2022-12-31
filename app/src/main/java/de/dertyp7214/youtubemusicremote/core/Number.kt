@@ -3,6 +3,7 @@
 package de.dertyp7214.youtubemusicremote.core
 
 import android.content.Context
+import de.dertyp7214.youtubemusicremote.R
 import java.util.concurrent.TimeUnit
 
 fun String.toHumanReadable(isSeconds: Boolean = false): String {
@@ -13,7 +14,7 @@ fun String.toHumanReadable(isSeconds: Boolean = false): String {
     }
 }
 
-fun Long.toHumanReadableTime(includeSeconds: Boolean = false): String {
+fun Long.toHumanReadableTime(context: Context? = null, includeSeconds: Boolean = false): String {
     val hours = TimeUnit.MILLISECONDS.toHours(this)
     val minutes = TimeUnit.MILLISECONDS.toMinutes(this) - TimeUnit.HOURS.toMinutes(hours)
     val seconds =
@@ -21,30 +22,36 @@ fun Long.toHumanReadableTime(includeSeconds: Boolean = false): String {
             hours
         )
 
+    val hrsSuffix = if (hours == 1L) context?.getString(R.string.hr) ?: "hr"
+    else context?.getString(R.string.hrs) ?: "hrs"
+    val minSuffix = if (minutes == 1L) context?.getString(R.string.min) ?: "min"
+    else context?.getString(R.string.mins) ?: "mins"
+    val secSuffix = context?.getString(R.string.s) ?: "s"
+
     return if (includeSeconds) {
-        if (hours > 0) "${hours}hrs ${
+        if (hours > 0) "$hours$hrsSuffix ${
             minutes.let {
-                if (it == 0L) "" else "${it}min"
+                if (it == 0L) "" else "$it$minSuffix"
             }
         } ${
             seconds.let {
-                if (it == 0L) "" else "${it}s"
+                if (it == 0L) "" else "it$secSuffix"
             }
         }"
-        else if (minutes > 0) "${minutes}min ${
+        else if (minutes > 0) "$minutes$minSuffix ${
             seconds.let {
-                if (it == 0L) "" else "${it}s"
+                if (it == 0L) "" else "$it$secSuffix"
             }
         }"
-        else "${seconds}s"
+        else "$seconds$secSuffix"
     } else {
-        if (hours > 0) "${hours}hrs ${
+        if (hours > 0) "$hours$hrsSuffix ${
             minutes.let {
-                if (it == 0L) "" else "${it}min"
+                if (it == 0L) "" else "$it$minSuffix"
             }
         }"
-        else if (minutes > 0) "${minutes}min"
-        else "${seconds}sec"
+        else if (minutes > 0) "$minutes$minSuffix"
+        else "$seconds$secSuffix"
     }
 }
 

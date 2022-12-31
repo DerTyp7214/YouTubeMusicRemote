@@ -7,6 +7,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.Point
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +18,7 @@ import android.provider.Settings
 import android.service.notification.StatusBarNotification
 import android.view.KeyEvent
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.View.GONE
 import android.view.ViewGroup
@@ -49,7 +54,7 @@ import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-class LockScreenPlayer : AppCompatActivity() {
+class LockScreenPlayer : AppCompatActivity(), SensorEventListener {
     private class MRoundedCorner(windowInsets: WindowInsets, position: Int) {
         val position: Int
         val radius: Int
@@ -123,6 +128,13 @@ class LockScreenPlayer : AppCompatActivity() {
     private val notificationList = mutableListOf<StatusBarNotification>()
     private val adapter by lazy { NotificationAdapter(notificationList) }
     private val volumeSlider by lazy { findViewById<LinearProgressIndicator>(R.id.volume) }
+
+    private val sensorManager by lazy { getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+    private val proximitySensor by lazy { sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) }
+
+    private val isClose = MutableLiveData<Boolean>()
+    private val getIsClose
+        get() = isClose.value ?: false
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -207,13 +219,35 @@ class LockScreenPlayer : AppCompatActivity() {
             override fun onReceive(context: Context, intent: Intent) {
                 val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
                 val percentage = (level * 100 / scale.toFloat()).roundToInt()
 
                 val batteryManager = getSystemService(BatteryManager::class.java)
                 val status = batteryManager?.computeChargeTimeRemaining()
 
+                val current =
+                    batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                val chargingStatus =
+                    batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS)
+
+                val isPlugged = plugged != 0
+                val isFull = chargingStatus == BatteryManager.BATTERY_STATUS_FULL
+                val isCharging = current > 0
+                val isChargingFast = current > 1.6e+6
+
+                val charging = when {
+                    isFull -> getString(R.string.full)
+                    isChargingFast -> getString(R.string.charging_rapidly)
+                    isCharging -> getString(R.string.charging)
+                    isPlugged -> getString(R.string.plugged)
+                    else -> ""
+                }
+
                 battery.text = "$percentage%".let {
-                    if (status != null && status > 0) "$it ・ Full in ${status.toHumanReadableTime()}"
+                    if (charging.isNotEmpty()) "$it ・ $charging" else it
+                }.let {
+                    if (!isFull && isCharging && status != null && status > 0) "$it ・ ${getString(R.string.full_in)} ${status.toHumanReadableTime()}"
+                    else if (!isFull && isPlugged && current < 0) "$it ・ ${getString(R.string.discharging)}"
                     else it
                 }
             }
@@ -228,7 +262,8 @@ class LockScreenPlayer : AppCompatActivity() {
         if (Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
                 .contains(packageName)
         )
-            NotificationService.notifications.observe(this) {
+            NotificationService.notifications.observe(this)
+            {
                 val list = it.filter { notification ->
                     notification.packageName != packageName &&
                             notification.packageName != "android" &&
@@ -258,7 +293,7 @@ class LockScreenPlayer : AppCompatActivity() {
 
                         when (socketResponse.action) {
                             Action.AUDIO_DATA -> {
-                                if (customLockscreenVisualizeAudio) {
+                                if (!getIsClose && customLockscreenVisualizeAudio) {
                                     val audioDataData = gson.fromJson(
                                         text, AudioDataData::class.java
                                     )
@@ -276,7 +311,8 @@ class LockScreenPlayer : AppCompatActivity() {
             }
         else visualization.visibility = GONE
 
-        MainActivity.currentSongInfo.observe(this) {
+        MainActivity.currentSongInfo.observe(this)
+        {
             if (coverData.value != it.coverData && it.coverData != null) coverData.postValue(it.coverData!!)
             if (
                 it.title != getSongInfo.title ||
@@ -288,7 +324,8 @@ class LockScreenPlayer : AppCompatActivity() {
             ) songInfo.postValue(it)
         }
 
-        songInfo.observe(this) {
+        songInfo.observe(this)
+        {
             title.text = it.title
             artist.text = it.artist
 
@@ -313,7 +350,8 @@ class LockScreenPlayer : AppCompatActivity() {
             else dislikeButton.setImageResource(R.drawable.ic_dislike)
         }
 
-        coverData.observe(this) {
+        coverData.observe(this)
+        {
             val coverImage = it.cover
             if (coverImage != null) {
                 val luminance = ColorUtilsC.calculateBitmapLuminance(coverImage.toBitmap())
@@ -324,8 +362,23 @@ class LockScreenPlayer : AppCompatActivity() {
             }
         }
 
-        timeData.observe(this) {
+        timeData.observe(this)
+        {
             time.text = it
+        }
+
+        isClose.observe(this)
+        {
+            if (it) container
+                .animate()
+                .alpha(0f)
+                .setDuration(200)
+                .start()
+            else container
+                .animate()
+                .alpha(customLockscreenBrightness / 100f)
+                .setDuration(200)
+                .start()
         }
     }
 
@@ -356,6 +409,34 @@ class LockScreenPlayer : AppCompatActivity() {
         } ?: super.onKeyDown(keyCode, event)
     }
 
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        return getIsClose || super.dispatchTouchEvent(ev)
+    }
+
+    override fun onSensorChanged(event: SensorEvent) {
+        isClose.postValue(event.values[0].let {
+            !(it == event.sensor.maximumRange || it > 5)
+        })
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    override fun onResume() {
+        super.onResume()
+
+        sensorManager.registerListener(
+            this,
+            proximitySensor,
+            SensorManager.SENSOR_DELAY_NORMAL
+        )
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        sensorManager.unregisterListener(this)
+    }
+
     private fun changeVolume(volume: Int) {
         CustomWebSocket.webSocketInstance?.send(
             SendAction(
@@ -378,7 +459,8 @@ class LockScreenPlayer : AppCompatActivity() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.notification_item, parent, false)
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.notification_item, parent, false)
         )
 
         override fun getItemCount() = notifications.size
